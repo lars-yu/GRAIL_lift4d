@@ -1,0 +1,118 @@
+{
+  "contact_labels": [
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ]
+  ],
+  "contact_interval": 8,
+  "contact_start_idx": 60,
+  "policy": "strict_gpt_start_frame_then_force_all_labels_to_R_Hand",
+  "model": "gpt-5.5",
+  "video_id": "dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00045",
+  "frame_count": 121,
+  "prompt_policy": "Contact only when right hand/fingers/palm visibly touches or holds the object; near/ambiguous is false.",
+  "decisions": [
+    {
+      "frame": 0,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The person's right hand is away from the scanner/base with a clear visible gap; no touching or grasping is visible."
+    },
+    {
+      "frame": 8,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The right hand is hovering at a distance from the scanner with a clear visible gap; no touch or grasp is visible."
+    },
+    {
+      "frame": 16,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The person's right hand is near the table but clearly separated from the scanner/base with a visible gap; no touching or grasping is visible."
+    },
+    {
+      "frame": 24,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The person's right hand is hovering above/near the scanner with a visible gap and no clear touching or grasping."
+    },
+    {
+      "frame": 32,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The right hand is hovering near the scanner but there is a visible gap and no clear touching or grasping."
+    },
+    {
+      "frame": 40,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The person's right hand is near the scanner but a visible gap remains; no clear touching or grasping is shown."
+    },
+    {
+      "frame": 48,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "Right hand is close to the scanner but a visible gap remains; no clear fingertip or palm contact."
+    },
+    {
+      "frame": 56,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The right hand is reaching close to the scanner, but a visible gap/ambiguity remains and no clear physical touch is shown."
+    },
+    {
+      "frame": 64,
+      "phase": "coarse",
+      "in_contact": true,
+      "reason": "The person's right hand/fingers visibly wrap around and touch the pink scanner/white base with no clear gap."
+    },
+    {
+      "frame": 57,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "Right hand is close to the scanner/base but a visible gap remains; no clear physical touch or grasp."
+    },
+    {
+      "frame": 58,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "Right hand is very close to the scanner, but clear physical touching or grasping is ambiguous with no definite visible overlap."
+    },
+    {
+      "frame": 59,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "Right hand is very close to the scanner, but clear physical touch or grasp is ambiguous with no definite overlap/pressing visible."
+    },
+    {
+      "frame": 60,
+      "phase": "refine",
+      "in_contact": true,
+      "reason": "The person's right hand is visibly adjacent to and overlapping/wrapping around the pink scanner with no clear gap, indicating contact."
+    }
+  ],
+  "source_frame_count": 150,
+  "truncated_to_frame_count": 121,
+  "label_postprocess": "truncate_to_121_frames_keep_gpt_debug_contact_start_idx_force_R_Hand_labels"
+}

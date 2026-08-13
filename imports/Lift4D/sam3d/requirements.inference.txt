@@ -1,0 +1,7 @@
+kaolin==0.17.0
+gsplat @ git+https://github.com/nerfstudio-project/gsplat.git@2323de5905d5e90e035f792fe65bad0fedd413e7
+seaborn==0.13.2
+imageio-ffmpeg   # FFMPEG backend for --render_video / comparison videos
+nvdiffrast @ git+https://github.com/NVlabs/nvdiffrast.git
+utils3d @ git+https://github.com/EasternJournalist/utils3d.git
+depth-anything-3

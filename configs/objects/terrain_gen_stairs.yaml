@@ -1,0 +1,641 @@
+dataset: gen_stairs
+objects:
+  straight_aged_brick_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_concrete_stairs_with_12_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_concrete_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_concrete_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_concrete_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_concrete_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_granite_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_limestone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_limestone_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_metal_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_metal_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_sandstone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_slate_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_stone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_stone_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_wood_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_wood_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_aged_wood_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_beige_sandstone_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_black_slate_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_buff_limestone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_brick_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_concrete_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_granite_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_granite_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_granite_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_limestone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_marble_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_marble_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_marble_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_metal_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_metal_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_sandstone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_slate_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_stone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_wood_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_wood_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_coarse_wood_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_dark_blue_slate_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_dark_brick_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_dark_concrete_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_dark_mahogany_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_dark_oak_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_dark_sandstone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_dark_wooden_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_black_stone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_brick_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_brick_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_ceramic_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_concrete_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_granite_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_granite_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_granite_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_limestone_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_limestone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_limestone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_marble_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_metal_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_sandstone_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_sandstone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_sandstone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_stone_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_stone_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_stone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_wood_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_wood_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_wooden_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_glossy_wooden_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_granulated_concrete_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_green_marble_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_grey_brick_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_grey_concrete_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_grey_stone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_jet_black_granite_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_light_colored_marble_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_light_colored_wooden_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_light_pine_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_light_sandstone_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_light_wood_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_lightly_textured_slate_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_lightly_weathered_wood_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_matte_black_concrete_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_metallic_silver_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_brick_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_concrete_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_granite_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_granite_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_granite_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_marble_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_marble_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_metal_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_sandstone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_slate_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_slate_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_slate_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_stone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_wood_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_wood_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_wooden_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_natural_wooden_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_brick_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_brick_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_brick_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_concrete_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_concrete_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_granite_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_limestone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_limestone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_limestone_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_marble_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_marble_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_metal_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_metal_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_metal_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_metal_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_sandstone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_sandstone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_stone_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_stone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_wood_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_wood_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_wooden_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_wooden_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_polished_wooden_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_redwood_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rough_brick_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rough_concrete_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rough_cut_stone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rough_hewn_wooden_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rough_stone_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rough_wooden_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rugged_concrete_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rugged_limestone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rugged_sandstone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rugged_sandstone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rugged_slate_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rugged_slate_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_brick_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_brick_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_concrete_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_granite_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_granite_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_granite_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_lime_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_limestone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_metal_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_sandstone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_slate_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_stone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_stone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_stone_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_wood_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_wooden_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_wooden_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_rustic_wooden_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_shiny_glass_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_shiny_metal_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_brick_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_concrete_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_granite_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_granite_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_granite_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_ivory_limestone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_limestone_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_limestone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_marble_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_marble_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_marble_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_metal_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_metal_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_sandstone_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_sandstone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_sandstone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_sandstone_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_slate_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_wooden_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_wooden_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_smooth_wooden_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_textured_concrete_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_textured_terracotta_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_vintage_brick_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_vintage_slate_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_vintage_stone_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_vintage_wood_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_brick_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_brown_brick_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_concrete_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_granite_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_granite_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_limestone_stairs_with_6_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_limestone_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_marble_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_marble_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_marble_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_marble_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_metal_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_sandstone_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_sandstone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_sandstone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_sandstone_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_slate_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_slate_stairs_with_9_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_stone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_wood_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_wood_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_wood_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_weathered_wooden_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_white_concrete_stairs_with_8_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_white_limestone_stairs_with_4_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_white_limestone_stairs_with_5_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_white_marble_stairs_with_10_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_white_plaster_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs
+  straight_worn_stone_stairs_with_7_steps_no_handrails_no_turns:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-gen-stairs

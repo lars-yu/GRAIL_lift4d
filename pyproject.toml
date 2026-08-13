@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+exclude = '''
+/(
+    third_party
+  | imports
+  | build
+  | dist
+  | \.egg-info
+)/
+'''
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+exclude = [".venv", "build", "dist", "*.egg-info", "imports"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP", "W"]
+ignore = [
+    "E501",   # line too long (handled by black)
+    "E402",   # module-import-not-at-top (needed for sys.path hacks)
+    "E722",   # bare except (legacy code)
+    "B905",   # zip-without-explicit-strict (pervasive in ML code)
+    "B006",   # mutable default argument (common pattern in ML)
+    "B007",   # unused loop variable (common in ML iteration)
+    "B008",   # function-call-in-default-argument (common torch.nn pattern)
+    "B020",   # found a loop variable used outside of the for loop
+    "B904",   # raise without from (legacy code)
+    "F401",   # imported but unused (many re-exports)
+    "F402",   # import shadowed by loop variable
+    "F403",   # star imports (used extensively in FoundationPose integration)
+    "F405",   # name may be undefined from star import
+    "F601",   # membership test with non-set
+    "F841",   # local variable assigned but never used (common in ML)
+    "E741",   # ambiguous variable name (l, I, O common in math)
+    "UP015",  # unnecessary open mode (explicit is fine)
+    "UP038",  # use X | Y in isinstance (requires Python 3.10+ syntax)
+    "UP035",  # deprecated typing imports (legacy code)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["grail", "constants", "scripts"]

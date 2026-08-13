@@ -1,0 +1,19 @@
+[submodule "imports/MoGe"]
+	path = imports/MoGe
+	url = https://github.com/microsoft/MoGe.git
+[submodule "imports/Hunyuan3D-2.1"]
+	path = imports/Hunyuan3D-2.1
+	url = https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1.git
+[submodule "imports/FoundationPose"]
+	path = imports/FoundationPose
+	url = https://github.com/NVlabs/FoundationPose
+[submodule "imports/GEM-SMPL"]
+	path = imports/GEM-SMPL
+	url = https://github.com/NVlabs/GENMO
+	branch = grail
+[submodule "imports/GEM-SOMA"]
+	path = imports/GEM-SOMA
+	url = https://github.com/NVlabs/GEM-X
+[submodule "imports/GMR"]
+	path = imports/GMR
+	url = https://github.com/YanjieZe/GMR.git

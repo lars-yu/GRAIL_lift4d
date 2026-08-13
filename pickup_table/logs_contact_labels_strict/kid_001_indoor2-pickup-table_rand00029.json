@@ -1,0 +1,94 @@
+{
+  "contact_labels": [
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ]
+  ],
+  "contact_interval": 8,
+  "contact_start_idx": 41,
+  "policy": "strict_gpt_start_frame_then_force_all_labels_to_R_Hand",
+  "model": "gpt-5.5",
+  "video_id": "dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00029",
+  "frame_count": 121,
+  "prompt_policy": "Contact only when right hand/fingers/palm visibly touches or holds the object; near/ambiguous is false.",
+  "decisions": [
+    {
+      "frame": 0,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The right hand is away from the scanner/base with a visible gap; no touching or grasping is visible."
+    },
+    {
+      "frame": 8,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "Right hand is approaching/hovering at a distance; no visible touch with the scanner/base."
+    },
+    {
+      "frame": 16,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "Right hand is reaching toward the scanner but remains visibly separated with a clear gap."
+    },
+    {
+      "frame": 24,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The person's right hand is reaching toward the scanner but remains visibly separated from it with a clear gap."
+    },
+    {
+      "frame": 32,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "The person's right hand is reaching toward the scanner but there is a visible gap and no clear physical touch."
+    },
+    {
+      "frame": 40,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "Right hand is hovering near the scanner, but no clear visible touch or overlap with the object."
+    },
+    {
+      "frame": 48,
+      "phase": "coarse",
+      "in_contact": true,
+      "reason": "The person's right hand is visibly wrapped around and touching the pink scanner with no clear gap."
+    },
+    {
+      "frame": 41,
+      "phase": "refine",
+      "in_contact": true,
+      "reason": "The person's right fingers visibly overlap/press against the upper pink scanner with no clear gap."
+    }
+  ],
+  "source_frame_count": 150,
+  "truncated_to_frame_count": 121,
+  "label_postprocess": "truncate_to_121_frames_keep_gpt_debug_contact_start_idx_force_R_Hand_labels"
+}

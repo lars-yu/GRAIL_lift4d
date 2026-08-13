@@ -1,0 +1,121 @@
+{
+  "contact_labels": [
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ],
+    [
+      "R_Hand"
+    ]
+  ],
+  "contact_interval": 8,
+  "contact_start_idx": 8,
+  "policy": "strict_gpt_start_frame_then_force_all_labels_to_R_Hand",
+  "model": "gpt-5.5",
+  "video_id": "dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00047",
+  "frame_count": 121,
+  "prompt_policy": "Contact only when right hand/fingers/palm visibly touches or holds the object; near/ambiguous is false.",
+  "decisions": [
+    {
+      "frame": 0,
+      "phase": "coarse",
+      "in_contact": false,
+      "reason": "Right hand is near the scanner/base but visible physical contact is not clear; possible gap/occlusion makes it ambiguous."
+    },
+    {
+      "frame": 8,
+      "phase": "coarse",
+      "in_contact": true,
+      "reason": "The person's right hand is visibly adjacent to and partially occluded by the pink scanner, indicating direct touch with no visible gap."
+    },
+    {
+      "frame": 1,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "Right hand/fingers are not visibly touching the scanner or base; any contact is ambiguous/occluded."
+    },
+    {
+      "frame": 2,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "The person's right hand/fingers are not clearly visible touching the scanner; any contact is ambiguous with a possible gap/occlusion."
+    },
+    {
+      "frame": 3,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "Right hand is near/partly occluded by the scanner, but visible physical touch or grasp is not clear."
+    },
+    {
+      "frame": 4,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "Right hand/fingers are not visibly touching the scanner; any contact is occluded or ambiguous."
+    },
+    {
+      "frame": 5,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "Right hand is near the scanner/base but clear physical touching or grasping is not visible; contact is ambiguous."
+    },
+    {
+      "frame": 6,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "The right hand/fingers are not clearly visible touching or grasping the scanner; any contact is ambiguous/occluded."
+    },
+    {
+      "frame": 7,
+      "phase": "refine",
+      "in_contact": false,
+      "reason": "Right hand is close to the scanner but clear physical touch is ambiguous/occluded, with no definite visible grasp or contact."
+    },
+    {
+      "frame": 8,
+      "phase": "refine",
+      "in_contact": true,
+      "reason": "The person's right hand is visibly adjacent to and partially occluded by the pink scanner, indicating direct touch with no visible gap."
+    }
+  ],
+  "source_frame_count": 150,
+  "truncated_to_frame_count": 121,
+  "label_postprocess": "truncate_to_121_frames_keep_gpt_debug_contact_start_idx_force_R_Hand_labels"
+}

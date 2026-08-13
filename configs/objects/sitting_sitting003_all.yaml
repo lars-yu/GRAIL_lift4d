@@ -1,0 +1,1346 @@
+dataset: gen_chairs_sitting003
+objects:
+  default:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  acadian_rustic_wooden_dining_chair_distressed_white:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  adams_style_carved_oval_back_dining_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  adirondack_chair_wooden_slats_natural_cedar:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  african_tribal_carved_wooden_ceremonial_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  aluminum_bistro_patio_chair_perforated_metal_seat_fixed_splayed_legs:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  antique_wooden_throne_chair_with_carved_scrollwork:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  appalachian_split_bottom_oak_side_chair_handwoven:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  argentine_gaucho_leather_sling_chair_wooden_frame:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  art_deco_1920s_egyptian_revival_lacquered_armchair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  art_nouveau_curvilinear_iron_and_stained_glass_single_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  balinese_carved_teak_ceremonial_chair_gold_leaf_accents:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  ball_pod_chair_white_fiberglass_retro_futuristic:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  bamboo_and_rattan_blend_tropical_armchair_beige:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  barnwood_reclaimed_plank_chair_iron_fasteners:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  basalt_black_stone_chair_sculpted_single_seat_outdoor:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  bauhaus_1923_student_dorm_tubular_steel_armchair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  bentwood_thonet_rocking_chair_cane_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  berber_tribal_painted_wooden_chair_geometric_patterns:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  biedermeier_1830s_satinwood_german_dining_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  birds_eye_maple_sheraton_style_dining_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  bistro_wicker_chair_white_painted_woven:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  black_powder_coated_metal_mesh_outdoor_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  brass_clad_upholstered_armchair_brutalist_tan_velvet:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  brazilian_rosewood_modernist_armchair_caned_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  brutalist_1972_raw_concrete_sculpted_armchair_detailed:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  brutalist_concrete_block_chair_geometric_minimal_raw_finish:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  bulgarian_rose_valley_wooden_chair_embroidered_cushion:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  burmese_monastery_temple_armchair_painted_gold_ornate:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cambodian_angkor_inspired_stone_throne_carved_sandstone:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cane_back_peacock_lounge_chair_white_painted:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cane_back_rattan_accent_chair_circular_silhouette:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  caribbean_rum_plantation_chair_carved_mahogany:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cartoon_style_oversized_hot_dog_bun_shaped_novelty_chair_tan:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  carved_foam_minimalist_accent_chair_pink_mono_block:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  carved_soapstone_single_seat_throne_form:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  carved_totem_pole_inspired_single_seat_cedar:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  carved_tree_stump_throne_live_edge_oak_single_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cast_aluminum_ornate_patio_armchair_white:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cast_iron_victorian_fern_pattern_garden_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  catalan_modernista_chair_organic_curved_oak:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cathedral_choir_stall_carved_oak_single_seat_ornate:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cathedral_window_stained_glass_mosaic_seat_sculpture:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  charles_eames_lounge_chair_walnut_shell_rosewood:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cherrywood_federal_dining_chair_carved_urn_splat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  chinese_mahjong_table_single_corner_chair_carved_teak:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  chinese_qing_dynasty_official_chair_lacquered_red_gold_trim:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  chinese_tang_dynasty_round_backed_armchair_rosewood:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  chippendale_ribbon_back_mahogany_dining_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  church_pew_end_chair_carved_solid_oak:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cocoon_woven_rattan_hanging_chair_stand_free:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  colombian_ranch_hacienda_dining_chair_black_wrought_iron:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  colonial_ladder_back_chair_with_woven_rush_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cork_outdoor_accent_chair_lightweight_natural:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  corner_chair_with_triangular_walnut_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cornish_smuggler_tavern_oak_armchair_dark_stained:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  country_mission_style_chair_quartersawn_oak:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  cross_back_farmhouse_dining_chair_distressed_white:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  curved_bent_metal_sheet_dining_chair_white:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  curved_concrete_outdoor_garden_chair_modern:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  driftwood_accent_chair_natural_weathered_finish:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  druidic_stone_seat_ancient_ritual_carved_granite:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  edwardian_1900s_english_drawing_room_armchair_floral:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  egg_chair_fiberglass_shell_on_steel_pedestal:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  egyptian_pharaoh_inspired_carved_alabaster_throne:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  embossed_leather_spanish_library_chair_brass_tacks:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  emeco_navy_chair_brushed_aluminum:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  empire_1810_french_neoclassical_armchair_gilded:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  empire_style_armchair_with_gilded_sphinx_armrests:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  english_pub_captain_elbow_chair_dark_elm:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  farmhouse_spindle_back_kitchen_chair_natural_pine:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  filipino_abaca_woven_chair_tropical_natural_finish:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  french_provincial_carved_dining_chair_cream_painted:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  georgian_carved_splat_back_dining_chair_mahogany:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  giant_carved_book_stack_themed_sculptural_single_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  giant_carved_hand_sculptural_accent_chair_red:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  glossy_chrome_blob_single_seat_accent_chair_sculptural:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  gold_painted_faux_bamboo_metal_accent_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  gothic_cathedral_high_back_carved_oak_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  greek_cycladic_island_stone_carved_single_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  greek_klismos_chair_with_curved_back_and_tapered_legs:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  hand_forged_iron_and_rawhide_accent_chair_brown:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  hand_tooled_saddle_bench_style_barstool_single_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  hawaiian_koa_wood_plantation_chair_caned_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  hepplewhite_shield_back_mahogany_side_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  hickory_wagon_wheel_back_dining_chair_stained_brown:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  hindu_temple_priest_wooden_chair_carved_peacock:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  hungarian_painted_folk_chair_flowers_blue_red:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  indian_colonial_planters_chair_carved_teak_extending_arms:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  indian_maharaja_jewel_inlaid_throne_chair_red_velvet:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  indonesian_balinese_dragon_carved_teak_ceremonial_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  industrial_black_pipe_frame_chair_with_metal_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  inuit_carved_bone_and_walrus_tusk_inspired_wooden_seat_ceremonial:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  iranian_safavid_mosaic_tile_inlay_throne_form:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  iraqi_date_palm_wood_traditional_carved_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  israeli_bezalel_school_carved_walnut_accent_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  italian_molded_plastic_armchair_bright_orange:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  japanese_kabuki_theatre_painted_lacquer_chair_red_and_gold:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  japanese_shogi_piece_shaped_fiberglass_accent_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  jordanian_petra_inspired_carved_sandstone_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  kartell_louis_ghost_chair_transparent_polycarbonate:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  knoll_pollock_executive_armchair_leather_and_chrome:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  korean_bandi_style_traditional_armchair_pine_and_persimmon:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  korean_joseon_dynasty_scholar_throne_carved_cypress_wood:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  korean_traditional_wooden_chair_with_lattice_back:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  laminated_plywood_bent_dining_chair_stackable:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  lebanese_mosaic_mother_of_pearl_inlay_armchair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  limestone_fossil_imprint_carved_chair_pale_beige:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  lion_armrest_carved_mahogany_throne_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  log_cabin_chair_rustic_split_pine_timber:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  louis_xvi_medallion_back_chair_with_painted_finish:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  low_back_vanity_chair_painted_white_wooden:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  maple_shaker_peg_back_dining_chair_simple:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  marcel_breuer_cesca_cantilever_chair_cane_back:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  memphis_group_1980s_geometric_postmodern_accent_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  mexican_talavera_tile_inlaid_colonial_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  mid_century_lawson_armchair_tapered_legs_olive_linen:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  mid_century_modern_walnut_scoop_dining_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  minimalist_black_steel_wire_dining_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  mission_1910s_craftsman_quartersawn_oak_armchair_detailed:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  mission_style_oak_rocker_tall_slats:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  mod_1965_plastic_egg_shaped_accent_chair_white:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  modern_sculpted_fiberglass_spiral_chair_lavender:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  mongolian_leather_throne_chair_tooled_brass_studs:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  monobloc_white_plastic_stackable_patio_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  moorish_geometric_inlay_armchair_brass_and_ebony:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  moroccan_painted_side_chair_with_mosaic_details:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  mosque_imam_prayer_seat_carved_cedar_geometric:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  new_mexico_pueblo_style_adobe_inspired_carved_wooden_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  norwegian_rosemaling_painted_dining_chair_blue_scrollwork:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  oak_t_back_vintage_farmhouse_dining_chair_stained:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  onyx_translucent_sculptural_chair_amber_hue:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  origami_folded_steel_sculptural_accent_chair_charcoal:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  ornate_park_bench_single_seat_wrought_iron:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  oversized_teddy_bear_themed_plush_armchair_beige:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  painted_hitchcock_american_stencil_dining_chair_black:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  panton_s_shaped_molded_plastic_chair_red:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  patinated_bronze_sculptural_armchair_industrial_finish:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  persian_safavid_throne_chair_tile_mosaic_inlay:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  persimmon_chinese_export_style_dining_chair_red:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  peruvian_highland_carved_wooden_ceremonial_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  pewter_detailed_armchair_fitted_cushion_gray:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  pine_farmhouse_trestle_dining_chair_distressed_cream:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  pink_granite_carved_single_seat_chair_smooth_finish:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  plantation_style_wide_armchair_with_wooden_slats:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  platform_rocking_chair_solid_oak_slat_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  polish_highlander_carved_pine_accent_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  polished_marble_carrara_armchair_veined_white_sculptural:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  postmodern_1985_memphis_style_geometric_armchair_pastel:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  powder_coated_steel_waiting_chair_clean_lines_pale_green:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  pumpkin_shaped_carved_gourd_wooden_accent_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  quaker_plain_meeting_house_side_chair_simple_maple:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  quebecois_habitant_carved_pine_kitchen_chair_painted:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  queen_anne_walnut_side_chair_cabriole_legs:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  reclaimed_barn_wood_plank_back_dining_chair_iron_straps:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  regency_sabre_leg_dining_chair_with_gilt_detail:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  resin_wicker_patio_armchair_beige_cushion:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  riveted_steel_plate_industrial_side_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  romanian_peasant_chair_carved_fir_wood:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  russian_empire_mahogany_armchair_with_sphinx_motif:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  russian_orthodox_bishop_carved_oak_ceremonial_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  rustic_hand_carved_pine_accent_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  saharan_tuareg_leather_and_wood_traditional_fixed_pose_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sandstone_mexican_carved_chair_desert_ochre:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  scandinavian_birch_plywood_stacking_chair_minimal:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  scottish_tartan_upholstered_laird_chair_carved_walnut:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sculpted_carrot_shape_novelty_wooden_chair_orange:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sculpted_dragonfly_wing_chair_iron_and_stained_glass:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sculpted_lotus_flower_fiberglass_chair_white_pink:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sculpted_seahorse_fiberglass_single_seat_aqua:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sculpted_seashell_shape_fiberglass_chair_pearl_finish:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sculpted_upcycled_bicycle_parts_art_chair_steel:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  senegalese_carved_fish_shape_novelty_wooden_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sheraton_painted_satinwood_side_chair_urn_splat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  shinto_shrine_ceremonial_wooden_seat_pale_cypress:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  sicilian_baroque_armchair_gold_gilt_heavy_carved:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  simple_pine_kitchen_chair_with_turned_legs:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  single_form_fiberglass_shell_chair_black_tapered_base:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  slat_backed_wooden_bar_stool_oak_handcrafted:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  slatted_teak_outdoor_reclining_lounge_chair_fixed_pose:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  slatted_wooden_deck_chair_reclining_style_fixed_natural_teak:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  slipcovered_classic_armchair_white_cotton_denim:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  slovenian_alpine_wood_carved_chair_painted_edelweiss_motif:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  solid_teak_danish_modern_stacking_dining_chair_detailed:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  spanish_colonial_dark_wood_chair_tooled_leather_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  stackable_fan_back_plastic_patio_chair_white:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  stadium_seat_fixed_cast_iron_base_blue_plastic_back:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  steam_bent_hardwood_captain_chair_with_armrests:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  streamline_1935_chrome_and_bakelite_single_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  swedish_gustavian_pale_gray_painted_dining_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  synagogue_rabbi_throne_chair_carved_cedar_hebrew_motif:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tall_wingback_armchair_patterned_chintz_floral:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  terrazzo_concrete_chair_pebbled_surface_single_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  texas_longhorn_motif_rustic_ranch_chair_distressed_wood:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  thai_royal_palace_chair_ornate_gilt_carved_teak:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  theater_audience_seat_with_cast_iron_base_velvet_upholstery:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tibetan_monastery_prayer_chair_carved_cedar_painted:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tibetan_painted_lotus_motif_accent_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tibetan_prayer_wheel_motif_carved_single_chair_pine:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tiger_maple_hepplewhite_style_dining_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tree_trunk_slab_seat_live_edge_wooden_bench_style_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tubular_steel_cantilever_dining_chair_chrome:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tufted_leather_executive_chair_button_back_oxblood:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tufted_velvet_slipper_chair_emerald_green:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  turkish_carved_wooden_armchair_red_velvet_seat:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  tuscan_country_dining_chair_distressed_olive_wood:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  verner_panton_heart_cone_fiberglass_chair_red:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  vietnamese_imperial_palace_chair_red_lacquer_gold_leaf:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  vietnamese_rosewood_scholar_chair_lattice_work:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  vintage_theater_seat_with_cast_iron_frame:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  vintage_wicker_peacock_chair_natural:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  wagon_wheel_back_accent_chair_stained_oak:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  walnut_eastlake_victorian_dining_chair_carved_spool:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  weathered_teak_adirondack_lounger_natural_grey:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  welded_chain_mail_single_seat_throne_sculpture:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  welsh_stick_chair_traditional_rural_elm:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  windsor_rocking_chair_with_spindle_arms_maple:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  wingback_fireside_chair_burgundy_tartan_upholstery:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  wood_frame_conference_chair_tan_vinyl_back:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  wrought_iron_bishop_chair_garden_ornate:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  y2k_millennial_bubble_translucent_inflatable_look_rigid_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  yemeni_carved_ivory_inlay_armchair_tribal:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  yoruba_carved_twin_figure_ceremonial_wooden_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting
+  zulu_traditional_carved_hardwood_chief_chair:
+    obj_scale:
+    - 0.8
+    - 0.8
+    - 0.8
+    scene: indoor1-sitting

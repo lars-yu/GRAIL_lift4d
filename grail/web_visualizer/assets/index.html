@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRAIL motion library</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1 id="title">GRAIL motion library</h1>
+    <div id="summary"></div>
+    <input id="search" type="search" placeholder="filter by motion name…" />
+  </header>
+  <main id="grid" aria-live="polite"></main>
+  <template id="card-template">
+    <article class="card">
+      <video preload="metadata" muted loop playsinline></video>
+      <header>
+        <h3 class="name"></h3>
+        <div class="frames"></div>
+      </header>
+      <dl class="meta"></dl>
+    </article>
+  </template>
+  <script src="main.js" defer></script>
+</body>
+</html>

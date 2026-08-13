@@ -1,0 +1,2744 @@
+dataset: RoboCasa
+objects:
+  alcohol_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  alcohol_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_22:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  apple_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  avocado_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  avocado_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  avocado_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  avocado_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  avocado_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  avocado_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  avocado_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagel_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bagged_food_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  baguette_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  baguette_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  baguette_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  baguette_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  baguette_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  baguette_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_22:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_23:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_24:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  banana_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_soap_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_soap_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_soap_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bar_soap_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  beer_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bell_pepper_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bell_pepper_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bell_pepper_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bell_pepper_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_drink_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_drink_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_drink_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_drink_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_drink_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bottled_water_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bowl_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_drink_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_drink_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_drink_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_drink_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_drink_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_drink_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_drink_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  boxed_food_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  bread_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  broccoli_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  broccoli_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  broccoli_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cake_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  can_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  candle_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  canned_food_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  carrot_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  carrot_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  carrot_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  carrot_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  carrot_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  carrot_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  carrot_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cereal_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cheese_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chips_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  chocolate_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  coffee_cup_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  condiment_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  condiment_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  condiment_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  corn_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  corn_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  corn_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  corn_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  croissant_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cucumber_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cucumber_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cucumber_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cucumber_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cucumber_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cucumber_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cup_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cup_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cup_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cup_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cupcake_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  cutting_board_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  donut_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  egg_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  eggplant_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  eggplant_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  eggplant_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  eggplant_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  eggplant_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fish_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  fork_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  garlic_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  garlic_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  garlic_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  garlic_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  garlic_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  hot_dog_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  hot_dog_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  hot_dog_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  hot_dog_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  hot_dog_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  hot_dog_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  hot_dog_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jam_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jam_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jam_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jam_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jam_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jam_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jam_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  jug_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ketchup_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_22:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_23:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_24:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_26:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_27:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_28:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kettle_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kiwi_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kiwi_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kiwi_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kiwi_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kiwi_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kiwi_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  kiwi_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_22:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_23:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_24:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_25:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_26:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_27:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  knife_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ladle_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ladle_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ladle_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ladle_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  ladle_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lemon_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lime_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lime_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lime_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  lime_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mango_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  milk_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  milk_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  milk_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  milk_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  milk_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  milk_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  milk_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  milk_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mug_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  mushroom_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  onion_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  orange_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_22:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_23:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_24:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pan_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  peach_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  peach_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  peach_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  peach_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  peach_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  peach_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  peach_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  pear_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  plate_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  potato_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  rolling_pin_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  rolling_pin_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  rolling_pin_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  rolling_pin_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  rolling_pin_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  rolling_pin_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  scissors_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  shaker_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  shaker_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  shaker_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  shaker_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  soap_dispenser_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  soap_dispenser_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  soap_dispenser_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  soap_dispenser_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  soap_dispenser_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  soap_dispenser_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spatula_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sponge_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sponge_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sponge_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sponge_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sponge_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sponge_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sponge_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sponge_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_22:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_23:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spoon_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spray_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spray_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  spray_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  squash_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  steak_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sweet_potato_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sweet_potato_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  sweet_potato_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tangerine_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tangerine_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tangerine_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tangerine_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tangerine_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tangerine_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tangerine_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_14:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  teapot_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tomato_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tomato_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tomato_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tomato_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tomato_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tomato_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tomato_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tomato_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  tray_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  waffle_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  waffle_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  waffle_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  waffle_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_0:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_15:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_16:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_17:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_18:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_19:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_20:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_21:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_22:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_23:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_7:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  water_bottle_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_10:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_11:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_12:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_13:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_4:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_5:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_6:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_8:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  wine_9:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  yogurt_1:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  yogurt_2:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table
+  yogurt_3:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor2-pickup-table

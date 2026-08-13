@@ -1,0 +1,3002 @@
+dataset: SynStairsV1
+objects:
+  stairs_000:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_001:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_002:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_003:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_004:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_005:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_006:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_007:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_008:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_009:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_010:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_011:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_012:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_013:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_014:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_015:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_016:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_017:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_018:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_019:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_020:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_021:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_022:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_023:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_024:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_025:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_026:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_027:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_028:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_029:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_030:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_031:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_032:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_033:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_034:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_035:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_036:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_037:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_038:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_039:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_040:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_041:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_042:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_043:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_044:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_045:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_046:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_047:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_048:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_049:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_050:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_051:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_052:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_053:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_054:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_055:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_056:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_057:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_058:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_059:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_060:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_061:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_062:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_063:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_064:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_065:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_066:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_067:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_068:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_069:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_070:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_071:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_072:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_073:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_074:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_075:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_076:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_077:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_078:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_079:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_080:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_081:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_082:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_083:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_084:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_085:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_086:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_087:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_088:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_089:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_090:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_091:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_092:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_093:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_094:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_095:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_096:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_097:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_098:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_099:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_100:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_101:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_102:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_103:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_104:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_105:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_106:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_107:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_108:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_109:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_110:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_111:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_112:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_113:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_114:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_115:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_116:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_117:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_118:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_119:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_120:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_121:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_122:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_123:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_124:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_125:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_126:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_127:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_128:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_129:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_130:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_131:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_132:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_133:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_134:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_135:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_136:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_137:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_138:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_139:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_140:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_141:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_142:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_143:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_144:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_145:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_146:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_147:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_148:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_149:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_150:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_151:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_152:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_153:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_154:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_155:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_156:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_157:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_158:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_159:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_160:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_161:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_162:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_163:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_164:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_165:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_166:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_167:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_168:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_169:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_170:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_171:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_172:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_173:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_174:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_175:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_176:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_177:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_178:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_179:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_180:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_181:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_182:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_183:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_184:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_185:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_186:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_187:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_188:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_189:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_190:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_191:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_192:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_193:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_194:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_195:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_196:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_197:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_198:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_199:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_200:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_201:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_202:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_203:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_204:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_205:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_206:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_207:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_208:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_209:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_210:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_211:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_212:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_213:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_214:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_215:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_216:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_217:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_218:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_219:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_220:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_221:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_222:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_223:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_224:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_225:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_226:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_227:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_228:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_229:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_230:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_231:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_232:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_233:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_234:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_235:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_236:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_237:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_238:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_239:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_240:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_241:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_242:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_243:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_244:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_245:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_246:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_247:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_248:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_249:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_250:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_251:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_252:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_253:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_254:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_255:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_256:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_257:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_258:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_259:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_260:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_261:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_262:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_263:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_264:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_265:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_266:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_267:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_268:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_269:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_270:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_271:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_272:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_273:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_274:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_275:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_276:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_277:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_278:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_279:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_280:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_281:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_282:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_283:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_284:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_285:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_286:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_287:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_288:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_289:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_290:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_291:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_292:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_293:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_294:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_295:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_296:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_297:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_298:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_299:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_300:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_301:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_302:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_303:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_304:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_305:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_306:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_307:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_308:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_309:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_310:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_311:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_312:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_313:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_314:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_315:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_316:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_317:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_318:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_319:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_320:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_321:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_322:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_323:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_324:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_325:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_326:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_327:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_328:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_329:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_330:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_331:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_332:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_333:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_334:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_335:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_336:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_337:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_338:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_339:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_340:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_341:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_342:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_343:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_344:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_345:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_346:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_347:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_348:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_349:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_350:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_351:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_352:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_353:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_354:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_355:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_356:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_357:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_358:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_359:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_360:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_361:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_362:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_363:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_364:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_365:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_366:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_367:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_368:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_369:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_370:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_371:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_372:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_373:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_374:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_375:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_376:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_377:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_378:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_379:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_380:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_381:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_382:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_383:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_384:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_385:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_386:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_387:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_388:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_389:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_390:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_391:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_392:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_393:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_394:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_395:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_396:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_397:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_398:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_399:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_400:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_401:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_402:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_403:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_404:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_405:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_406:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_407:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_408:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_409:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_410:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_411:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_412:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_413:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_414:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_415:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_416:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_417:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_418:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_419:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_420:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_421:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_422:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_423:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_424:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_425:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_426:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_427:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_428:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_429:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_430:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_431:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_432:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_433:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_434:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_435:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_436:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_437:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_438:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_439:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_440:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_441:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_442:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_443:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_444:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_445:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_446:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_447:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_448:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_449:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_450:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_451:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_452:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_453:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_454:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_455:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_456:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_457:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_458:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_459:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_460:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_461:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_462:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_463:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_464:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_465:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_466:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_467:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_468:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_469:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_470:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_471:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_472:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_473:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_474:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_475:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_476:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_477:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_478:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_479:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_480:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_481:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_482:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_483:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_484:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_485:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_486:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_487:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_488:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_489:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_490:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_491:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_492:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_493:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_494:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_495:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_496:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_497:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_498:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_499:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_500:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_501:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_502:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_503:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_504:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_505:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_506:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_507:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_508:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_509:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_510:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_511:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_512:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_513:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_514:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_515:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_516:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_517:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_518:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_519:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_520:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_521:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_522:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_523:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_524:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_525:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_526:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_527:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_528:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_529:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_530:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_531:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_532:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_533:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_534:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_535:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_536:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_537:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_538:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_539:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_540:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_541:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_542:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_543:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_544:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_545:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_546:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_547:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_548:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_549:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_550:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_551:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_552:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_553:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_554:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_555:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_556:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_557:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_558:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_559:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_560:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_561:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_562:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_563:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_564:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_565:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_566:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_567:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_568:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_569:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_570:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_571:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_572:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_573:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_574:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_575:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_576:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_577:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_578:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_579:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_580:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_581:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_582:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_583:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_584:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_585:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_586:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_587:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_588:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_589:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_590:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_591:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_592:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_593:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_594:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_595:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_596:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_597:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_598:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_599:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_600:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_601:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_602:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_603:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_604:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_605:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_606:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_607:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_608:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_609:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_610:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_611:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_612:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_613:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_614:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_615:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_616:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_617:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_618:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_619:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_620:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_621:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_622:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_623:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_624:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_625:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_626:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_627:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_628:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_629:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_630:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_631:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_632:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_633:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_634:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_635:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_636:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_637:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_638:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_639:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_640:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_641:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_642:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_643:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_644:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_645:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_646:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_647:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_648:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_649:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_650:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_651:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_652:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_653:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_654:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_655:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_656:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_657:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_658:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_659:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_660:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_661:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_662:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_663:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_664:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_665:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_666:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_667:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_668:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_669:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_670:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_671:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_672:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_673:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_674:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_675:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_676:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_677:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_678:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_679:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_680:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_681:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_682:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_683:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_684:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_685:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_686:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_687:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_688:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_689:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_690:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_691:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_692:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_693:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_694:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_695:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_696:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_697:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_698:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_699:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_700:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_701:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_702:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_703:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_704:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_705:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_706:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_707:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_708:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_709:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_710:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_711:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_712:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_713:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_714:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_715:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_716:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_717:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_718:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_719:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_720:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_721:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_722:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_723:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_724:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_725:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_726:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_727:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_728:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_729:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_730:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_731:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_732:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_733:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_734:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_735:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_736:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_737:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_738:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_739:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_740:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_741:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_742:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_743:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_744:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_745:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_746:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_747:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_748:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_749:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_750:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_751:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_752:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_753:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_754:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_755:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_756:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_757:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_758:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_759:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_760:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_761:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_762:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_763:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_764:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_765:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_766:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_767:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_768:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_769:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_770:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_771:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_772:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_773:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_774:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_775:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_776:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_777:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_778:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_779:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_780:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_781:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_782:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_783:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_784:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_785:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_786:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_787:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_788:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_789:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_790:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_791:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_792:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_793:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_794:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_795:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_796:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_797:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_798:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_799:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_800:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_801:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_802:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_803:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_804:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_805:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_806:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_807:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_808:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_809:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_810:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_811:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_812:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_813:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_814:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_815:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_816:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_817:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_818:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_819:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_820:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_821:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_822:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_823:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_824:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_825:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_826:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_827:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_828:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_829:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_830:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_831:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_832:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_833:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_834:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_835:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_836:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_837:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_838:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_839:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_840:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_841:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_842:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_843:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_844:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_845:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_846:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_847:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_848:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_849:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_850:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_851:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_852:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_853:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_854:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_855:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_856:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_857:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_858:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_859:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_860:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_861:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_862:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_863:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_864:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_865:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_866:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_867:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_868:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_869:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_870:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_871:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_872:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_873:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_874:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_875:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_876:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_877:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_878:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_879:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_880:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_881:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_882:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_883:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_884:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_885:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_886:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_887:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_888:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_889:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_890:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_891:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_892:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_893:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_894:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_895:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_896:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_897:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_898:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_899:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_900:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_901:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_902:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_903:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_904:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_905:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_906:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_907:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_908:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_909:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_910:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_911:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_912:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_913:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_914:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_915:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_916:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_917:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_918:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_919:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_920:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_921:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_922:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_923:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_924:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_925:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_926:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_927:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_928:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_929:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_930:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_931:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_932:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_933:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_934:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_935:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_936:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_937:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_938:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_939:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_940:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_941:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_942:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_943:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_944:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_945:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_946:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_947:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_948:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_949:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_950:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_951:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_952:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_953:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_954:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_955:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_956:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_957:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_958:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_959:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_960:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_961:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_962:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_963:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_964:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_965:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_966:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_967:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_968:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_969:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_970:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_971:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_972:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_973:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_974:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_975:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_976:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_977:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_978:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_979:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_980:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_981:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_982:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_983:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_984:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_985:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_986:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_987:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_988:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_989:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_990:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_991:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_992:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_993:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_994:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_995:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_996:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_997:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_998:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs
+  stairs_999:
+    obj_scale: [1.0, 1.0, 1.0]
+    scene: indoor1-syn-stairs

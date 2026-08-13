@@ -1,0 +1,43 @@
+paths:
+  results_dir: pickup_table
+  video_dir: generation/videos_wan
+  prompt_dir: generation/prompts
+  foundation_pose_dir: generation/foundation_pose
+  output_dir: generation/cameraanything_aux
+
+cameraanything:
+  repo_dir: imports/CameraAnything
+  python_executable: python3
+  inference_script: inference.py
+  checkpoint: models/cameraanything.ckpt
+  task_name: multi-shot-only_1
+  cam_type: pluc_adaln
+  cfg_scale: 5.0
+  num_inference_steps: 50
+  seed: 0
+  dataloader_num_workers: 1
+
+view:
+  name: oblique_45
+  # Match GRAIL/Blender's target selection by default:
+  # target_location = (object.location + character.location) / 2, with z set
+  # to object.location.z. Source-orbit parameters remain available for
+  # source_orbit mode and exact source-camera reconstruction diagnostics.
+  look_at_mode: grail_center
+  source_elevation_deg: 30.0
+  source_azimuth_deg: 300.0
+  source_radius: 3.0
+  source_camera_offset: [0.0, 0.0, 0.0]
+  elevation_deg: 45.0
+  azimuth_deg: 300.0
+  radius: 3.0
+  look_at: null
+  normalize_to_source_camera: true
+  keep_source_intrinsics: true
+
+prompt:
+  suffix: " The same interaction is viewed from a fixed elevated camera. Preserve the same character, object, motion, scene layout and timing."
+
+io:
+  copy_source_video: false
+  overwrite: false

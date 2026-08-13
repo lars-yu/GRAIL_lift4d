@@ -1,0 +1,913 @@
+{
+  "total": 50,
+  "ok": 50,
+  "skip": 0,
+  "fail": 0,
+  "results": [
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00001",
+      "status": "ok",
+      "start_idx": 39,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00001.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00002",
+      "status": "ok",
+      "start_idx": 51,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00002.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00003",
+      "status": "ok",
+      "start_idx": 2,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 15,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00003.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00004",
+      "status": "ok",
+      "start_idx": 34,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00004.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00005",
+      "status": "ok",
+      "start_idx": 73,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 6,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00005.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00006",
+      "status": "ok",
+      "start_idx": 51,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00006.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00007",
+      "status": "ok",
+      "start_idx": 60,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00007.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00008",
+      "status": "ok",
+      "start_idx": 55,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00008.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00009",
+      "status": "ok",
+      "start_idx": 0,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 16,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00009.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00010",
+      "status": "ok",
+      "start_idx": 26,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00010.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00011",
+      "status": "ok",
+      "start_idx": 58,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00011.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00012",
+      "status": "ok",
+      "start_idx": 64,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00012.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00013",
+      "status": "ok",
+      "start_idx": 34,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00013.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00014",
+      "status": "ok",
+      "start_idx": 31,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00014.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00015",
+      "status": "ok",
+      "start_idx": 44,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 10,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00015.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00016",
+      "status": "ok",
+      "start_idx": 49,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00016.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00017",
+      "status": "ok",
+      "start_idx": 24,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 13,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00017.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00018",
+      "status": "ok",
+      "start_idx": 60,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00018.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00019",
+      "status": "ok",
+      "start_idx": 65,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00019.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00020",
+      "status": "ok",
+      "start_idx": 60,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00020.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00021",
+      "status": "ok",
+      "start_idx": 38,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00021.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00022",
+      "status": "ok",
+      "start_idx": 33,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00022.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00023",
+      "status": "ok",
+      "start_idx": 37,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00023.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00024",
+      "status": "ok",
+      "start_idx": 39,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00024.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00025",
+      "status": "ok",
+      "start_idx": 57,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00025.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00026",
+      "status": "ok",
+      "start_idx": 64,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00026.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00027",
+      "status": "ok",
+      "start_idx": 58,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00027.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00028",
+      "status": "ok",
+      "start_idx": 50,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00028.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00029",
+      "status": "ok",
+      "start_idx": 41,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 10,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00029.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00030",
+      "status": "ok",
+      "start_idx": 64,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00030.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00031",
+      "status": "ok",
+      "start_idx": 57,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00031.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00032",
+      "status": "ok",
+      "start_idx": 24,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 13,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00032.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00033",
+      "status": "ok",
+      "start_idx": 49,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00033.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00034",
+      "status": "ok",
+      "start_idx": 51,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00034.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00035",
+      "status": "ok",
+      "start_idx": 47,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 10,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00035.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00036",
+      "status": "ok",
+      "start_idx": 50,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00036.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00037",
+      "status": "ok",
+      "start_idx": 57,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00037.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00038",
+      "status": "ok",
+      "start_idx": 30,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00038.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00039",
+      "status": "ok",
+      "start_idx": 28,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00039.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00040",
+      "status": "ok",
+      "start_idx": 66,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00040.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00041",
+      "status": "ok",
+      "start_idx": 69,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00041.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00042",
+      "status": "ok",
+      "start_idx": 50,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00042.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00043",
+      "status": "ok",
+      "start_idx": 37,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00043.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00044",
+      "status": "ok",
+      "start_idx": 65,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00044.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00045",
+      "status": "ok",
+      "start_idx": 60,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00045.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00046",
+      "status": "ok",
+      "start_idx": 49,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00046.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00047",
+      "status": "ok",
+      "start_idx": 8,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 15,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00047.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00048",
+      "status": "ok",
+      "start_idx": 77,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 6,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00048.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00049",
+      "status": "ok",
+      "start_idx": 65,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00049.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00050",
+      "status": "ok",
+      "start_idx": 29,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00050.json"
+    }
+  ],
+  "failures": [],
+  "items": [
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00001",
+      "status": "ok",
+      "start_idx": 39,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00001.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00002",
+      "status": "ok",
+      "start_idx": 51,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00002.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00003",
+      "status": "ok",
+      "start_idx": 2,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 15,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00003.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00004",
+      "status": "ok",
+      "start_idx": 34,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00004.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00005",
+      "status": "ok",
+      "start_idx": 73,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 6,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00005.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00006",
+      "status": "ok",
+      "start_idx": 51,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00006.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00007",
+      "status": "ok",
+      "start_idx": 60,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00007.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00008",
+      "status": "ok",
+      "start_idx": 55,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00008.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00009",
+      "status": "ok",
+      "start_idx": 0,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 16,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00009.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00010",
+      "status": "ok",
+      "start_idx": 26,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00010.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00011",
+      "status": "ok",
+      "start_idx": 58,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00011.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00012",
+      "status": "ok",
+      "start_idx": 64,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00012.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00013",
+      "status": "ok",
+      "start_idx": 34,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00013.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00014",
+      "status": "ok",
+      "start_idx": 31,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00014.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00015",
+      "status": "ok",
+      "start_idx": 44,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 10,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00015.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00016",
+      "status": "ok",
+      "start_idx": 49,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00016.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00017",
+      "status": "ok",
+      "start_idx": 24,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 13,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00017.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00018",
+      "status": "ok",
+      "start_idx": 60,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00018.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00019",
+      "status": "ok",
+      "start_idx": 65,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00019.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00020",
+      "status": "ok",
+      "start_idx": 60,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00020.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00021",
+      "status": "ok",
+      "start_idx": 38,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00021.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00022",
+      "status": "ok",
+      "start_idx": 33,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00022.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00023",
+      "status": "ok",
+      "start_idx": 37,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00023.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00024",
+      "status": "ok",
+      "start_idx": 39,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00024.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00025",
+      "status": "ok",
+      "start_idx": 57,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00025.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00026",
+      "status": "ok",
+      "start_idx": 64,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00026.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00027",
+      "status": "ok",
+      "start_idx": 58,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00027.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00028",
+      "status": "ok",
+      "start_idx": 50,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00028.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00029",
+      "status": "ok",
+      "start_idx": 41,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 10,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00029.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00030",
+      "status": "ok",
+      "start_idx": 64,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00030.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00031",
+      "status": "ok",
+      "start_idx": 57,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00031.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00032",
+      "status": "ok",
+      "start_idx": 24,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 13,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00032.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00033",
+      "status": "ok",
+      "start_idx": 49,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00033.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00034",
+      "status": "ok",
+      "start_idx": 51,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00034.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00035",
+      "status": "ok",
+      "start_idx": 47,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 10,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00035.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00036",
+      "status": "ok",
+      "start_idx": 50,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00036.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00037",
+      "status": "ok",
+      "start_idx": 57,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00037.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00038",
+      "status": "ok",
+      "start_idx": 30,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00038.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00039",
+      "status": "ok",
+      "start_idx": 28,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00039.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00040",
+      "status": "ok",
+      "start_idx": 66,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00040.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00041",
+      "status": "ok",
+      "start_idx": 69,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00041.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00042",
+      "status": "ok",
+      "start_idx": 50,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00042.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00043",
+      "status": "ok",
+      "start_idx": 37,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 11,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00043.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00044",
+      "status": "ok",
+      "start_idx": 65,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00044.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00045",
+      "status": "ok",
+      "start_idx": 60,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 8,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00045.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00046",
+      "status": "ok",
+      "start_idx": 49,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 9,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00046.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00047",
+      "status": "ok",
+      "start_idx": 8,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 15,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00047.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00048",
+      "status": "ok",
+      "start_idx": 77,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 6,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00048.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00049",
+      "status": "ok",
+      "start_idx": 65,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 7,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00049.json"
+    },
+    {
+      "stem": "kid_001_indoor2-pickup-table_rand00050",
+      "status": "ok",
+      "start_idx": 29,
+      "frame_count": 121,
+      "source_frame_count": 150,
+      "n_labels": 12,
+      "cache": "pickup_table/generation/4dhoi_recon_cache/contact_labels/dl300_delta/dl300/kid_001_indoor2-pickup-table_rand00050.json"
+    }
+  ],
+  "postprocess": "truncate_cache_window_to_121_frames_use_gpt_debug_contact_start_idx_force_R_Hand_labels",
+  "target_frame_count": 121
+}

@@ -1,0 +1,902 @@
+dataset: Terrain
+objects:
+  curb_000:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_001:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_002:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_003:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_004:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_005:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_006:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_007:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_008:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_009:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_010:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_011:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_012:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_013:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_014:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_015:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_016:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_017:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_018:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_019:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_020:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_021:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_022:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_023:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_024:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_025:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_026:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_027:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_028:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_029:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_030:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_031:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_032:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_033:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_034:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_035:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_036:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_037:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_038:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_039:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_040:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_041:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_042:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_043:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_044:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_045:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_046:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_047:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_048:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_049:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_050:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_051:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_052:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_053:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_054:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_055:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_056:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_057:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_058:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_059:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_060:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_061:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_062:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_063:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_064:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_065:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_066:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_067:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_068:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_069:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_070:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_071:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_072:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_073:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_074:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_075:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_076:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_077:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_078:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_079:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_080:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_081:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_082:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_083:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_084:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_085:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_086:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_087:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_088:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_089:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_090:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_091:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_092:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_093:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_094:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_095:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_096:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_097:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_098:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_099:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_100:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_101:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_102:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_103:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_104:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_105:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_106:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_107:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_108:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_109:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_110:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_111:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_112:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_113:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_114:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_115:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_116:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_117:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_118:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_119:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_120:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_121:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_122:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_123:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_124:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_125:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_126:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_127:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_128:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_129:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_130:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_131:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_132:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_133:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_134:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_135:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_136:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_137:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_138:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_139:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_140:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_141:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_142:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_143:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_144:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_145:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_146:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_147:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_148:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_149:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_150:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_151:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_152:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_153:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_154:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_155:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_156:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_157:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_158:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_159:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_160:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_161:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_162:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_163:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_164:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_165:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_166:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_167:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_168:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_169:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_170:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_171:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_172:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_173:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_174:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_175:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_176:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_177:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_178:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_179:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_180:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_181:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_182:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_183:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_184:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_185:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_186:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_187:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_188:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_189:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_190:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_191:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_192:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_193:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_194:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_195:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_196:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_197:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_198:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_199:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_200:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_201:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_202:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_203:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_204:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_205:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_206:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_207:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_208:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_209:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_210:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_211:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_212:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_213:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_214:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_215:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_216:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_217:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_218:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_219:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_220:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_221:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_222:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_223:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_224:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_225:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_226:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_227:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_228:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_229:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_230:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_231:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_232:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_233:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_234:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_235:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_236:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_237:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_238:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_239:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_240:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_241:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_242:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_243:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_244:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_245:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_246:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_247:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_248:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_249:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_250:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_251:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_252:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_253:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_254:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_255:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_256:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_257:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_258:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_259:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_260:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_261:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_262:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_263:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_264:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_265:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_266:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_267:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_268:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_269:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_270:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_271:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_272:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_273:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_274:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_275:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_276:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_277:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_278:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_279:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_280:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_281:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_282:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_283:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_284:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_285:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_286:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_287:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_288:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_289:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_290:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_291:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_292:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_293:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_294:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_295:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_296:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_297:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_298:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb
+  curb_299:
+    obj_scale: [0.6, 0.6, 0.6]
+    scene: indoor1-terrain-curb

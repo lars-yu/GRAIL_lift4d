@@ -1,0 +1,157 @@
+indoor1-manipulation:
+  character_pos: [11.0, 8.0, 0.1365]
+  character_rot: [90, 0, -75]
+  character_scale: [0.01, 0.01, 0.01]
+  obj_pos: [10, 8, 0.1365]
+  obj_rot: [90, 0, 255]
+  camera_elevation: 6
+  camera_azimuth: 190.0
+  camera_radius: 5
+  camera_offset: [0, 0, 0.6]
+  camera_azimuth_rand_max: 10.0
+  character_pos_rand_max: [0, 0.3, 0]
+  obj_rot_rand_max: [0, 0, 30]
+  render_width: 1280
+  render_height: 720
+indoor1-sitting:
+  # character_pos: [11.0, 8.3, 0.1365]   # absolute mode reference
+  # character_rot: [90, 0, -75]           # absolute mode reference
+  character_pos_mode: "polar"
+  character_azimuth: 10
+  character_distance: 1.5
+  character_face_object: true
+  character_azimuth_rand_max: 120
+  character_distance_rand_max: 0.2
+  character_rot_rand_max: [0, 0, 15]
+  character_scale: [0.01, 0.01, 0.01]
+  obj_pos: [10, 8.5, 0.1365]
+  obj_rot: [90, 0, 280]
+  camera_elevation: 6
+  camera_azimuth: 190.0
+  camera_radius: 5.75
+  camera_offset: [0, 0, 0.5]
+  camera_azimuth_rand_max: 10.0
+  obj_rot_rand_max: [0, 0, 40]
+  render_width: 1280
+  render_height: 720
+indoor1-terrain-curb:
+  character_pos: [10.5, 11.0, 0.1365]
+  character_rot: [90, 0, 0]
+  character_scale: [0.01, 0.01, 0.01]
+  obj_pos: [10.5, 10.3, 0.1365]
+  obj_rot: [0, 0, -90]
+  camera_elevation: 12
+  camera_azimuth: 180.0
+  camera_radius: 6.75
+  camera_offset: [0, -2, 0.75]
+  camera_azimuth_rand_max: 10.0
+  character_pos_rand_max: [0, 0.15, 0]
+  character_rot_rand_max: [0, 0, 30]
+  render_width: 1280
+  render_height: 720
+indoor1-terrain-slope:
+  character_pos: [10.5, 11.0, 0.1365]
+  character_rot: [90, 0, 0]
+  character_scale: [0.01, 0.01, 0.01]
+  obj_pos: [10.5, 10.3, 0.1365]
+  obj_rot: [0, 0, -90]
+  camera_elevation: 12
+  camera_azimuth: 180.0
+  camera_radius: 6.75
+  camera_offset: [0, -2, 0.75]
+  camera_azimuth_rand_max: 10.0
+  character_pos_rand_max: [0, 0.15, 0]
+  character_rot_rand_max: [0, 0, 30]
+  render_width: 1280
+  render_height: 720
+indoor1-syn-stairs:
+  character_pos: [10.5, 10.0, 0.1365]
+  character_rot: [90, 0, 0]
+  character_scale: [0.01, 0.01, 0.01]
+  obj_pos: [10.5, 8.8, 0.1365]
+  obj_rot: [0, 0, -90]
+  camera_elevation: 5
+  camera_azimuth: 152.5
+  camera_radius: 6.5
+  camera_offset: [0, -1.5, 1.0]
+  camera_azimuth_rand_max: 5.0
+  character_pos_rand_max: [0.3, 0.1, 0]
+  character_rot_rand_max: [0, 0, 30]
+  render_width: 1280
+  render_height: 720
+indoor1-gen-stairs:
+  character_pos: [10.5, 9.5, 0.1365]
+  character_rot: [90, 0, 0]
+  character_scale: [0.01, 0.01, 0.01]
+  obj_pos: [10.5, 7.8, 0.1365]
+  obj_rot: [90, 0, 180]
+  camera_elevation: 5
+  camera_azimuth: 152.5
+  camera_radius: 6.5
+  camera_offset: [0, -1.2, 0.2]
+  camera_azimuth_rand_max: 5.0
+  character_pos_rand_max: [0, 0.1, 0]
+  render_width: 1280
+  render_height: 720
+indoor2-manipulation:
+  blender_file_name: indoor2
+  character_pos: [5.7, 14.2, 0.1365]
+  character_rot: [90, 0, 0]
+  character_scale: [0.01, 0.01, 0.01]
+  obj_pos: [5.4, 13.62, 0.93916]
+  obj_rot: [90, 0, 270]
+  camera_elevation: 8
+  camera_azimuth: 270.0
+  camera_radius: 2.3
+  camera_offset: [0, 0, 0.15]
+  camera_azimuth_rand_max: 15.0
+  character_pos_rand_max: [0.1, 0, 0]
+  obj_rot_rand_max: [0, 0, 60]
+  render_width: 720
+  render_height: 1280
+indoor2-pickup-table:
+  blender_file_name: indoor2
+  character_pos: [5.5, 14.5, 0.1365]
+  character_rot: [0, 0, -90]
+  character_scale: [1, 1, 1]
+  obj_pos: [5.5, 13.7, 0.83916]
+  obj_scale: [0.1, 0.1, 0.1]
+  obj_rot: [90, 0, 0]
+  static_objects:
+    table1:
+      name: long_table.obj
+      pos: [5.5, 13.7, 0.04109]
+      rot: [90, 0, 0]
+      scale: [1.5, 1.0, 0.6]
+      pos_rand_max: [0, 0, 0.1]
+      pos_rand_min: [0, 0, -0.4]
+      opacity: 0.5
+  camera_elevation: 30
+  camera_azimuth: 300
+  camera_radius: 3.0
+  camera_offset: [0, 0, 0]
+  character_pos_box_include: [-0.5, -0.4, 0.5, 0]
+  character_pos_box_exclude: [-0.2, -0.4, 0.2, -0.3]
+  character_rot_rand_max: [0, 0, 10]
+  obj_pos_rand_max: [0.1, 0.2, 0]
+  obj_pos_rand_min: [-0.1, 0, 0]
+indoor2-pickup-ground:
+  blender_file_name: indoor2
+  character_pos: [5.7, 14.5, 0.1365]
+  character_rot: [90, 0, 0]
+  character_scale: [0.01, 0.01, 0.01]
+  obj_pos: [5.7, 13, 0.9365]
+  obj_rot: [90, 0, 0]
+  obj_scale: [0.1, 0.1, 0.1]
+  camera_elevation: 18
+  camera_azimuth: 315
+  camera_radius: 3.4
+  camera_offset: [0, 0, -0.3]
+  character_pos_rand_max: [0.5, 0, 0]
+  character_pos_rand_min: [-0.5, -0.5, 0]
+  character_rot_rand_max: [0, 0, 30]
+  character_pos_end_offset: [0.0, -1, 0]
+  obj_pos_start_offset: [0, 0.1, -0.8]
+  obj_pos_end_offset: [0, 0.1, -0.8]
+  obj_pos_rand_max: [0.1, 0.1, 0]
+  same_obj_state: true

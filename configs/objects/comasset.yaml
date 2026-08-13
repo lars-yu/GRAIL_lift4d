@@ -1,0 +1,75 @@
+dataset: ComAsset
+objects:
+  default:
+    obj_scale: [3.0, 3.0, 3.0]
+    scene: indoor2-manipulation
+  fire_extinguisher:
+    obj_scale: [3, 3, 3]
+    obj_rot: [90, 0, 25]
+    scene: indoor1-manipulation
+  trophy:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor1-manipulation
+  hammer:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor2-manipulation
+  cordless_drill:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor2-manipulation
+  frypan:
+    obj_scale: [2.5, 2.5, 2.5]
+    obj_rot: [90, 0, 235]
+    scene: indoor2-manipulation
+  axe:
+    obj_scale: [2.5, 2.5, 2.5]
+    obj_rot: [90, 0, 180]
+    scene: indoor2-manipulation
+  gas_torch:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor2-manipulation
+  hair_dryer:
+    obj_scale: [2.5, 2.5, 2.5]
+    obj_rot: [90, 0, 225]
+    scene: indoor2-manipulation
+  paint_brush:
+    obj_scale: [2.5, 2.5, 2.5]
+    obj_rot: [90, 0, 180]
+    scene: indoor2-manipulation
+  press_iron:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor2-manipulation
+  shopping_bag:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor2-manipulation
+  watering_can:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor2-manipulation
+  hand_truck:
+    obj_scale: [2, 2, 2]
+    obj_rot: [90, 0, 145]
+    obj_pos: [10.5, 7.5, 0.1365]
+    scene: indoor1-manipulation
+  largetable:
+    obj_scale: [1.0, 1.0, 1.0]
+    obj_pos: [10, 7, 0.1365]
+    obj_rot: [90, 0, 255]
+    scene: indoor1-manipulation
+  suitcase:
+    obj_scale: [1.0, 1.0, 1.0]
+    obj_pos: [11, 9, 0.1365]
+    obj_rot: [0, 0, 255]
+    scene: indoor1-manipulation
+  sofa:
+    obj_scale: [2.5, 2.5, 2.5]
+    obj_pos: [10, 9.5, 0.1365]
+    obj_rot: [90, 0, 255]
+    scene: indoor1-manipulation
+  massage_chair:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor1-manipulation
+  wheel_chair:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor1-manipulation
+  woodchair:
+    obj_scale: [2.5, 2.5, 2.5]
+    scene: indoor1-manipulation

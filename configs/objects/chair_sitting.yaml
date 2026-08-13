@@ -1,0 +1,119 @@
+dataset: Hunyuan
+objects:
+  adirondack_chair_wooden_slats:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  antique_wooden_throne_chair_with_carving:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  art_deco_armchair_geometric_patterns:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  backless_counter_stool_leather:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  bamboo_outdoor_chair_natural:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  barcelona_chair_leather_cushions:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  barrel_chair_with_curved_back:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  bentwood_bistro_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  breuer_cesca_chair_cantilever:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  cane_seat_dining_chair_natural:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  canvas_director_s_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  cast_iron_garden_bench_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  chesterfield_armchair_tufted_leather:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  chippendale_dining_chair_mahogany:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  classic_wingback_chair_floral_pattern:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  colorful_resin_adirondack_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  cross_back_farmhouse_dining_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  eames_molded_plastic_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  lawson_armchair_classic_upholstered:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  log_cabin_chair_rustic:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  louis_xvi_medallion_back_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  mies_van_der_rohe_brno_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  mission_style_dining_chair_oak:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  modern_dining_chair_with_upholstered_seat:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  polywood_deck_chair_recycled_plastic:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  queen_anne_chair_cabriole_legs:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  saarinen_tulip_armchair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  saddle_seat_stool_walnut:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  shaker_style_dining_chair_maple:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  shell_chair_molded_plywood:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  slipper_chair_low_profile:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  teak_outdoor_armchair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  tulip_chair_white_fiberglass:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  victorian_parlor_chair_velvet:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  wicker_patio_chair_with_cushion:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  windsor_chair_with_spindle_back:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  wooden_dining_chair_with_slat_back:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  wrought_iron_patio_chair:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting
+  zig_zag_chair_rietveld_design:
+    obj_scale: [1, 1, 1]
+    scene: indoor1-sitting

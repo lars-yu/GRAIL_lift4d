@@ -1,0 +1,18 @@
+#usda 1.0
+(
+    defaultPrim = "x2_ultra_isaac"
+    subLayers = [
+        @./x2_ultra_omnihand.usd@
+    ]
+)
+
+# The source asset also applies ArticulationRootAPI to an empty /worldBody.
+# Remove that stale schema so IsaacLab discovers only the physical pelvis root.
+over "x2_ultra_isaac"
+{
+    over "worldBody" (
+        delete apiSchemas = ["PhysicsArticulationRootAPI"]
+    )
+    {
+    }
+}

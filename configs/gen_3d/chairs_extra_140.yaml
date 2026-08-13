@@ -1,0 +1,174 @@
+# 140 ADDITIONAL rigid chair prompts to extend data/gen_chairs_sitting003/ toward
+# 200 filter-passing meshes. Designed to be slug-disjoint from the existing 170
+# meshes and to avoid the rigid-body exclude keywords
+# (swivel|caster|drafting|task|office|gaming|footring).
+#
+# Coverage strategy: deeper Asian/European/American/African regional variants,
+# religious/ceremonial seating, period-and-decade specific (Art Deco, Memphis,
+# Atomic, etc.), exotic-material sculpture (terrazzo, bronze, alabaster), and
+# more dining-room variety.
+#
+# Usage:
+#   python -m grail.pipelines.gen_3d_assets -i configs/gen_3d/chairs_extra_140.yaml -o data/gen_chairs_sitting003
+
+# --- Asian regional (deep) ---
+- Japanese tea ceremony zaisu cushion back floor seat tatami
+- Japanese kabuki theatre painted lacquer chair red and gold
+- Japanese kotatsu floor chair walnut wood with thick cushion
+- Korean joseon dynasty scholar throne carved cypress wood
+- Korean ondol-style heated low seat wooden plank fixed pose
+- Chinese Tang dynasty round backed armchair rosewood
+- Chinese Qing dynasty official chair lacquered red gold trim
+- Chinese mahjong table single corner chair carved teak
+- Thai royal palace chair ornate gilt carved teak
+- Indian Maharaja jewel inlaid throne chair red velvet
+- Burmese monastery temple armchair painted gold ornate
+- Vietnamese imperial palace chair red lacquer gold leaf
+- Filipino abaca woven chair tropical natural finish
+- Mongolian ger interior felt covered low chair
+- Tibetan monastery prayer chair carved cedar painted
+- Persian Safavid throne chair tile mosaic inlay
+- Indonesian Balinese dragon carved teak ceremonial seat
+- Cambodian Angkor inspired stone throne carved sandstone
+- Korean Bandi style traditional armchair pine and persimmon
+- Japanese shogi piece shaped fiberglass accent chair
+
+# --- European regional (deep) ---
+- Scottish tartan upholstered laird chair carved walnut
+- Welsh stick chair traditional rural elm
+- Cornish smuggler tavern oak armchair dark stained
+- Hungarian painted folk chair flowers blue red
+- Polish highlander carved pine accent chair
+- Slovenian alpine wood carved chair painted edelweiss motif
+- Norwegian rosemaling painted dining chair blue scrollwork
+- Swedish gustavian pale gray painted dining chair
+- Romanian peasant chair carved fir wood
+- Bulgarian rose valley wooden chair embroidered cushion
+- Greek Cycladic island stone carved single seat
+- Sicilian baroque armchair gold gilt heavy carved
+- Tuscan country dining chair distressed olive wood
+- Sardinian shepherd cork bark stool natural texture
+- Catalan modernista chair organic curved oak
+
+# --- North and South American ---
+- Mexican Talavera tile inlaid colonial chair
+- Peruvian highland carved wooden ceremonial chair
+- Argentine gaucho leather sling chair wooden frame
+- Brazilian rosewood Modernist armchair caned seat
+- Colombian ranch hacienda dining chair black wrought iron
+- Quebecois habitant carved pine kitchen chair painted
+- Acadian rustic wooden dining chair distressed white
+- Pacific Northwest cedar plank carved tribal seat
+- New Mexico Pueblo style adobe inspired carved wooden chair
+- Appalachian split bottom oak side chair handwoven
+- Texas longhorn motif rustic ranch chair distressed wood
+- Hawaiian koa wood plantation chair caned seat
+- Caribbean rum plantation chair carved mahogany
+- Andean alpaca cushion wooden carved highland chair
+- Inuit carved bone and walrus tusk inspired wooden seat ceremonial
+
+# --- African regional ---
+- Egyptian pharaoh inspired carved alabaster throne
+- Moorish geometric inlay armchair brass and ebony
+- Ethiopian Lalibela rock hewn inspired stone seat
+- Ashanti golden stool inspired Ghanaian carved wooden seat
+- Zulu traditional carved hardwood chief chair
+- Berber tribal painted wooden chair geometric patterns
+- Maasai red beadwork wooden tribal stool
+- Senegalese carved fish shape novelty wooden chair
+- Yoruba carved twin figure ceremonial wooden chair
+- Saharan tuareg leather and wood traditional fixed pose chair
+
+# --- Middle East ---
+- Ottoman Turkish carved cedar wood low seat
+- Lebanese mosaic mother of pearl inlay armchair
+- Saudi majlis floor seat cushion ornate gold
+- Yemeni carved ivory inlay armchair tribal
+- Iraqi date palm wood traditional carved chair
+- Israeli Bezalel school carved walnut accent chair
+- Iranian Safavid mosaic tile inlay throne form
+- Jordanian Petra inspired carved sandstone chair
+
+# --- Religious / ceremonial ---
+- Cathedral choir stall carved oak single seat ornate
+- Buddhist meditation single low cushion seat carved oak base
+- Tibetan prayer wheel motif carved single chair pine
+- Synagogue rabbi throne chair carved cedar Hebrew motif
+- Mosque imam prayer seat carved cedar geometric
+- Hindu temple priest wooden chair carved peacock
+- Shinto shrine ceremonial wooden seat pale cypress
+- Quaker plain meeting house side chair simple maple
+- Druidic stone seat ancient ritual carved granite
+- Russian Orthodox bishop carved oak ceremonial chair
+
+# --- Period / style deep dive ---
+- Art Deco 1920s Egyptian revival lacquered armchair
+- Art Nouveau curvilinear iron and stained glass single chair
+- Memphis Group 1980s geometric postmodern accent chair
+- Bauhaus 1923 student dorm tubular steel armchair
+- Rococo carved gilt French boudoir armchair pink silk
+- Empire 1810 French neoclassical armchair gilded
+- Biedermeier 1830s satinwood German dining chair
+- Edwardian 1900s English drawing room armchair floral
+- Mission 1910s craftsman quartersawn oak armchair detailed
+- Streamline 1935 chrome and bakelite single chair
+- Atomic 1956 space age fiberglass armchair turquoise
+- Mod 1965 plastic egg shaped accent chair white
+- Postmodern 1985 Memphis style geometric armchair pastel
+- Brutalist 1972 raw concrete sculpted armchair detailed
+- Y2K millennial bubble translucent inflatable look rigid chair
+
+# --- Exotic material deep dive ---
+- Hammered copper bowl seat single chair four splayed legs
+- Patinated bronze sculptural armchair industrial finish
+- Terrazzo concrete chair pebbled surface single seat
+- Polished marble carrara armchair veined white sculptural
+- Pink granite carved single seat chair smooth finish
+- Basalt black stone chair sculpted single seat outdoor
+- Limestone fossil imprint carved chair pale beige
+- Travertine sculptural chair Roman bath inspired
+- Onyx translucent sculptural chair amber hue
+- Sandstone Mexican carved chair desert ochre
+- Pewter detailed armchair fitted cushion gray
+- Brass clad upholstered armchair brutalist tan velvet
+- Hand forged iron and rawhide accent chair brown
+- Bamboo and rattan blend tropical armchair beige
+- Cork outdoor accent chair lightweight natural
+
+# --- Children family ---
+- Children mushroom seat polkadot fiberglass small
+- Toddler high back wooden chair painted whale motif
+- Child scaled French provincial dining chair cream
+- Kid friendly carved pony rocking chair pine
+- Children carved elephant accent chair wood beige
+- Junior wooden Adirondack chair red painted
+- Kindergarten plastic four leg stacking chair primary green
+- Children reading nook bean bag shaped rigid sculpture chair
+
+# --- Novelty sculptural ---
+- Giant carved book stack themed sculptural single seat
+- Sculpted seashell shape fiberglass chair pearl finish
+- Carved tree stump throne live edge oak single seat
+- Sculpted owl shaped wooden child chair brown
+- Bonsai pot shaped ceramic glazed sculpture chair blue
+- Sculpted carrot shape novelty wooden chair orange
+- Pumpkin shaped carved gourd wooden accent chair
+- Sculpted seahorse fiberglass single seat aqua
+- Cathedral window stained glass mosaic seat sculpture
+- Carved totem pole inspired single seat cedar
+- Sculpted lotus flower fiberglass chair white pink
+- Sculpted dragonfly wing chair iron and stained glass
+
+# --- Dining variety ---
+- Pine farmhouse trestle dining chair distressed cream
+- Walnut Eastlake Victorian dining chair carved spool
+- Oak T-back vintage farmhouse dining chair stained
+- Maple Shaker peg back dining chair simple
+- Cherrywood Federal dining chair carved urn splat
+- Hickory wagon wheel back dining chair stained brown
+- Reclaimed barn wood plank back dining chair iron straps
+- Solid teak Danish modern stacking dining chair detailed
+- Painted Hitchcock American stencil dining chair black
+- Persimmon Chinese export style dining chair red
+- Birds eye maple Sheraton style dining chair
+- Tiger maple Hepplewhite style dining chair

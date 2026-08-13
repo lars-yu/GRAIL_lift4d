@@ -1,0 +1,415 @@
+<mujoco model="agibot_x2_omnihand_ik">
+  <compiler angle="radian" autolimits="true" />
+  <option timestep="0.01" gravity="0 0 0" />
+  <worldbody>
+    <body name="pelvis">
+      <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+      <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+      <freejoint name="root" />
+      <body name="left_hip_pitch_link" pos="0 0.0713500008 0" quat="1.000000134 0 0 0">
+        <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+        <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+        <joint name="left_hip_pitch_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="-2.703999866 2.555999749" />
+        <body name="left_hip_roll_link" pos="-0.0005750000128 0.06570000201 0" quat="1 0 0 0">
+          <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+          <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+          <joint name="left_hip_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-0.2349999811 2.90599957" />
+          <body name="left_hip_yaw_link" pos="0.0005750000128 0 -0.1368499994" quat="1.000000134 0 0 0">
+            <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+            <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+            <joint name="left_hip_yaw_joint" type="hinge" pos="0 0 0" axis="0 0 1.000000134" damping="0.01" limited="true" range="-1.683999981 3.42999995" />
+            <body name="left_knee_link" pos="-0.007660000119 0.0002249926329 -0.1830999851" quat="1.000000134 0 0 0">
+              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+              <joint name="left_knee_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="0 2.407300019" />
+              <body name="left_ankle_pitch_link" pos="-0.009999999776 -0.0001249164343 -0.2820000052" quat="1.000000134 0 0 0">
+                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                <joint name="left_ankle_pitch_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="-0.8029999271 0.4530000063" />
+                <body name="left_ankle_roll_link" pos="-0.001749999821 0 0" quat="1 0 0 0">
+                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                  <joint name="left_ankle_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-0.2619999904 0.2619999904" />
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+      <body name="right_hip_pitch_link" pos="0 -0.0713500008 0" quat="1.000000134 0 0 0">
+        <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+        <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+        <joint name="right_hip_pitch_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="-2.703999866 2.555999749" />
+        <body name="right_hip_roll_link" pos="0 -0.06570000201 0" quat="1 0 0 0">
+          <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+          <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+          <joint name="right_hip_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-2.90599957 0.2349999811" />
+          <body name="right_hip_yaw_link" pos="0 0 -0.1368499994" quat="1.000000134 0 0 0">
+            <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+            <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+            <joint name="right_hip_yaw_joint" type="hinge" pos="0 0 0" axis="0 0 1.000000134" damping="0.01" limited="true" range="-3.42999995 1.683999981" />
+            <body name="right_knee_link" pos="-0.007660000119 -0.0002249926329 -0.1830999851" quat="1.000000134 0 0 0">
+              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+              <joint name="right_knee_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="0 2.407300019" />
+              <body name="right_ankle_pitch_link" pos="-0.009999999776 0.0001249164343 -0.2820000052" quat="1.000000134 0 0 0">
+                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                <joint name="right_ankle_pitch_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="-0.8029999271 0.4530000063" />
+                <body name="right_ankle_roll_link" pos="-0.001749999821 0 0" quat="1 0 0 0">
+                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                  <joint name="right_ankle_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-0.2624999656 0.2624999656" />
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+      <body name="waist_yaw_link" pos="0 0 0.06705999374" quat="1.000000134 0 0 0">
+        <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+        <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+        <joint name="waist_yaw_joint" type="hinge" pos="0 0 0" axis="0 0 1.000000134" damping="0.01" limited="true" range="-3.42999995 2.381999989" />
+        <body name="waist_pitch_link" pos="0 0 0.08801060915" quat="1.000000134 0 0 0">
+          <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+          <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+          <joint name="waist_pitch_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="-0.3140000083 0.3140000083" />
+          <body name="torso_link" pos="0 0 0" quat="1 0 0 0">
+            <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+            <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+            <joint name="waist_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-0.4880000017 0.4880000017" />
+            <body name="head_yaw_link" pos="0.008347730152 0 0.3093969822" quat="1.000000134 0 0 0">
+              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+              <joint name="head_yaw_joint" type="hinge" pos="0 0 0" axis="0 0 1.000000134" damping="0.01" limited="true" range="-0.3659999597 0.3659999597" />
+              <body name="head_pitch_link" pos="0 0 0.08889997005" quat="1.000000134 0 0 0">
+                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                <joint name="head_pitch_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="-0.3837999958 0.3837999958" />
+              </body>
+            </body>
+            <body name="left_shoulder_pitch_link" pos="0.003299070057 0.1430319995 0.2416479588" quat="0.9945222233 0.104528025 0 0">
+              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+              <joint name="left_shoulder_pitch_joint" type="hinge" pos="0 0 0" axis="0 1.000000303 0" damping="0.01" limited="true" range="-3.079999597 2.039999904" />
+              <body name="left_shoulder_roll_link" pos="-0.0004999910016 0.04949998856 0" quat="1 0 0 0">
+                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                <joint name="left_shoulder_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-0.06100000021 2.992999983" />
+                <body name="left_shoulder_yaw_link" pos="0.001224239822 2.980232239e-08 -0.1211949587" quat="0.9999957934 7.012528536e-09 -0.002987748271 3.545492564e-09">
+                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                  <joint name="left_shoulder_yaw_joint" type="hinge" pos="0 0 0" axis="-8.429370635e-08 2.455136497e-08 1.000000219" damping="0.01" limited="true" range="-2.555999749 2.555999749" />
+                  <body name="left_elbow_link" pos="0.01400000043 0.0002000033855 -0.08294999599" quat="0.9999955825 1.437215558e-08 0.002987814949 -3.113581615e-11">
+                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                    <joint name="left_elbow_joint" type="hinge" pos="0 0 0" axis="0 0.9999999658 -2.084186855e-08" damping="0.01" limited="true" range="-2.355600073 0" />
+                    <body name="left_wrist_yaw_link" pos="-0.01327969506 -9.754300117e-05 -0.1205759645" quat="0.9999999658 0 -2.928451925e-22 0">
+                      <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                      <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                      <joint name="left_wrist_yaw_joint" type="hinge" pos="0 0 0" axis="0 2.107342452e-08 0.9999999658" damping="0.01" limited="true" range="-2.555999749 2.555999749" />
+                      <body name="left_wrist_pitch_link" pos="0.0004900009371 0 -0.08199846745" quat="0.9999954982 3.449528435e-09 -0.002987828737 -6.117772955e-12">
+                        <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                        <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                        <joint name="left_wrist_pitch_joint" type="hinge" pos="0 0 0" axis="-8.429369203e-08 0.9999998815 4.218800682e-09" damping="0.01" limited="true" range="-0.5579999925 0.5579999925" />
+                        <body name="left_wrist_roll_link" pos="0 0 0" quat="0.9999997616 0 0 0">
+                          <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                          <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                          <joint name="left_wrist_roll_joint" type="hinge" pos="0 0 0" axis="0.9999997616 0 0" damping="0.01" limited="true" range="-1.570999925 0.7239999166" />
+                          <body name="L_palm" pos="0 0 0" quat="0 1 0 0">
+                            <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                            <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                            <body name="L_index_abad_link" pos="-0.0006978195161 -0.02695798874 0.09442305565" quat="0.9999997616 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="L_index_abad_joint" type="hinge" pos="0 0 0" axis="0.9999997616 0 0" damping="0.01" limited="true" range="0 0.164060993" />
+                              <body name="L_index_pip_link" pos="0.001024998724 -2.980232239e-08 0.01757496595" quat="0.9999998815 0 0 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <joint name="L_index_pip_joint" type="hinge" pos="0 0 0" axis="8.429369203e-08 0.9999998815 -4.280538868e-09" damping="0.01" limited="true" range="0 1.483529997" />
+                                <body name="L_index_dip_link" pos="-0.00142659992 2.980232239e-08 0.03600007296" quat="0.9999998815 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  <body name="L_index_tip" pos="-0.001309999963 0 0.0384100005" quat="1 0 0 0">
+                                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                            <body name="L_middle_pip_link" pos="-0.002172799315 -0.00795006752 0.1139979959" quat="0.9999998815 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="L_middle_pip_joint" type="hinge" pos="0 0 0" axis="8.429369203e-08 0.9999998815 -4.280538868e-09" damping="0.01" limited="true" range="0 1.483529997" />
+                              <body name="L_middle_dip_link" pos="-0.001426599454 0 0.03600001335" quat="0.9999998815 0 0 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <body name="L_middle_tip" pos="-0.001309999963 0 0.0384100005" quat="1 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                </body>
+                              </body>
+                            </body>
+                            <body name="L_pinky_abad_link" pos="-0.0006978195161 0.03005000949 0.08942300081" quat="0.9999997616 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="L_pinky_abad_joint" type="hinge" pos="0 0 0" axis="0.9999997616 0 0" damping="0.01" limited="true" range="-0.1850049906 0" />
+                              <body name="L_pinky_pip_link" pos="0.001025000587 0 0.01757502556" quat="0.9999998815 0 0 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <joint name="L_pinky_pip_joint" type="hinge" pos="0 0 0" axis="8.429369203e-08 0.9999998815 -4.280538868e-09" damping="0.01" limited="true" range="0 1.483529997" />
+                                <body name="L_pinky_dip_link" pos="-0.00142659992 0 0.03599995375" quat="0.9999998815 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  <body name="L_pinky_tip" pos="-0.001309999963 0 0.0384100005" quat="1 0 0 0">
+                                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                            <body name="L_ring_abad_link" pos="-0.002197799273 0.01105001569 0.09442299604" quat="0.9999997616 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="L_ring_abad_joint" type="hinge" pos="0 0 0" axis="0.9999997616 0 0" damping="0.01" limited="true" range="-0.169296984 0" />
+                              <body name="L_ring_pip_link" pos="0.001024999656 0 0.01757502556" quat="0.9999998815 0 0 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <joint name="L_ring_pip_joint" type="hinge" pos="0 0 0" axis="8.429369203e-08 0.9999998815 -4.280538868e-09" damping="0.01" limited="true" range="0 1.483529997" />
+                                <body name="L_ring_dip_link" pos="-0.00142659992 0 0.03600007296" quat="0.9999998815 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  <body name="L_ring_tip" pos="-0.001309999963 0 0.0384100005" quat="1 0 0 0">
+                                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                            <body name="L_thumb_roll_link" pos="0 -0.0185289979 0.04685103893" quat="0.9999997616 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="L_thumb_roll_joint" type="hinge" pos="0 0 0" axis="0.9999997616 0 0" damping="0.01" limited="true" range="-1.121369917 0.02967059812" />
+                              <body name="L_thumb_abad_link" pos="0.020032987 -0.004292011261 0.0007499456406" quat="0.9999999658 0 -2.922263668e-20 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <joint name="L_thumb_abad_joint" type="hinge" pos="0 0 0" axis="0 8.849191675e-10 0.9999999658" damping="0.01" limited="true" range="-0.0453786005 1.642349873" />
+                                <body name="L_thumb_mcp_link" pos="-1.862645149e-09 -0.02649998665 -0.005800068378" quat="0.9999997616 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  <joint name="L_thumb_mcp_joint" type="hinge" pos="0 0 0" axis="0.9999997616 0 0" damping="0.01" limited="true" range="-0.8412489791 0" />
+                                  <body name="L_thumb_pip_link" pos="1.862645149e-09 -0.03622898459 0.002660572529" quat="0.9999997616 0 0 0">
+                                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                    <body name="L_thumb_dip_link" pos="3.725290298e-09 -0.0260540545 -0.008671998978" quat="0.9999997616 0 0 0">
+                                      <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                      <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                      <body name="L_thumb_tip" pos="0 -0.02311000042 -0.01374000032" quat="1 0 0 0">
+                                        <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                        <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                      </body>
+                                    </body>
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                          </body>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+            <body name="right_shoulder_pitch_link" pos="0.003300939919 -0.1430310011 0.2416479588" quat="0.9945218866 -0.1045299865 0 0">
+              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+              <joint name="right_shoulder_pitch_joint" type="hinge" pos="0 0 0" axis="0 1.000000134 0" damping="0.01" limited="true" range="-3.079999597 2.039999904" />
+              <body name="right_shoulder_roll_link" pos="-0.000500000082 -0.04950001836 0" quat="1 0 7.700150309e-05 0">
+                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                <joint name="right_shoulder_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-2.992999983 0.06100000021" />
+                <body name="right_shoulder_yaw_link" pos="0.0004999998491 0 -0.1212000251" quat="1.000000219 0 2.612236374e-21 0">
+                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                  <joint name="right_shoulder_yaw_joint" type="hinge" pos="0 0 0" axis="-8.429370624e-08 -8.124407547e-09 1.000000219" damping="0.01" limited="true" range="-2.555999749 2.555999749" />
+                  <body name="right_elbow_link" pos="0.01400000229 -0.0002000033855 -0.0829500556" quat="1.00000005 0 0 0">
+                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                    <joint name="right_elbow_joint" type="hinge" pos="0 0 0" axis="-8.429369913e-08 1.00000005 2.185062311e-08" damping="0.01" limited="true" range="-2.355600073 0" />
+                    <body name="right_wrist_yaw_link" pos="-0.01400000229 9.751319885e-05 -0.1206940413" quat="1.000000261 -3.955173258e-09 4.214674417e-08 1.636979634e-05">
+                      <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                      <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                      <joint name="right_wrist_yaw_joint" type="hinge" pos="0 0 0" axis="-8.429370624e-08 -1.352460208e-08 1.000000219" damping="0.01" limited="true" range="-2.555999749 2.555999749" />
+                      <body name="right_wrist_pitch_link" pos="-2.328306437e-10 2.980232239e-08 -0.08179998398" quat="1.00000005 6.29236449e-10 6.294215181e-10 -1.635297763e-05">
+                        <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                        <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                        <joint name="right_wrist_pitch_joint" type="hinge" pos="0 0 0" axis="-8.429369913e-08 1.00000005 2.185062311e-08" damping="0.01" limited="true" range="-0.5579999925 0.5579999925" />
+                        <body name="right_wrist_roll_link" pos="0 0 0" quat="1 0 0 0">
+                          <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                          <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                          <joint name="right_wrist_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-0.7239999166 1.570999925" />
+                          <body name="R_palm" pos="0 0 0" quat="0 1 0 0">
+                            <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                            <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                            <body name="R_index_abad_link" pos="-0.0006978204474 0.02695798874 0.09442299604" quat="1 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="R_index_abad_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-0.164060993 0" />
+                              <body name="R_index_pip_link" pos="0.001024999889 -2.980232239e-08 0.01757502556" quat="1.00000005 0 0 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <joint name="R_index_pip_joint" type="hinge" pos="0 0 0" axis="8.429369908e-08 1.00000005 2.029140319e-08" damping="0.01" limited="true" range="0 1.483529997" />
+                                <body name="R_index_dip_link" pos="-0.00142659992 2.980232239e-08 0.03599989414" quat="1.00000005 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  <body name="R_index_tip" pos="-0.001309999963 0 0.0384100005" quat="1 0 0 0">
+                                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                            <body name="R_middle_pip_link" pos="-0.002172800247 0.007950097322 0.1139979362" quat="1.00000005 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="R_middle_pip_joint" type="hinge" pos="0 0 0" axis="8.429369908e-08 1.00000005 2.029140319e-08" damping="0.01" limited="true" range="0 1.483529997" />
+                              <body name="R_middle_dip_link" pos="-0.001426600036 2.980232239e-08 0.03599995375" quat="1.00000005 0 0 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <body name="R_middle_tip" pos="-0.001309999963 0 0.0384100005" quat="1 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                </body>
+                              </body>
+                            </body>
+                            <body name="R_pinky_abad_link" pos="-0.0006978206802 -0.03005000949 0.08942294121" quat="1 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="R_pinky_abad_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="0 0.1850049906" />
+                              <body name="R_pinky_pip_link" pos="0.001025000354 -2.980232239e-08 0.01757502556" quat="1.00000005 0 0 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <joint name="R_pinky_pip_joint" type="hinge" pos="0 0 0" axis="8.429369908e-08 1.00000005 2.029140319e-08" damping="0.01" limited="true" range="0 1.483529997" />
+                                <body name="R_pinky_dip_link" pos="-0.00142659992 2.980232239e-08 0.03599998355" quat="1.00000005 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  <body name="R_pinky_tip" pos="-0.001309999963 0 0.0384100005" quat="1 0 0 0">
+                                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                            <body name="R_ring_abad_link" pos="-0.002197799971 -0.01105001569 0.09442293644" quat="1 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="R_ring_abad_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="0 0.169296984" />
+                              <body name="R_ring_pip_link" pos="0.001024999656 0 0.01757502556" quat="1.00000005 0 0 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <joint name="R_ring_pip_joint" type="hinge" pos="0 0 0" axis="8.429369908e-08 1.00000005 2.029140319e-08" damping="0.01" limited="true" range="0 1.483529997" />
+                                <body name="R_ring_dip_link" pos="-0.001426599454 2.980232239e-08 0.03599998355" quat="1.00000005 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  <body name="R_ring_tip" pos="-0.001309999963 0 0.0384100005" quat="1 0 0 0">
+                                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                            <body name="R_thumb_roll_link" pos="2.328306437e-10 0.0185289681 0.04685097933" quat="1 0 0 0">
+                              <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                              <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                              <joint name="R_thumb_roll_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="-0.02967059812 1.121369917" />
+                              <body name="R_thumb_abad_link" pos="0.02003300004 0.004292011261 0.0007499456406" quat="1.000000219 0 -1.920849143e-17 0">
+                                <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                <joint name="R_thumb_abad_joint" type="hinge" pos="0 0 0" axis="8.429370635e-08 -6.891565534e-09 1.000000219" damping="0.01" limited="true" range="-1.642349873 0.0453786005" />
+                                <body name="R_thumb_mcp_link" pos="1.862645149e-09 0.02650001645 -0.005800068378" quat="1 0 0 0">
+                                  <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                  <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                  <joint name="R_thumb_mcp_joint" type="hinge" pos="0 0 0" axis="1 0 0" damping="0.01" limited="true" range="0 0.8412489791" />
+                                  <body name="R_thumb_pip_link" pos="-1.862645149e-09 0.0362290144 0.002660632133" quat="1 0 0 0">
+                                    <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                    <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                    <body name="R_thumb_dip_link" pos="0 0.0260540247 -0.008671998978" quat="1 0 0 0">
+                                      <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                      <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                      <body name="R_thumb_tip" pos="0 0.02311000042 -0.01374000032" quat="1 0 0 0">
+                                        <inertial pos="0 0 0" mass="0.1" diaginertia="0.0001 0.0001 0.0001" />
+                                        <geom type="sphere" size="0.012" rgba="0.45 0.55 0.65 0.35" contype="0" conaffinity="0" />
+                                      </body>
+                                    </body>
+                                  </body>
+                                </body>
+                              </body>
+                            </body>
+                          </body>
+                        </body>
+                      </body>
+                    </body>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <motor name="left_hip_pitch_joint" joint="left_hip_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-2.703999866 2.555999749" />
+    <motor name="left_hip_roll_joint" joint="left_hip_roll_joint" gear="1" ctrllimited="true" ctrlrange="-0.2349999811 2.90599957" />
+    <motor name="left_hip_yaw_joint" joint="left_hip_yaw_joint" gear="1" ctrllimited="true" ctrlrange="-1.683999981 3.42999995" />
+    <motor name="left_knee_joint" joint="left_knee_joint" gear="1" ctrllimited="true" ctrlrange="0 2.407300019" />
+    <motor name="left_ankle_pitch_joint" joint="left_ankle_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-0.8029999271 0.4530000063" />
+    <motor name="left_ankle_roll_joint" joint="left_ankle_roll_joint" gear="1" ctrllimited="true" ctrlrange="-0.2619999904 0.2619999904" />
+    <motor name="right_hip_pitch_joint" joint="right_hip_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-2.703999866 2.555999749" />
+    <motor name="right_hip_roll_joint" joint="right_hip_roll_joint" gear="1" ctrllimited="true" ctrlrange="-2.90599957 0.2349999811" />
+    <motor name="right_hip_yaw_joint" joint="right_hip_yaw_joint" gear="1" ctrllimited="true" ctrlrange="-3.42999995 1.683999981" />
+    <motor name="right_knee_joint" joint="right_knee_joint" gear="1" ctrllimited="true" ctrlrange="0 2.407300019" />
+    <motor name="right_ankle_pitch_joint" joint="right_ankle_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-0.8029999271 0.4530000063" />
+    <motor name="right_ankle_roll_joint" joint="right_ankle_roll_joint" gear="1" ctrllimited="true" ctrlrange="-0.2624999656 0.2624999656" />
+    <motor name="waist_yaw_joint" joint="waist_yaw_joint" gear="1" ctrllimited="true" ctrlrange="-3.42999995 2.381999989" />
+    <motor name="waist_pitch_joint" joint="waist_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-0.3140000083 0.3140000083" />
+    <motor name="waist_roll_joint" joint="waist_roll_joint" gear="1" ctrllimited="true" ctrlrange="-0.4880000017 0.4880000017" />
+    <motor name="head_yaw_joint" joint="head_yaw_joint" gear="1" ctrllimited="true" ctrlrange="-0.3659999597 0.3659999597" />
+    <motor name="head_pitch_joint" joint="head_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-0.3837999958 0.3837999958" />
+    <motor name="left_shoulder_pitch_joint" joint="left_shoulder_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-3.079999597 2.039999904" />
+    <motor name="left_shoulder_roll_joint" joint="left_shoulder_roll_joint" gear="1" ctrllimited="true" ctrlrange="-0.06100000021 2.992999983" />
+    <motor name="left_shoulder_yaw_joint" joint="left_shoulder_yaw_joint" gear="1" ctrllimited="true" ctrlrange="-2.555999749 2.555999749" />
+    <motor name="left_elbow_joint" joint="left_elbow_joint" gear="1" ctrllimited="true" ctrlrange="-2.355600073 0" />
+    <motor name="left_wrist_yaw_joint" joint="left_wrist_yaw_joint" gear="1" ctrllimited="true" ctrlrange="-2.555999749 2.555999749" />
+    <motor name="left_wrist_pitch_joint" joint="left_wrist_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-0.5579999925 0.5579999925" />
+    <motor name="left_wrist_roll_joint" joint="left_wrist_roll_joint" gear="1" ctrllimited="true" ctrlrange="-1.570999925 0.7239999166" />
+    <motor name="L_index_abad_joint" joint="L_index_abad_joint" gear="1" ctrllimited="true" ctrlrange="0 0.164060993" />
+    <motor name="L_index_pip_joint" joint="L_index_pip_joint" gear="1" ctrllimited="true" ctrlrange="0 1.483529997" />
+    <motor name="L_middle_pip_joint" joint="L_middle_pip_joint" gear="1" ctrllimited="true" ctrlrange="0 1.483529997" />
+    <motor name="L_pinky_abad_joint" joint="L_pinky_abad_joint" gear="1" ctrllimited="true" ctrlrange="-0.1850049906 0" />
+    <motor name="L_pinky_pip_joint" joint="L_pinky_pip_joint" gear="1" ctrllimited="true" ctrlrange="0 1.483529997" />
+    <motor name="L_ring_abad_joint" joint="L_ring_abad_joint" gear="1" ctrllimited="true" ctrlrange="-0.169296984 0" />
+    <motor name="L_ring_pip_joint" joint="L_ring_pip_joint" gear="1" ctrllimited="true" ctrlrange="0 1.483529997" />
+    <motor name="L_thumb_roll_joint" joint="L_thumb_roll_joint" gear="1" ctrllimited="true" ctrlrange="-1.121369917 0.02967059812" />
+    <motor name="L_thumb_abad_joint" joint="L_thumb_abad_joint" gear="1" ctrllimited="true" ctrlrange="-0.0453786005 1.642349873" />
+    <motor name="L_thumb_mcp_joint" joint="L_thumb_mcp_joint" gear="1" ctrllimited="true" ctrlrange="-0.8412489791 0" />
+    <motor name="right_shoulder_pitch_joint" joint="right_shoulder_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-3.079999597 2.039999904" />
+    <motor name="right_shoulder_roll_joint" joint="right_shoulder_roll_joint" gear="1" ctrllimited="true" ctrlrange="-2.992999983 0.06100000021" />
+    <motor name="right_shoulder_yaw_joint" joint="right_shoulder_yaw_joint" gear="1" ctrllimited="true" ctrlrange="-2.555999749 2.555999749" />
+    <motor name="right_elbow_joint" joint="right_elbow_joint" gear="1" ctrllimited="true" ctrlrange="-2.355600073 0" />
+    <motor name="right_wrist_yaw_joint" joint="right_wrist_yaw_joint" gear="1" ctrllimited="true" ctrlrange="-2.555999749 2.555999749" />
+    <motor name="right_wrist_pitch_joint" joint="right_wrist_pitch_joint" gear="1" ctrllimited="true" ctrlrange="-0.5579999925 0.5579999925" />
+    <motor name="right_wrist_roll_joint" joint="right_wrist_roll_joint" gear="1" ctrllimited="true" ctrlrange="-0.7239999166 1.570999925" />
+    <motor name="R_index_abad_joint" joint="R_index_abad_joint" gear="1" ctrllimited="true" ctrlrange="-0.164060993 0" />
+    <motor name="R_index_pip_joint" joint="R_index_pip_joint" gear="1" ctrllimited="true" ctrlrange="0 1.483529997" />
+    <motor name="R_middle_pip_joint" joint="R_middle_pip_joint" gear="1" ctrllimited="true" ctrlrange="0 1.483529997" />
+    <motor name="R_pinky_abad_joint" joint="R_pinky_abad_joint" gear="1" ctrllimited="true" ctrlrange="0 0.1850049906" />
+    <motor name="R_pinky_pip_joint" joint="R_pinky_pip_joint" gear="1" ctrllimited="true" ctrlrange="0 1.483529997" />
+    <motor name="R_ring_abad_joint" joint="R_ring_abad_joint" gear="1" ctrllimited="true" ctrlrange="0 0.169296984" />
+    <motor name="R_ring_pip_joint" joint="R_ring_pip_joint" gear="1" ctrllimited="true" ctrlrange="0 1.483529997" />
+    <motor name="R_thumb_roll_joint" joint="R_thumb_roll_joint" gear="1" ctrllimited="true" ctrlrange="-0.02967059812 1.121369917" />
+    <motor name="R_thumb_abad_joint" joint="R_thumb_abad_joint" gear="1" ctrllimited="true" ctrlrange="-1.642349873 0.0453786005" />
+    <motor name="R_thumb_mcp_joint" joint="R_thumb_mcp_joint" gear="1" ctrllimited="true" ctrlrange="0 0.8412489791" />
+  </actuator>
+</mujoco>

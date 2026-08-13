@@ -1,0 +1,97 @@
+# 70 rigid chairs for 3D asset generation via Hunyuan3D-2.1.
+# All entries are rigid bodies -- no soft/deformable items.
+# Does NOT overlap with chairs in object_config/chair_sitting.yaml.
+#
+# Usage:
+#   python src/generation/generate_3d_assets.py -i configs/gen_3d/chairs.yaml -o batch_outputs_chairs
+
+# --- Iconic / Designer ---
+- Panton S-shaped molded plastic chair red
+- Hans Wegner wishbone Y-chair natural beechwood
+- Bertoia wire diamond lounge chair chrome
+- Kartell Louis Ghost chair transparent polycarbonate
+- Tolix A-style industrial metal stacking chair silver
+- Emeco Navy chair brushed aluminum
+- Egg chair fiberglass shell on steel pedestal
+- Ball pod chair white fiberglass retro futuristic
+- Retro chrome diner chair with molded seat red
+- Mid century modern walnut scoop dining chair
+
+# --- Traditional / Antique ---
+- Gothic cathedral high back carved oak chair
+- Greek klismos chair with curved back and tapered legs
+- Hepplewhite shield back mahogany side chair
+- Georgian carved splat back dining chair mahogany
+- Regency sabre leg dining chair with gilt detail
+- Empire style armchair with gilded sphinx armrests
+- Colonial ladder back chair with woven rush seat
+- French provincial carved dining chair cream painted
+- English pub captain elbow chair dark elm
+- Lion armrest carved mahogany throne chair
+- African tribal carved wooden ceremonial chair
+
+# --- Farmhouse / Rustic ---
+- Farmhouse spindle back kitchen chair natural pine
+- Craftsman prairie style armchair quarter-sawn oak
+- Simple pine kitchen chair with turned legs
+- Rustic hand-carved pine accent chair
+- Driftwood accent chair natural weathered finish
+- Three-legged milking stool rustic pine
+- Plantation style wide armchair with wooden slats
+
+# --- Modern / Minimalist ---
+- Minimalist black steel wire dining chair
+- Modern clear acrylic dining chair seamless
+- Scandinavian birch plywood stacking chair minimal
+- Danish modern teak lounge chair low profile
+- Tubular steel cantilever dining chair chrome
+- Laminated plywood bent dining chair stackable
+- Geometric cube chair open wooden frame
+- Brutalist concrete block chair geometric minimal
+
+# --- Industrial ---
+- Industrial black pipe frame chair with metal seat
+- Cast iron tractor seat industrial stool
+- Tall drafting stool chrome base wooden seat
+- Chrome pedestal swivel bar stool round seat
+- Vintage theater seat with cast iron frame
+
+# --- Outdoor / Patio ---
+- Aluminum bistro folding chair perforated seat
+- Monobloc white plastic stackable patio chair
+- Stackable fan back plastic patio chair white
+- Cast aluminum ornate patio armchair white
+- Art nouveau scrollwork iron garden chair
+- Slatted teak outdoor reclining lounge chair
+- Folding wooden deck chair with slatted seat
+- Black powder-coated metal mesh outdoor chair
+- Curved concrete outdoor garden chair modern
+- Stone carved classical garden seat
+- Ornate park bench single seat wrought iron
+- Outdoor two-tone metal glider chair green
+- Gold painted faux bamboo metal accent chair
+
+# --- Specialty / Accent ---
+- Chinese horseshoe back armchair dark rosewood
+- Japanese low floor chair walnut zaisu style
+- Rattan peacock fan back throne chair natural
+- Corner chair with triangular walnut seat
+- Convertible wooden step stool chair
+- Black lacquer piano bench single seat
+- Low back vanity chair painted white wooden
+- Mid century cocktail lounge chair tapered legs
+- Church pew end chair carved solid oak
+- Library reading armchair carved solid oak
+
+# --- Rocking Chairs ---
+- Windsor rocking chair with spindle arms maple
+- Platform rocking chair solid oak slat seat
+
+# --- School / Public ---
+- School classroom chair molded seat chrome legs
+- Stadium folding seat blue plastic
+- Italian molded plastic armchair bright orange
+
+# --- Asian-Inspired ---
+- Steam-bent hardwood captain chair with armrests
+- Korean traditional wooden chair with lattice back

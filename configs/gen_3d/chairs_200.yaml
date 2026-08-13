@@ -1,0 +1,241 @@
+# 200 rigid chair prompts for Hunyuan3D-2.1 generation.
+# All entries are single rigid bodies — no folding/articulated/wheeled mechanisms.
+# Avoid: swivel posts, caster bases, drafting/task/office/gaming chairs, footring-on-swivel.
+# These violate `loco_smplx.yaml`'s `is_static_obj: true` assumption (chair must stay still under sitting human).
+#
+# Usage:
+#   python -m grail.pipelines.gen_3d_assets -i configs/gen_3d/chairs_200.yaml -o data/gen_chairs_<results_subdir>
+
+# --- Iconic / Designer ---
+- Panton S-shaped molded plastic chair red
+- Hans Wegner wishbone Y-chair natural beechwood
+- Bertoia wire diamond lounge chair chrome
+- Kartell Louis Ghost chair transparent polycarbonate
+- Tolix A-style industrial metal stacking chair silver
+- Emeco Navy chair brushed aluminum
+- Egg chair fiberglass shell on steel pedestal
+- Ball pod chair white fiberglass retro futuristic
+- Retro chrome diner chair with molded seat red
+- Mid century modern walnut scoop dining chair
+- Eames molded plastic side chair with dowel legs
+- Saarinen tulip armchair white pedestal base
+- Womb chair burnt orange wool upholstery
+- Wassily chrome tube and black leather strap chair
+- Marcel Breuer Cesca cantilever chair cane back
+- Arne Jacobsen Ant chair laminated plywood three legs
+- Jens Risom side chair webbing seat walnut frame
+- Verner Panton heart cone fiberglass chair red
+- Knoll Pollock style chrome and leather armchair on fixed sled base
+- George Nelson coconut chair white shell black legs
+- Charles Eames lounge chair walnut shell rosewood
+- Hans Wegner papa bear armchair wool upholstery
+- Florence Knoll lounge chair walnut and tan leather
+- Pierre Paulin tongue chair wool fabric mustard
+- Hans Wegner shell CH07 chair oak three legs
+
+# --- Traditional / Antique ---
+- Gothic cathedral high back carved oak chair
+- Greek klismos chair with curved back and tapered legs
+- Hepplewhite shield back mahogany side chair
+- Georgian carved splat back dining chair mahogany
+- Regency sabre leg dining chair with gilt detail
+- Empire style armchair with gilded sphinx armrests
+- Colonial ladder back chair with woven rush seat
+- French provincial carved dining chair cream painted
+- English pub captain elbow chair dark elm
+- Lion armrest carved mahogany throne chair
+- African tribal carved wooden ceremonial chair
+- Antique wooden throne chair with carved scrollwork
+- Louis XVI medallion back chair with painted finish
+- Queen Anne walnut side chair cabriole legs
+- Chippendale ribbon back mahogany dining chair
+- Sheraton painted satinwood side chair urn splat
+- Adams style carved oval back dining chair
+- Italian Renaissance Savonarola fixed-form oak chair
+- Spanish colonial dark wood chair tooled leather seat
+- Russian Empire mahogany armchair with sphinx motif
+
+# --- Farmhouse / Rustic ---
+- Farmhouse spindle back kitchen chair natural pine
+- Craftsman prairie style armchair quarter sawn oak
+- Simple pine kitchen chair with turned legs
+- Rustic hand-carved pine accent chair
+- Driftwood accent chair natural weathered finish
+- Three-legged milking stool rustic pine
+- Plantation style wide armchair with wooden slats
+- Log cabin chair rustic split pine timber
+- Adirondack chair wooden slats natural cedar
+- Cross back farmhouse dining chair distressed white
+- Wagon wheel back accent chair stained oak
+- Barnwood reclaimed plank chair iron fasteners
+- Rustic shaker side chair tape woven seat
+- Country mission style chair quartersawn oak
+- Antler frame rustic accent chair tan upholstery
+
+# --- Modern / Minimalist ---
+- Minimalist black steel wire dining chair
+- Modern clear acrylic dining chair seamless
+- Scandinavian birch plywood stacking chair minimal
+- Danish modern teak lounge chair low profile
+- Tubular steel cantilever dining chair chrome
+- Laminated plywood bent dining chair stackable
+- Geometric cube chair open wooden frame
+- Brutalist concrete block chair geometric minimal raw finish
+- Bauhaus tubular steel armchair black canvas
+- Slim profile walnut dining chair tapered hairpin legs
+- Carved foam minimalist accent chair pink mono-block
+- Origami folded steel sculptural accent chair charcoal
+- Curved bent metal sheet dining chair white
+- Single form fiberglass shell chair black tapered base
+- Powder coated steel waiting chair clean lines pale green
+
+# --- Industrial ---
+- Industrial black pipe frame chair with metal seat
+- Cast iron tractor seat industrial stool
+- Tall fixed four legged wooden stool with chrome footring no swivel
+- Chrome four splayed legged bar stool round wooden seat fixed pose
+- Vintage theater seat with cast iron frame
+- Riveted steel plate industrial side chair
+- Welded rebar bar stool concrete base
+- Pendulum splayed leg machinist stool cast iron footring fixed base
+- Galvanized factory locker bench single seat
+- Vintage tractor seat shop stool red enameled
+
+# --- Outdoor / Patio ---
+- Aluminum bistro patio chair perforated metal seat fixed splayed legs
+- Monobloc white plastic stackable patio chair
+- Stackable fan back plastic patio chair white
+- Cast aluminum ornate patio armchair white
+- Art nouveau scrollwork iron garden chair
+- Slatted teak outdoor reclining lounge chair fixed pose
+- Black powder coated metal mesh outdoor chair
+- Curved concrete outdoor garden chair modern
+- Stone carved classical garden seat single seat
+- Ornate park bench single seat wrought iron
+- Outdoor two-tone metal glider chair green
+- Gold painted faux bamboo metal accent chair
+- Cast iron Victorian fern pattern garden chair
+- Mosaic tile seat outdoor concrete chair
+- Weathered teak Adirondack lounger natural grey
+- Resin wicker patio armchair beige cushion
+- Wrought iron Bishop chair garden ornate
+- Sling style aluminum patio chair royal blue
+- Slatted wooden deck chair reclining-style fixed natural teak
+- Powder coated steel sling outdoor lounger black
+
+# --- Specialty / Accent ---
+- Chinese horseshoe back armchair dark rosewood
+- Japanese low floor chair walnut zaisu style
+- Rattan peacock fan back throne chair natural
+- Corner chair with triangular walnut seat
+- Pine step stool single piece carved seat
+- Black lacquer piano bench single seat
+- Low back vanity chair painted white wooden
+- Mid century cocktail lounge chair tapered legs
+- Church pew end chair carved solid oak
+- Library reading armchair carved solid oak
+- Tufted velvet slipper chair emerald green
+- Wingback fireside chair burgundy tartan upholstery
+- Slipper chair boucle fabric cream curved back
+- Curved oak captain armchair leather seat four turned legs
+- Embossed leather Spanish library chair brass tacks
+
+# --- Rocking ---
+- Windsor rocking chair with spindle arms maple
+- Platform rocking chair solid oak slat seat
+- Bentwood Thonet rocking chair cane seat
+- Mission style oak rocker tall slats
+- Sculptural single piece concrete rocker
+
+# --- School / Public ---
+- School classroom chair molded seat chrome legs
+- Stadium seat fixed cast iron base blue plastic back
+- Italian molded plastic armchair bright orange
+- Theater audience seat with cast iron base velvet upholstery
+- Public library reading chair wooden barrel back
+
+# --- Asian / Cultural ---
+- Steam-bent hardwood captain chair with armrests
+- Korean traditional wooden chair with lattice back
+- Ming dynasty yokeback armchair zitan wood
+- Indian colonial planters chair carved teak extending arms
+- Moroccan painted side chair with mosaic details
+- Turkish carved wooden armchair red velvet seat
+- Balinese carved teak ceremonial chair gold leaf accents
+- Vietnamese rosewood scholar chair lattice work
+- Tibetan painted lotus motif accent chair
+- Mongolian leather throne chair tooled brass studs
+
+# --- Heavy Side Chairs (rigid, no wheels/swivel) ---
+- Mid century walnut armchair leather seat four splayed legs
+- Modern molded plastic side chair four chrome tapered legs
+- Captain pedestal-style armchair turned oak four spindle legs
+- Tufted leather club armchair button back oxblood four wooden legs
+- Edwardian quartersawn oak armchair fixed cabriole legs
+- Scandinavian wood armchair four tapered hairpin legs gray cushion
+- Industrial fixed four legged steel chair red enameled
+- Carved oak draughtsman fixed leg chair with cast iron footring
+- Mid century molded plastic four leg side chair sky blue
+- Wood frame conference side chair tan vinyl four splayed legs
+
+# --- Lounge / Accent ---
+- Tufted Chesterfield club chair distressed brown leather
+- Mid century Lawson armchair tapered legs olive linen
+- Slipcovered classic armchair white cotton denim
+- Tall wingback armchair patterned chintz floral
+- Brutalist solid teak lounge chair sculpted
+- Modular cube armchair leather single seat solid plinth base
+- Cocoon woven rattan hanging chair stand free
+- Mid century lounge chair brass legs cognac leather
+- Floor cushion lounge chair tatami style flat seat
+- Curved sectional single seat boucle white
+- Velvet barrel accent armchair navy fixed solid base
+- Carved oak Gothic revival lounge chair tapestry seat
+- Cane back peacock lounge chair white painted
+- Tuxedo style armchair tight back pinstripe upholstery
+- Slipper chair tufted brown velvet four turned wooden legs
+
+# --- Stools / Single Benches ---
+- Backless saddle leather bar stool walnut legs
+- Three-legged hand-carved wooden milking stool dark walnut
+- Round counter stool cane seat brass footring
+- Industrial drum bar stool sheet metal seat
+- Tractor seat counter stool wooden base steel
+- Tall bistro stool tubular steel wooden round seat
+- Slat backed wooden bar stool oak handcrafted
+- Backless stone garden stool drum form carved
+- Mushroom shaped wooden side stool turned oak
+- Geometric resin counter stool faceted clear
+
+# --- Children / Novelty / Sculptural ---
+- Childrens carved animal accent chair wooden bunny
+- Wooden rocking horse seat single child rocker
+- Sculptural fiberglass mushroom chair white organic
+- Giant carved hand sculptural accent chair red
+- Tree trunk slab seat live edge wooden bench-style chair
+- Oversized teddy bear themed plush armchair beige
+- Modern sculpted fiberglass spiral chair lavender
+- Driftwood pile sculptural lounge chair single seat
+- Child scaled wooden Adirondack chair white
+- Cartoon style oversized hot dog bun shaped novelty chair tan
+
+# --- Lounge Variations (rigid) ---
+- Modern racing style bucket seat fixed sled base red and black faux leather
+- Ergonomic kneeling chair wood frame gray cushion
+- Saddle stool ergonomic posture seat black leather
+- Wood frame zero gravity recliner outdoor canvas
+- Modern balance stool ergonomic seat post tilting base
+
+# --- Wicker / Rattan ---
+- Vintage wicker peacock chair natural
+- Bohemian rattan lounge chair curved arms cream cushion
+- Bistro wicker chair white painted woven
+- Bamboo armchair tropical natural finish
+- Cane back rattan accent chair circular silhouette
+
+# --- Sculptural / Final ---
+- Sculpted upcycled bicycle parts art chair steel
+- Carved soapstone single seat throne form
+- Welded chain mail single seat throne sculpture
+- Glossy chrome blob single seat accent chair sculptural
+- Hand tooled saddle bench style barstool single seat

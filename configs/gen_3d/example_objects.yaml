@@ -1,0 +1,16 @@
+# Example input for grail.pipelines.gen_3d_assets — 6-entry smoke-test list.
+# Plain list of object names, one per line.
+#
+# Object-selection criteria (prefer 5-150 cm rigid asymmetric objects, no
+# articulation, no plain spheres, no phantom display plinth) are documented
+# in docs/source/gen_3d_assets.md ("Object selection guidelines").
+#
+# Usage:
+#   conda run -n hunyuan python -m grail.pipelines.gen_3d_assets -i configs/gen_3d/example_objects.yaml -o data/gen_example
+
+- Wooden dining chair with slat back
+- Metal bar stool with wooden seat
+- Classic leather armchair brown
+- Cordless power drill
+- Red ceramic coffee mug
+- Hardcover book standing upright
