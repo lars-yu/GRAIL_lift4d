@@ -22,6 +22,166 @@ def huber_loss(a, delta=1e-2):
     return loss.mean()
 
 
+def _weighted_mean(loss, weights):
+    weights = weights.to(loss.device, dtype=loss.dtype)
+    denom = weights.sum().clamp_min(1e-8)
+    return (loss * weights).sum() / denom
+
+
+def weighted_huber_loss(a, weights, delta=1e-2):
+    abs_a = torch.abs(a)
+    quadratic = 0.5 * abs_a**2
+    linear = delta * (abs_a - 0.5 * delta)
+    loss = torch.where(abs_a < delta, quadratic, linear)
+    return _weighted_mean(loss, weights)
+
+
+def foundationpose_camera_rays(fp_trans_cam, eps=1e-6):
+    """Return z-normalized OpenCV camera rays while preserving the FP pixels."""
+    if fp_trans_cam.ndim != 2 or fp_trans_cam.shape[1] != 3:
+        raise ValueError(f"fp_trans_cam must be [T,3], got {tuple(fp_trans_cam.shape)}")
+    z = fp_trans_cam[:, 2:3]
+    if not torch.isfinite(fp_trans_cam).all() or torch.any(z <= eps):
+        raise ValueError("FoundationPose OpenCV camera translations must be finite with z > 0")
+    return fp_trans_cam / z.clamp_min(eps)
+
+
+def ray_depth_translation(fp_ray, z_opt):
+    if fp_ray.ndim != 2 or fp_ray.shape[1] != 3:
+        raise ValueError(f"fp_ray must be [T,3], got {tuple(fp_ray.shape)}")
+    if z_opt.ndim != 1 or z_opt.shape[0] != fp_ray.shape[0]:
+        raise ValueError(f"z_opt must be [T], got {tuple(z_opt.shape)}")
+    return fp_ray * z_opt[:, None]
+
+
+def positive_depth_scale(log_depth_scale, minimum=0.25, maximum=4.0):
+    if minimum <= 0 or maximum <= minimum:
+        raise ValueError(f"Invalid positive scale range [{minimum}, {maximum}]")
+    return torch.exp(log_depth_scale).clamp(min=float(minimum), max=float(maximum))
+
+
+def full_frame_indices(frame_num, *, interval=1, device=None):
+    frame_num = int(frame_num)
+    if int(interval) != 1:
+        raise ValueError(
+            f"Lift4D formal supervision requires interval=1 for all frames, got {interval}"
+        )
+    indices = torch.arange(frame_num, device=device, dtype=torch.long)
+    if len(indices) != frame_num:
+        raise AssertionError(f"Expected {frame_num} Lift4D indices, got {len(indices)}")
+    return indices
+
+
+def lift4d_depth_trend_loss(
+    z_opt, lift_z, frame_weight, depth_scale, delta=0.02, anchor_frame=0
+):
+    if float(depth_scale.detach()) <= 0:
+        raise ValueError("Lift4D motion_scale must be positive")
+    indices = full_frame_indices(z_opt.shape[0], device=z_opt.device)
+    anchor = int(anchor_frame)
+    if anchor < 0 or anchor >= z_opt.shape[0]:
+        raise ValueError(f"Invalid Lift4D anchor_frame={anchor}")
+    obj_delta_z = z_opt[indices] - z_opt[anchor]
+    lift_delta_z = lift_z.detach()[indices] - lift_z.detach()[anchor]
+    return weighted_huber_loss(
+        obj_delta_z - depth_scale * lift_delta_z,
+        frame_weight.detach()[indices],
+        delta=delta,
+    )
+
+
+def lift4d_depth_velocity_loss(z_opt, lift_z, frame_weight, depth_scale, delta=0.015):
+    if float(depth_scale.detach()) <= 0:
+        raise ValueError("Lift4D motion_scale must be positive")
+    full_frame_indices(z_opt.shape[0], device=z_opt.device)
+    if z_opt.shape[0] < 2:
+        return z_opt.new_zeros(())
+    obj_velocity = z_opt[1:] - z_opt[:-1]
+    lift_velocity = lift_z.detach()[1:] - lift_z.detach()[:-1]
+    velocity_weight = torch.minimum(frame_weight.detach()[1:], frame_weight.detach()[:-1])
+    return weighted_huber_loss(
+        obj_velocity - depth_scale * lift_velocity,
+        velocity_weight,
+        delta=delta,
+    )
+
+
+def lift4d_depth_acceleration_loss(z_opt):
+    full_frame_indices(z_opt.shape[0], device=z_opt.device)
+    if z_opt.shape[0] < 3:
+        return z_opt.new_zeros(())
+    acceleration = z_opt[2:] - 2.0 * z_opt[1:-1] + z_opt[:-2]
+    return acceleration.abs().mean()
+
+
+def foundationpose_depth_anchor_loss(z_opt, fp_z, delta=0.02):
+    return huber_loss(z_opt[0] - fp_z.detach()[0], delta=delta)
+
+
+def object_depth_smoothness_loss(z_opt, delta=0.015):
+    if z_opt.shape[0] < 3:
+        return z_opt.new_zeros(())
+    acceleration = z_opt[2:] - 2.0 * z_opt[1:-1] + z_opt[:-2]
+    return huber_loss(acceleration, delta=delta)
+
+
+def so3_geodesic_distance(R_a, R_b):
+    """Geodesic distance between batches of SO(3) rotation matrices."""
+    rel = torch.matmul(R_a, R_b.transpose(-1, -2))
+    trace = rel[..., 0, 0] + rel[..., 1, 1] + rel[..., 2, 2]
+    cos = ((trace - 1.0) * 0.5).clamp(-1.0, 1.0)
+    skew = torch.stack(
+        [
+            rel[..., 2, 1] - rel[..., 1, 2],
+            rel[..., 0, 2] - rel[..., 2, 0],
+            rel[..., 1, 0] - rel[..., 0, 1],
+        ],
+        dim=-1,
+    ) * 0.5
+    sin = torch.linalg.norm(skew, dim=-1)
+    return torch.atan2(sin, cos)
+
+
+def lift4d_motion_loss(
+    pred_t,
+    pred_R,
+    prior_t,
+    prior_R,
+    valid,
+    confidence,
+    anchor_frame,
+    *,
+    translation_weight=1.0,
+    rotation_weight=1.0,
+    velocity_weight=0.0,
+    angular_velocity_weight=0.0,
+    huber_delta=1e-2,
+    min_confidence=0.2,
+    interval=1,
+):
+    raise RuntimeError(
+        "Legacy Lift4D full-xyz/Kabsch/rotation supervision is prohibited. "
+        "Use the full-frame point_trajectories_cam camera-Z prior instead."
+    )
+
+
+def contact_anchor_distance_loss(distance, target=0.02, delta=0.02):
+    return huber_loss(distance - float(target), delta=delta)
+
+
+def approach_monotonic_loss(distances):
+    if distances.numel() < 2:
+        return distances.new_zeros(())
+    return torch.relu(distances[1:] - distances[:-1]).mean()
+
+
+def relative_translation_consistency_loss(relative_translation, delta=0.01):
+    if relative_translation.shape[0] < 2:
+        return relative_translation.new_zeros(())
+    velocity = relative_translation[1:] - relative_translation[:-1]
+    return huber_loss(torch.linalg.norm(velocity, dim=-1), delta=delta)
+
+
 def bidirectional_chamfer_loss(pred_verts, gt_points, trim_pct=0.2):
     """
     Trimmed bidirectional Chamfer distance using knn_points for efficiency.

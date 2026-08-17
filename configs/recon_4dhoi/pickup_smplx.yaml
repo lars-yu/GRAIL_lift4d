@@ -84,6 +84,56 @@ optimization:
     vis_html: true
     vis_contact: true
 
+  # Real Lift4D Gaussian-center camera-Z prior. Formal runs supervise every frame
+  # and preserve FoundationPose image-plane position and rotation.
+  use_lift4d_depth_prior: false
+  lift4d_motion:
+    enabled: false
+    source: "point_trajectories_cam"
+    full_frame: true
+    stable_point_count: 2500
+    median_window: 7
+    savgol_window: 31
+    savgol_polyorder: 2
+    motion_scale: 1.0
+    weight: 30.0
+    velocity_weight: 5.0
+    acceleration_weight: 20.0
+    huber_delta: 0.02
+    optimize_depth_only: true
+    use_kabsch_pose: false
+  lift4d_motion_prior_path: null # required when enabled; no guessed path or fallback
+  freeze_foundationpose_image_plane_translation: false
+  lift4d_stable_point_count: 2500
+  lift4d_median_window: 7
+  lift4d_center_smooth_window: 31
+  lift4d_savgol_polyorder: 2
+  lift4d_min_stable_points: 64
+  lift4d_depth_scale: 1.0
+  learn_lift4d_depth_scale: false
+  lift4d_depth_scale_min: 0.25
+  lift4d_depth_scale_max: 4.0
+  lift4d_depth_scale_lr: 0.001
+  lift4d_depth_lr: 0.01
+  max_human_approach_distance: 0.35
+  contact:
+    frame: null
+    hand: "right"
+    approach_window: 30
+    target_distance: 0.02
+
+  human_precontact_approach_opt:
+    enabled: false
+    niter: 600
+    approach_window: 30
+    max_approach_distance: 0.35
+    opt_vars:
+      human_approach_distance:
+        lr: 0.003
+      human_pose_res:
+        lr: 0.0001
+        joint_scope: "lower_body_and_arms"
+
   # Optimization stages
   opt_stage_specs:
     # Stage 1: Human trajectory optimization
@@ -93,6 +143,7 @@ optimization:
           lr: 0.003
         human_pose_res:
           lr: 0.0001
+          joint_scope: "full_body"
       niter: 400
       loss_cfg:
         keypoint_tracking:
@@ -118,6 +169,7 @@ optimization:
           xy_only: true
         human_pose_res:
           lr: 0.0001
+          joint_scope: "full_body"
       niter: 1000
       loss_cfg:
         contact:
@@ -142,7 +194,7 @@ optimization:
           lr: 0.001
         human_pose_res:
           lr: 0.0001
-          arm_only: true
+          joint_scope: "lower_body_and_arms"
       niter: 400
       loss_cfg:
         contact:
@@ -156,6 +208,28 @@ optimization:
         verts_tracking:
           weight: 0.1
           threshold: 0.1
+        lift4d_depth:
+          enabled: false
+          weight: 30.0
+          delta: 0.03
+        lift4d_velocity:
+          enabled: false
+          weight: 5.0
+          delta: 0.015
+        fp_depth_anchor:
+          enabled: false
+          weight: 1.0
+          delta: 0.02
+        obj_depth_smoothness:
+          enabled: false
+          weight: 0.5
+          delta: 0.015
+        lift4d_depth_scale_reg:
+          enabled: false
+          weight: 0.1
+      save_motion_progress: false
+      motion_progress_interval: 50
+      gradient_log_interval: 25
 
   # Evaluation configuration
   eval:

@@ -12,6 +12,7 @@ from pytorch3d.transforms import (
     rotation_6d_to_matrix,
 )
 
+from grail.adapters.lift4d_depth import load_lift4d_depth_prior
 from grail.constants.image import FOCAL_LENGTH, HEIGHT, WIDTH
 from grail.core.contact_label import detect_contact_joints_interval
 from grail.core.io import (
@@ -36,6 +37,11 @@ from grail.optimization.interaction import (
     identify_interaction_start_end_with_mask,
 )
 from grail.optimization.loss_computer import LossComputer
+from grail.optimization.approach import (
+    approach_offsets,
+    ground_approach_direction,
+    smoothstep_approach_ramp,
+)
 from grail.optimization.visualizer import HOIVisualizer
 from grail.pose_est.utils import smooth_axis_angle_sequence, smooth_pose_sequence
 from grail.preprocessing.preprocess import load_depth_from_cache, load_masks_from_cache
@@ -44,8 +50,12 @@ from grail.rendering.camera import (
     cam_pose_opencv_to_pytorch3d,
     get_camera,
     project_world_to_screen,
+    transform_camera_to_world,
+    transform_world_to_camera,
     transform_pose_c2w,
+    world_to_camera_matrix,
 )
+from grail.optimization.loss_terms import foundationpose_camera_rays, positive_depth_scale, ray_depth_translation
 from grail.visualization.scenepic import ScenepicVisualizer
 
 
@@ -108,7 +118,7 @@ class HOIOptimizer:
         )
 
         # 2. Object mesh and poses
-        obj_verts, obj_faces, obj_poses_incam, obj_poses = self._load_object(
+        obj_verts, obj_faces, obj_poses_incam, obj_poses, fp_ray_cam = self._load_object(
             obj_path, obj_scale, obj_pose_file, opencv_cam_R, opencv_cam_t
         )
 
@@ -134,6 +144,17 @@ class HOIOptimizer:
             raise ValueError(
                 f"Frame count mismatch - Video: {video_frame_count}, SMPL: {frame_num}"
             )
+
+        legacy_motion_cfg = self.cfg.get("lift4d_motion", {}) or {}
+        if legacy_motion_cfg.get("enabled", False):
+            raise ValueError(
+                "Legacy lift4d_motion supervision is prohibited because it consumes "
+                "object_poses_cam/Kabsch rotation. Use use_lift4d_depth_prior instead."
+            )
+        lift4d_motion = None
+        lift4d_depth = self._load_lift4d_depth_prior(video_id=video_id, frame_num=frame_num)
+        if lift4d_depth is not None:
+            self._validate_ray_projection(obj_poses_incam, fp_ray_cam, lift4d_depth)
 
         # 6. Contact labels
         contact_labels, contact_interval, contact_start_idx = self._detect_contact_labels(
@@ -161,6 +182,8 @@ class HOIOptimizer:
 
         # ── Set self.* state (all in one place) ──────────────────────────────
         self.cameras = cameras
+        self.opencv_cam_R = opencv_cam_R
+        self.opencv_cam_t = opencv_cam_t
         self.obj_path = obj_path
         self.obj_mesh = Meshes(verts=[obj_verts], faces=[obj_faces])
         self.video_fps = video_fps
@@ -169,6 +192,20 @@ class HOIOptimizer:
         self.contact_labels = contact_labels
         self.contact_interval = contact_interval
         self.contact_start_idx = contact_start_idx
+
+        contact_cfg = self.cfg.get("contact", {}) or {}
+        contact_frame = contact_cfg.get("frame", None)
+        if contact_frame is None:
+            contact_frame = inter_start_idx
+        contact_frame = int(contact_frame)
+        if contact_frame < 0 or contact_frame >= frame_num:
+            raise ValueError(f"contact.frame must be in [0,{frame_num - 1}], got {contact_frame}")
+        contact_hand = str(contact_cfg.get("hand", "right")).lower()
+        if contact_hand not in ("left", "right", "both"):
+            raise ValueError(f"contact.hand must be left/right/both, got {contact_hand!r}")
+        approach_window = int(contact_cfg.get("approach_window", 30))
+        if approach_window < 1:
+            raise ValueError("contact.approach_window must be positive")
 
         # ── Assemble HOIData ─────────────────────────────────────────────────
         return HOIData(
@@ -191,6 +228,8 @@ class HOIOptimizer:
                 masks=[obj_masks[i] for i in range(frame_num)],
                 verts_seq=obj_verts_seq,
                 poses=obj_poses,
+                poses_cam=obj_poses_incam,
+                fp_ray_cam=fp_ray_cam,
                 verts_tracking_seq=gt_obj_verts_tracking,
             ),
             camera=camera,
@@ -198,6 +237,11 @@ class HOIOptimizer:
             depth_maps=depth_maps,
             is_static_obj=is_static_obj,
             static_objects=static_objects,
+            lift4d_motion=lift4d_motion,
+            lift4d_depth=lift4d_depth,
+            contact_frame=contact_frame,
+            contact_hand=contact_hand,
+            approach_window=approach_window,
         )
 
     # ── init_data sub-methods (no self.* side effects) ───────────────────────
@@ -244,8 +288,9 @@ class HOIOptimizer:
             obj_path, mesh_scale=obj_scale, target_num_verts=6000, device=self.device
         )
         obj_poses_incam = load_object_pose_data(obj_pose_file, to_tensor=True, device=self.device)
+        fp_ray_cam = foundationpose_camera_rays(obj_poses_incam[:, :3, 3])
         obj_poses = transform_pose_c2w(obj_poses_incam, opencv_cam_R, opencv_cam_t)
-        return obj_verts, obj_faces, obj_poses_incam, obj_poses
+        return obj_verts, obj_faces, obj_poses_incam, obj_poses, fp_ray_cam
 
     def _load_video_frames(self, video_file):
         """Extract video frames and return image paths and fps."""
@@ -466,12 +511,120 @@ class HOIOptimizer:
         self.logger.info(f"Loaded depth from cache: {depth_cache_file}")
         return depth_maps
 
+    def _resolve_lift4d_depth_prior_path(self, video_id):
+        prior_path = self.cfg.get("lift4d_motion_prior_path")
+        if not prior_path:
+            raise ValueError(
+                "use_lift4d_depth_prior=true requires an explicit lift4d_motion_prior_path; "
+                "no default or guessed NPZ path is allowed"
+            )
+        prior_path = str(prior_path).format(
+            video_id=video_id, video_id_safe=video_id.replace("/", "__")
+        )
+        if not os.path.isabs(prior_path):
+            results_dir = self.cfg.get("results_dir")
+            if not results_dir:
+                raise ValueError("Relative lift4d_motion_prior_path requires explicit results_dir")
+            prior_path = os.path.join(results_dir, prior_path)
+        return os.path.abspath(prior_path)
+
+    def _load_lift4d_depth_prior(self, video_id, frame_num):
+        if not self.cfg.get("use_lift4d_depth_prior", False):
+            return None
+        if not self.cfg.get("freeze_foundationpose_image_plane_translation", False):
+            raise ValueError(
+                "Lift4D depth supervision requires freeze_foundationpose_image_plane_translation=true"
+            )
+        if self.cfg.get("camera_mode", "fixed") != "fixed":
+            raise ValueError(
+                "Lift4D ray-depth optimization currently requires the real fixed-camera GRAIL path; "
+                "dynamic-camera HOI optimization does not yet consume per-frame c2w matrices"
+            )
+        prior_path = self._resolve_lift4d_depth_prior_path(video_id)
+        prior = load_lift4d_depth_prior(
+            prior_path,
+            frame_num=frame_num,
+            median_window=self.cfg.get("lift4d_median_window", 7),
+            smooth_window=self.cfg.get("lift4d_center_smooth_window", 31),
+            savgol_polyorder=self.cfg.get("lift4d_savgol_polyorder", 2),
+            stable_point_count=self.cfg.get("lift4d_stable_point_count", 2500),
+            min_stable_points=self.cfg.get("lift4d_min_stable_points", 64),
+        )
+        self.logger.info(
+            "Loaded real Lift4D point-depth prior: %s | frames=%d | stable_points=%d | "
+            "z=[%.5f, %.5f]",
+            prior.source_path,
+            frame_num,
+            prior.stable_point_ids.size,
+            float(prior.z.min()),
+            float(prior.z.max()),
+        )
+        to_tensor = lambda value, dtype=torch.float32: torch.as_tensor(
+            value, dtype=dtype, device=self.device
+        )
+        return HOIData.Lift4DDepth(
+            frame_indices=to_tensor(prior.frame_indices, torch.long),
+            prior_used=to_tensor(prior.prior_used, torch.bool),
+            center_cam_raw=to_tensor(prior.center_cam_raw),
+            center_cam=to_tensor(prior.center_cam),
+            z_raw=to_tensor(prior.z_raw),
+            z=to_tensor(prior.z),
+            delta_z=to_tensor(prior.delta_z),
+            frame_weight=to_tensor(prior.frame_weight),
+            valid_point_count=to_tensor(prior.valid_point_count, torch.long),
+            camera_intrinsics=to_tensor(prior.camera_intrinsics),
+            stable_point_ids=to_tensor(prior.stable_point_ids, torch.long),
+            source_path=prior.source_path,
+            camera_convention=prior.camera_convention,
+            diagnostics=prior.diagnostics,
+        )
+
+    def _validate_ray_projection(self, fp_poses_cam, fp_ray_cam, prior):
+        fp_trans = fp_poses_cam[:, :3, 3]
+        probe_z = fp_trans[:, 2] * 0.75
+        probe_trans = ray_depth_translation(fp_ray_cam, probe_z)
+
+        def project(trans):
+            K = prior.camera_intrinsics
+            return torch.stack(
+                [
+                    K[:, 0, 0] * trans[:, 0] / trans[:, 2] + K[:, 0, 2],
+                    K[:, 1, 1] * trans[:, 1] / trans[:, 2] + K[:, 1, 2],
+                ],
+                dim=1,
+            )
+
+        pixel_error = torch.linalg.norm(project(probe_trans) - project(fp_trans), dim=1)
+        stats = (
+            float(pixel_error.mean()),
+            float(pixel_error.median()),
+            float(pixel_error.max()),
+        )
+        self.logger.info(
+            "Ray-depth projection check | mean=%.8g px | median=%.8g px | max=%.8g px",
+            *stats,
+        )
+        if stats[2] > 1e-3:
+            raise ValueError(
+                f"FoundationPose ray projection drift is too large: max={stats[2]:.8g} px"
+            )
+
     def init_params(self, data):
         frame_num = data.frame_num
         identity_6d = torch.tensor([1.0, 0.0, 0.0, 0.0, 1.0, 0.0], device=self.device)
 
         self.num_body_joints = self.human_model.num_body_joints
         self.num_hand_joints = self.human_model.num_hand_joints
+
+        use_ray_depth = bool(self.cfg.get("use_lift4d_depth_prior", False))
+        if use_ray_depth and data.lift4d_depth is None:
+            raise ValueError("Ray-depth parameterization requested without a real Lift4D depth prior")
+        fixed_depth_scale = float(self.cfg.get("lift4d_depth_scale", 1.0))
+        if not np.isfinite(fixed_depth_scale) or fixed_depth_scale <= 0:
+            raise ValueError(f"lift4d_depth_scale must be positive, got {fixed_depth_scale}")
+        learn_depth_scale = bool(self.cfg.get("learn_lift4d_depth_scale", False))
+        if learn_depth_scale and not use_ray_depth:
+            raise ValueError("learn_lift4d_depth_scale requires use_lift4d_depth_prior=true")
 
         self.params = OptParams(
             human_trans_global=torch.zeros(3, device=self.device, requires_grad=True),
@@ -491,7 +644,28 @@ class HOIOptimizer:
                 device=self.device,
                 requires_grad=True,
             ),
-            obj_t_res=torch.zeros(frame_num, 3, device=self.device, requires_grad=True),
+            obj_t_res=(
+                None
+                if use_ray_depth
+                else torch.zeros(frame_num, 3, device=self.device, requires_grad=True)
+            ),
+            obj_depth_res=(
+                torch.zeros(frame_num, device=self.device, requires_grad=True)
+                if use_ray_depth
+                else None
+            ),
+            human_approach_distance=torch.zeros((), device=self.device, requires_grad=True),
+            obj_z_opt=None,
+            log_lift4d_depth_scale=(
+                torch.tensor(
+                    np.log(fixed_depth_scale),
+                    dtype=data.obj.poses.dtype,
+                    device=self.device,
+                    requires_grad=learn_depth_scale,
+                )
+                if use_ray_depth
+                else None
+            ),
         )
         return self.params
 
@@ -499,11 +673,11 @@ class HOIOptimizer:
         opt_params = {}
 
         for opt_var in opt_vars:
-            if is_static_obj and opt_var in ("obj_R_res", "obj_t_res"):
+            if is_static_obj and opt_var in ("obj_R_res", "obj_t_res", "obj_depth_res", "obj_z_opt"):
                 self.logger.info(f"Skipping optimization of {opt_var} (static object)")
                 continue
 
-            if hasattr(params, opt_var):
+            if hasattr(params, opt_var) and getattr(params, opt_var) is not None:
                 opt_params[opt_var] = getattr(params, opt_var)
             else:
                 self.logger.warning(f"Optimization parameter {opt_var} not found")
@@ -520,15 +694,29 @@ class HOIOptimizer:
 
     def init_opt(self, data, params, opt_config):
         is_static_obj = data.is_static_obj
+        configured_opt_vars = dict(opt_config["opt_vars"])
+        use_ray_depth = bool(self.cfg.get("use_lift4d_depth_prior", False))
+        if use_ray_depth and "obj_t_res" in configured_opt_vars:
+            raise ValueError(
+                "Formal Lift4D depth optimization must configure obj_depth_res, not obj_t_res"
+            )
+        elif not use_ray_depth:
+            configured_opt_vars.pop("obj_depth_res", None)
+        if use_ray_depth and "obj_z_opt" in configured_opt_vars:
+            raise ValueError("Deprecated absolute obj_z_opt is prohibited; use obj_depth_res")
+        if use_ray_depth and self.cfg.get("learn_lift4d_depth_scale", False):
+            configured_opt_vars["log_lift4d_depth_scale"] = {
+                "lr": float(self.cfg.get("lift4d_depth_scale_lr", 1e-3))
+            }
         opt_params = self.get_opt_params(
-            params, opt_config["opt_vars"].keys(), is_static_obj=is_static_obj
+            params, configured_opt_vars.keys(), is_static_obj=is_static_obj
         )
         if len(opt_params.keys()) == 0:
             return None, opt_params
 
         opt_params_cfg = []
         for opt_var in opt_params.keys():
-            var_config = opt_config["opt_vars"][opt_var]
+            var_config = configured_opt_vars[opt_var]
             # Check if xy_only is set for human_trans_global
             if opt_var == "human_trans_global" and var_config.get("xy_only", False):
                 # Register a gradient hook to zero out z-dimension gradients (1D tensor)
@@ -560,12 +748,20 @@ class HOIOptimizer:
                 )
                 self.logger.info(f"Optimizing {opt_var} with xy_only=True (only x, y dimensions)")
             else:
-                opt_params_cfg.append(
-                    {
-                        "params": opt_params[opt_var],
-                        "lr": var_config["lr"],
-                    }
-                )
+                group = {
+                    "params": opt_params[opt_var],
+                    "lr": var_config["lr"],
+                }
+                if opt_var in (
+                    "obj_depth_res",
+                    "human_approach_distance",
+                    "obj_z_opt",
+                    "log_lift4d_depth_scale",
+                ):
+                    # These are absolute physical quantities, not zero-centered
+                    # residuals. AdamW decay would introduce an unrelated depth drift.
+                    group["weight_decay"] = 0.0
+                opt_params_cfg.append(group)
 
         optimizer = torch.optim.AdamW(opt_params_cfg)
 
@@ -604,8 +800,27 @@ class HOIOptimizer:
 
         # Apply translation residuals
         trans = motion_data["trans"].reshape(frame_num, 3)
+        approach_ramp = smoothstep_approach_ramp(
+            frame_num,
+            data.contact_frame,
+            data.approach_window,
+            device=trans.device,
+            dtype=trans.dtype,
+        )
+        approach_direction = getattr(self, "_human_approach_direction", None)
+        if approach_direction is None:
+            approach_direction = torch.zeros(3, device=trans.device, dtype=trans.dtype)
+        approach_offset, approach_distance = approach_offsets(
+            approach_ramp,
+            params.human_approach_distance,
+            approach_direction,
+            max_distance=self.cfg.get("max_human_approach_distance", 0.35),
+        )
         motion_data["trans"] = (
-            trans + human_trans_res.reshape(frame_num, 3) + human_trans_global.reshape(1, 3)
+            trans
+            + human_trans_res.reshape(frame_num, 3)
+            + human_trans_global.reshape(1, 3)
+            + approach_offset
         )
 
         pred_human_verts_seq, _ = self.human_model.generate_mesh(
@@ -639,6 +854,9 @@ class HOIOptimizer:
             hand_keypoints_seq=pred_hand_keypoints_seq,
             pose_res=human_pose_res,
             trans_res=human_trans_res,
+            approach_ramp=approach_ramp,
+            approach_offset=approach_offset,
+            approach_distance=approach_distance,
             motion_data=motion_data,
         )
 
@@ -649,23 +867,72 @@ class HOIOptimizer:
         obj_poses = data.obj.poses.clone()
 
         pred_obj_R = torch.bmm(obj_R_res_mat, obj_poses[:, :3, :3])
-        pred_obj_t = obj_poses[:, :3, 3].reshape(frame_num, 3) + obj_t_res.reshape(frame_num, 3)
+        if params.obj_depth_res is not None:
+            fp_z = data.obj.poses_cam[:, 2, 3].detach()
+            pred_obj_z = fp_z + params.obj_depth_res.reshape(frame_num)
+            if torch.any(pred_obj_z <= 0):
+                raise ValueError("Optimized OpenCV camera depth became non-positive")
+            pred_obj_t_cam = ray_depth_translation(data.obj.fp_ray_cam.detach(), pred_obj_z)
+            pred_obj_t = transform_camera_to_world(
+                pred_obj_t_cam, self.opencv_cam_R, self.opencv_cam_t
+            )
+            depth_scale = positive_depth_scale(
+                params.log_lift4d_depth_scale,
+                minimum=self.cfg.get("lift4d_depth_scale_min", 0.25),
+                maximum=self.cfg.get("lift4d_depth_scale_max", 4.0),
+            )
+        else:
+            pred_obj_t = obj_poses[:, :3, 3].reshape(frame_num, 3) + obj_t_res.reshape(frame_num, 3)
+            pred_obj_t_cam = transform_world_to_camera(
+                pred_obj_t, self.opencv_cam_R, self.opencv_cam_t
+            )
+            pred_obj_z = pred_obj_t_cam[:, 2]
+            depth_scale = pred_obj_t.new_tensor(1.0)
 
         pred_obj_verts_seq = obj_verts.unsqueeze(0).repeat(frame_num, 1, 1)
         pred_obj_verts_seq = torch.bmm(
             pred_obj_verts_seq, pred_obj_R.transpose(1, 2)
         ) + pred_obj_t.reshape(frame_num, 1, 3)
+        w2c = world_to_camera_matrix(self.opencv_cam_R, self.opencv_cam_t)
+        pred_obj_R_cam = torch.matmul(w2c[:3, :3].unsqueeze(0), pred_obj_R)
 
         pred_obj = HOIPrediction.Object(
             trans=pred_obj_t,
+            trans_cam=pred_obj_t_cam,
+            z_cam=pred_obj_z,
+            depth_scale=depth_scale,
             R=pred_obj_R,
+            R_cam=pred_obj_R_cam,
             verts_seq=pred_obj_verts_seq,
         )
 
         return HOIPrediction(human=pred_human, obj=pred_obj)
 
+    @torch.no_grad()
+    def initialize_human_approach_direction(self, data, gravity_axis="z"):
+        """Freeze the contact-frame ground direction after object depth optimization."""
+        pred = self.forward(data, self.params)
+        frame = int(data.contact_frame)
+        direction = ground_approach_direction(
+            pred.obj.trans[frame],
+            pred.human.trans[frame],
+            gravity_axis=gravity_axis,
+        )
+        self._human_approach_direction = direction.detach()
+        self.logger.info(
+            "Human approach direction at contact frame %d: [%.6f, %.6f, %.6f]",
+            frame,
+            *self._human_approach_direction.tolist(),
+        )
+        return self._human_approach_direction
+
     def optimize_main(self, data, opt_config):
         """Run optimization for a single stage."""
+        pose_opt_cfg = opt_config.get("opt_vars", {}).get("human_pose_res", {})
+        if "arm_only" in opt_config or "arm_only" in pose_opt_cfg:
+            raise ValueError(
+                "arm_only is ambiguous and prohibited; use human_pose_res.joint_scope"
+            )
         optimizer, opt_params = self.init_opt(data, self.params, opt_config)
         if len(opt_params.keys()) == 0:
             self.logger.warning("No optimization parameters found. Skipping optimization...")
@@ -678,13 +945,109 @@ class HOIOptimizer:
             optimizer.zero_grad()
             pred = self.forward(data, self.params)
             loss, loss_dict = self.loss_computer.compute_loss(data, pred, loss_cfg)
+            grad_log_interval = int(opt_config.get("gradient_log_interval", 25))
+            should_log_grad = cur_iter in {0, opt_niter - 1} or (
+                grad_log_interval > 0 and cur_iter % grad_log_interval == 0
+            )
+            if should_log_grad and self.params.obj_depth_res is not None:
+                for loss_name, weighted_term in self.loss_computer.last_weighted_terms.items():
+                    if not isinstance(weighted_term, torch.Tensor) or not weighted_term.requires_grad:
+                        loss_dict[f"{loss_name}_grad_obj_depth_res"] = 0.0
+                        continue
+                    grad = torch.autograd.grad(
+                        weighted_term,
+                        self.params.obj_depth_res,
+                        retain_graph=True,
+                        allow_unused=True,
+                    )[0]
+                    loss_dict[f"{loss_name}_grad_obj_depth_res"] = (
+                        0.0 if grad is None else float(torch.linalg.norm(grad).detach())
+                    )
             loss.backward()
+            self._apply_stage_gradient_masks(data, opt_config)
+            if self.params.obj_depth_res is not None and self.params.obj_depth_res.grad is not None:
+                loss_dict["total_grad_obj_depth_res"] = float(
+                    torch.linalg.norm(self.params.obj_depth_res.grad).detach()
+                )
+            if (
+                self.params.log_lift4d_depth_scale is not None
+                and self.params.log_lift4d_depth_scale.grad is not None
+            ):
+                loss_dict["total_grad_log_lift4d_depth_scale"] = float(
+                    torch.abs(self.params.log_lift4d_depth_scale.grad).detach()
+                )
             optimizer.step()
+            if self.params.human_approach_distance is not None:
+                with torch.no_grad():
+                    self.params.human_approach_distance.clamp_(
+                        0.0, float(self.cfg.get("max_human_approach_distance", 0.35))
+                    )
+
+            self._maybe_save_motion_progress(cur_iter, pred, opt_config)
 
             self.write_logs(cur_iter, loss_dict, opt_config)
-
         self.logger.info(
             f"Human pelvis after optimization stage: {pred.human.body_joints_seq[0, 0, :]}"
+        )
+
+    def _apply_stage_gradient_masks(self, data, opt_config):
+        pose_cfg = opt_config.get("opt_vars", {}).get("human_pose_res")
+        if pose_cfg is None or self.params.human_pose_res.grad is None:
+            return
+        scope = pose_cfg.get("joint_scope", "full_body")
+        groups = {
+            "lower_body": {1, 2, 4, 5, 7, 8, 10, 11},
+            "arms": {13, 14, 16, 17, 18, 19, 20, 21},
+        }
+        if scope == "full_body":
+            allowed = set(range(self.num_body_joints))
+        elif scope == "lower_body_and_arms":
+            allowed = groups["lower_body"] | groups["arms"]
+        elif scope in groups:
+            allowed = groups[scope]
+        else:
+            raise ValueError(
+                f"Invalid human_pose_res joint_scope={scope!r}; expected arms, lower_body, "
+                "lower_body_and_arms, or full_body"
+            )
+        joint_mask = torch.zeros(
+            self.num_body_joints,
+            dtype=self.params.human_pose_res.grad.dtype,
+            device=self.params.human_pose_res.grad.device,
+        )
+        for index in allowed:
+            if index < self.num_body_joints:
+                joint_mask[index] = 1.0
+        frame_mask = torch.zeros(
+            data.frame_num,
+            dtype=joint_mask.dtype,
+            device=joint_mask.device,
+        )
+        start = max(0, int(data.contact_frame) - int(data.approach_window))
+        end = min(data.frame_num, int(data.contact_frame) + int(pose_cfg.get("frame_radius", 2)) + 1)
+        frame_mask[start:end] = 1.0
+        self.params.human_pose_res.grad.mul_(
+            frame_mask[:, None, None] * joint_mask[None, :, None]
+        )
+
+    def _maybe_save_motion_progress(self, cur_iter, pred, opt_config):
+        if not opt_config.get("save_motion_progress", False):
+            return
+        stage = opt_config.get("stage", "stage")
+        if "obj" not in stage:
+            return
+        interval = int(opt_config.get("motion_progress_interval", 50))
+        niter = int(opt_config.get("niter", 0))
+        if cur_iter not in {0, niter - 1} and (interval <= 0 or cur_iter % interval != 0):
+            return
+        out_dir = os.path.join(self.log_dir, "lift4d_motion_progress")
+        os.makedirs(out_dir, exist_ok=True)
+        np.savez_compressed(
+            os.path.join(out_dir, f"{stage}_iter_{cur_iter:06d}.npz"),
+            obj_R=tensor_to_numpy(pred.obj.R),
+            obj_t=tensor_to_numpy(pred.obj.trans),
+            iteration=np.asarray(cur_iter, dtype=np.int64),
+            stage=np.asarray(stage),
         )
 
     def optimize(self, data):
@@ -692,6 +1055,24 @@ class HOIOptimizer:
         # Validate that data has been initialized
         if not hasattr(self, "obj_mesh") or self.obj_mesh is None:
             raise ValueError("Data not initialized. Call init_data() first.")
+        if self.cfg.get("use_lift4d_depth_prior", False):
+            required_losses = {
+                "lift4d_depth",
+                "lift4d_velocity",
+                "fp_depth_anchor",
+                "obj_depth_smoothness",
+            }
+            enabled_losses = set()
+            for stage_specs in self.opt_stage_specs.values():
+                for name, loss_cfg in stage_specs.get("loss_cfg", {}).items():
+                    if loss_cfg.get("enabled", True) and float(loss_cfg.get("weight", 0.0)) > 0:
+                        enabled_losses.add(name)
+            missing = sorted(required_losses - enabled_losses)
+            if missing:
+                raise ValueError(
+                    "use_lift4d_depth_prior=true requires explicit positive Stage-3 loss configs; "
+                    f"missing enabled losses: {missing}"
+                )
 
         if self.enable_vis:
             self.visualizer = HOIVisualizer(
@@ -796,15 +1177,24 @@ class HOIOptimizer:
                     matrix_to_axis_angle(obj_R).unsqueeze(1), window_length=11, polyorder=2
                 ).squeeze(1)
             )
-            obj_t = smooth_pose_sequence(obj_t, window_length=11, polyorder=2)
+            if not self.cfg.get("use_lift4d_depth_prior", False):
+                obj_t = smooth_pose_sequence(obj_t, window_length=11, polyorder=2)
+            else:
+                self.logger.info("Skipping world-space object translation smoothing to preserve FP rays")
             return human_data, obj_R, obj_t
 
         human_data = pred.human.motion_data
         obj_R = pred.obj.R
         obj_t = pred.obj.trans
+        obj_t_cam = pred.obj.trans_cam
+        obj_z_cam = pred.obj.z_cam
 
         if smooth:
             human_data, obj_R, obj_t = smooth_results(human_data, obj_R, obj_t)
+        obj_R_cam = torch.matmul(
+            world_to_camera_matrix(self.opencv_cam_R, self.opencv_cam_t)[:3, :3].unsqueeze(0),
+            obj_R,
+        )
 
         optimized_data = {
             "human_data": tensor_to_numpy(human_data) if to_numpy else human_data,
@@ -812,18 +1202,141 @@ class HOIOptimizer:
                 tensor_to_numpy(
                     {
                         "obj_R": obj_R,
+                        "obj_R_cam": obj_R_cam,
                         "obj_t": obj_t,
+                        "obj_t_cam": obj_t_cam,
+                        "obj_z_cam": obj_z_cam,
+                        "obj_depth_res": self.params.obj_depth_res,
                         "obj_scale": data.obj.scale,
                     }
                 )
                 if to_numpy
-                else {"obj_R": obj_R, "obj_t": obj_t, "obj_scale": data.obj.scale}
+                else {
+                    "obj_R": obj_R,
+                    "obj_R_cam": obj_R_cam,
+                    "obj_t": obj_t,
+                    "obj_t_cam": obj_t_cam,
+                    "obj_z_cam": obj_z_cam,
+                    "obj_depth_res": self.params.obj_depth_res,
+                    "obj_scale": data.obj.scale,
+                }
             ),
             "meta": {
                 "inter_start_idx": data.inter_start_idx,
                 "inter_end_idx": data.inter_end_idx,
+                "optimization_config": dict(self.cfg),
+                "contact_frame": data.contact_frame,
+                "contact_hand": data.contact_hand,
+                "approach_window": data.approach_window,
+                "human_approach_distance": float(pred.human.approach_distance.detach()),
+                "human_approach_ramp": (
+                    tensor_to_numpy(pred.human.approach_ramp)
+                    if to_numpy
+                    else pred.human.approach_ramp
+                ),
+                "human_approach_offset": (
+                    tensor_to_numpy(pred.human.approach_offset)
+                    if to_numpy
+                    else pred.human.approach_offset
+                ),
             },
         }
+
+        if data.lift4d_depth is not None:
+            K = data.lift4d_depth.camera_intrinsics
+            fp_trans_cam = data.obj.poses_cam[:, :3, 3]
+
+            def project(trans):
+                return torch.stack(
+                    [
+                        K[:, 0, 0] * trans[:, 0] / trans[:, 2] + K[:, 0, 2],
+                        K[:, 1, 1] * trans[:, 1] / trans[:, 2] + K[:, 1, 2],
+                    ],
+                    dim=1,
+                )
+
+            pixel_error = torch.linalg.norm(project(obj_t_cam) - project(fp_trans_cam), dim=1)
+            pixel_stats = {
+                "mean": float(pixel_error.mean().detach()),
+                "median": float(pixel_error.median().detach()),
+                "max": float(pixel_error.max().detach()),
+            }
+            self.logger.info(
+                "Final projection pixel error | mean=%.8g | median=%.8g | max=%.8g",
+                pixel_stats["mean"],
+                pixel_stats["median"],
+                pixel_stats["max"],
+            )
+            if pixel_stats["max"] > 1e-3:
+                raise ValueError(
+                    "Optimized object translation left the FoundationPose image ray: "
+                    f"max pixel error={pixel_stats['max']:.8g}"
+                )
+            optimized_data["meta"]["lift4d_depth"] = {
+                "source_path": data.lift4d_depth.source_path,
+                "camera_convention": data.lift4d_depth.camera_convention,
+                "stable_point_ids": (
+                    tensor_to_numpy(data.lift4d_depth.stable_point_ids)
+                    if to_numpy
+                    else data.lift4d_depth.stable_point_ids
+                ),
+                "valid_point_count": (
+                    tensor_to_numpy(data.lift4d_depth.valid_point_count)
+                    if to_numpy
+                    else data.lift4d_depth.valid_point_count
+                ),
+                "frame_indices": (
+                    tensor_to_numpy(data.lift4d_depth.frame_indices)
+                    if to_numpy
+                    else data.lift4d_depth.frame_indices
+                ),
+                "prior_used": (
+                    tensor_to_numpy(data.lift4d_depth.prior_used)
+                    if to_numpy
+                    else data.lift4d_depth.prior_used
+                ),
+                "lift4d_z_raw": (
+                    tensor_to_numpy(data.lift4d_depth.z_raw)
+                    if to_numpy
+                    else data.lift4d_depth.z_raw
+                ),
+                "lift4d_z": (
+                    tensor_to_numpy(data.lift4d_depth.z)
+                    if to_numpy
+                    else data.lift4d_depth.z
+                ),
+                "frame_weight": (
+                    tensor_to_numpy(data.lift4d_depth.frame_weight)
+                    if to_numpy
+                    else data.lift4d_depth.frame_weight
+                ),
+                "depth_scale": float(pred.obj.depth_scale.detach()),
+                "projection_pixel_error": pixel_stats,
+                "diagnostics": data.lift4d_depth.diagnostics,
+            }
+
+        if data.lift4d_motion is not None:
+            optimized_data["meta"]["lift4d_motion"] = {
+                "source_path": data.lift4d_motion.source_path,
+                "anchor_frame": data.lift4d_motion.anchor_frame,
+                "translation_scale": data.lift4d_motion.translation_scale,
+                "valid_frames": (
+                    tensor_to_numpy(data.lift4d_motion.motion_valid)
+                    if to_numpy
+                    else data.lift4d_motion.motion_valid
+                ),
+                "motion_confidence": (
+                    tensor_to_numpy(data.lift4d_motion.motion_confidence)
+                    if to_numpy
+                    else data.lift4d_motion.motion_confidence
+                ),
+                "rigid_fit_rmse": (
+                    tensor_to_numpy(data.lift4d_motion.rigid_fit_rmse)
+                    if to_numpy and data.lift4d_motion.rigid_fit_rmse is not None
+                    else data.lift4d_motion.rigid_fit_rmse
+                ),
+                "diagnostics": data.lift4d_motion.diagnostics,
+            }
 
         if data.static_objects is not None:
             optimized_data["scene_data"] = tensor_to_numpy(data.static_objects)
@@ -832,7 +1345,7 @@ class HOIOptimizer:
 
     def write_logs(self, cur_iter, loss_dict, opt_config):
         opt_niters = opt_config["niter"]
-        loss_str = " | ".join([f"{x}: {y:7.3f}" for x, y in loss_dict.items()])
+        loss_str = " | ".join([f"{x}: {y:.6g}" for x, y in loss_dict.items()])
         head_str = f'{self.cfg["exp_name"]} - {opt_config["stage"]}'
         info_str = f"{head_str} | {cur_iter:4d}/{opt_niters} | {loss_str}"
 

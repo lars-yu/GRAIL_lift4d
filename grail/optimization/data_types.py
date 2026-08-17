@@ -37,7 +37,38 @@ class HOIData:
         masks: list  # per-frame binary masks, len=L
         verts_seq: torch.Tensor  # (L, V, 3) per-frame transformed vertices
         poses: torch.Tensor  # (L, 4, 4) SE(3) poses
+        poses_cam: torch.Tensor  # (L, 4, 4) FoundationPose T_C<-O in OpenCV camera
+        fp_ray_cam: torch.Tensor  # (L, 3), z-normalized FoundationPose image rays
         verts_tracking_seq: torch.Tensor  # (L, V, 2) projected 2D vertices
+
+    @dataclass
+    class Lift4DMotion:
+        object_poses: torch.Tensor  # (L, 4, 4) aligned FP-anchor + Lift4D relative prior
+        motion_valid: torch.Tensor  # (L,) bool
+        motion_confidence: torch.Tensor  # (L,)
+        source_path: str
+        anchor_frame: int
+        translation_scale: float
+        rigid_fit_rmse: torch.Tensor | None = None  # (L,)
+        object_scales: torch.Tensor | None = None  # (L,) diagnostic only
+        diagnostics: dict[str, Any] | None = None
+
+    @dataclass
+    class Lift4DDepth:
+        frame_indices: torch.Tensor  # (L,), strictly equal to arange(L)
+        prior_used: torch.Tensor  # (L,) bool, all true for formal supervision
+        center_cam_raw: torch.Tensor  # (L, 3), robust per-frame center before temporal smoothing
+        center_cam: torch.Tensor  # (L, 3), filtered/smoothed OpenCV camera center
+        z_raw: torch.Tensor  # (L,), unsmoothed robust center depth
+        z: torch.Tensor  # (L,)
+        delta_z: torch.Tensor  # (L,), relative to frame 0
+        frame_weight: torch.Tensor  # (L,), support-derived and normalized
+        valid_point_count: torch.Tensor  # (L,)
+        camera_intrinsics: torch.Tensor  # (L, 3, 3)
+        stable_point_ids: torch.Tensor  # (S,)
+        source_path: str
+        camera_convention: str
+        diagnostics: dict[str, Any]
 
     frame_num: int
     inter_start_idx: int
@@ -50,6 +81,11 @@ class HOIData:
     is_static_obj: bool
     obj_sdf: Any = None
     static_objects: dict | None = None
+    lift4d_motion: Lift4DMotion | None = None
+    lift4d_depth: Lift4DDepth | None = None
+    contact_frame: int | None = None
+    contact_hand: str = "right"
+    approach_window: int = 30
 
 
 @dataclass
@@ -61,7 +97,11 @@ class OptParams:
     human_pose_res: torch.Tensor  # (L, J_body, 6) — body pose residuals in 6D
     hand_pose_res: torch.Tensor  # (L, J_hand, 6) — hand pose residuals in 6D
     obj_R_res: torch.Tensor  # (L, 6) — object rotation residuals in 6D
-    obj_t_res: torch.Tensor  # (L, 3) — object translation residuals
+    obj_t_res: Optional[torch.Tensor]  # (L, 3) legacy world translation residuals
+    obj_depth_res: Optional[torch.Tensor] = None  # (L,) residual added to FoundationPose camera-z
+    human_approach_distance: Optional[torch.Tensor] = None  # scalar, projected to [0,max]
+    obj_z_opt: Optional[torch.Tensor] = None  # deprecated absolute ray depth; compatibility only
+    log_lift4d_depth_scale: Optional[torch.Tensor] = None  # scalar, exp() keeps scale positive
 
 
 @dataclass
@@ -80,12 +120,19 @@ class HOIPrediction:
         hand_keypoints_seq: torch.Tensor  # (L, J_hand, 2)
         pose_res: torch.Tensor  # (L, J_body, 6)
         trans_res: torch.Tensor  # (L, 1, 3)
+        approach_ramp: torch.Tensor  # (L,)
+        approach_offset: torch.Tensor  # (L, 3)
+        approach_distance: torch.Tensor  # scalar
         motion_data: dict  # body-model-specific, used by get_optimized_data
 
     @dataclass
     class Object:
         trans: torch.Tensor  # (L, 3)
+        trans_cam: torch.Tensor  # (L, 3), OpenCV camera convention
+        z_cam: torch.Tensor  # (L,)
+        depth_scale: torch.Tensor  # positive scalar
         R: torch.Tensor  # (L, 3, 3)
+        R_cam: torch.Tensor  # (L, 3, 3), OpenCV camera convention
         verts_seq: torch.Tensor  # (L, V, 3)
 
     human: Human
