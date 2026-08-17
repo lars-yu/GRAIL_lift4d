@@ -7,6 +7,8 @@ from typing import Any, Optional
 
 import torch
 
+from grail.optimization.motion_state import ObjectMotionState
+
 
 @dataclass
 class HOIData:
@@ -58,9 +60,11 @@ class HOIData:
         frame_indices: torch.Tensor  # (L,), strictly equal to arange(L)
         prior_used: torch.Tensor  # (L,) bool, all true for formal supervision
         center_cam_raw: torch.Tensor  # (L, 3), robust per-frame center before temporal smoothing
+        center_cam_detection: torch.Tensor  # (L, 3), median5 only; motion onset input
         center_cam: torch.Tensor  # (L, 3), filtered/smoothed OpenCV camera center
         z_raw: torch.Tensor  # (L,), unsmoothed robust center depth
         z: torch.Tensor  # (L,)
+        z_target: torch.Tensor  # (L,), static-locked then relative Lift4D motion
         delta_z: torch.Tensor  # (L,), relative to frame 0
         frame_weight: torch.Tensor  # (L,), support-derived and normalized
         valid_point_count: torch.Tensor  # (L,)
@@ -83,7 +87,14 @@ class HOIData:
     static_objects: dict | None = None
     lift4d_motion: Lift4DMotion | None = None
     lift4d_depth: Lift4DDepth | None = None
-    contact_frame: int | None = None
+    object_motion_state: ObjectMotionState | None = None
+    contact_frame: int | None = None  # compatibility alias for contact_hint
+    contact_hint: int | None = None
+    contact_hint_source: str = "inter_start"
+    contact_window_start: int | None = None
+    contact_window_end: int | None = None
+    selected_contact_frame: int | None = None
+    contact_soft_weight: torch.Tensor | None = None
     contact_hand: str = "right"
     approach_window: int = 30
 

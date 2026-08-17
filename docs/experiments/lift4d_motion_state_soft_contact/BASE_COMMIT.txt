@@ -1,0 +1,6 @@
+8390b83343a9c080e71873d398c09752ac2b7592
+
+GitHub: https://github.com/lars-yu/GRAIL_lift4d.git
+Branch: codex/lift4d-motion-state-soft-contact
+Isolated worktree: /home/jiaoyufei_insta360.com/PRE/GRAIL_4d_motion_state_soft_contact
+Protected source worktree: /home/jiaoyufei_insta360.com/PRE/GRAIL_4d

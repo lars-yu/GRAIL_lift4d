@@ -36,6 +36,43 @@ def _install_numpy_pickle_compat() -> None:
     sys.modules.setdefault("numpy._core.multiarray", np.core.multiarray)
 
 
+def _validate_vggt_provenance(result_meta):
+    """Validate optional human-only VGGT provenance for a formal result."""
+    if "formal_joint_optimization" not in result_meta:
+        return
+    vggt_meta = result_meta.get("vggt_depth")
+    if not isinstance(vggt_meta, dict):
+        raise ValueError("Formal HOI result has no VGGT depth provenance")
+    if not bool(vggt_meta.get("enabled", False)):
+        if vggt_meta.get("consumed_by_loss") is not None:
+            raise ValueError("Disabled VGGT depth cannot be consumed by a loss")
+        return
+    _real_file(vggt_meta.get("depth_path", ""), "VGGT depth")
+    if vggt_meta.get("consumed_by_loss") != "human depth_pointcloud":
+        raise ValueError("Formal VGGT depth may supervise only the human depth loss")
+
+
+def _build_render_setup_config(root_cfg, config_file, results_dir):
+    """Build data/camera setup config without rerunning optimization priors."""
+    cfg = dict(root_cfg["optimization"])
+    cfg["human_model"] = dict(root_cfg["human_model"])
+    project_root = Path(config_file).resolve().parents[2]
+    for key, value in list(cfg["human_model"].items()):
+        if (key.endswith("_path") or key.endswith("_dir")) and isinstance(value, str):
+            if value and not os.path.isabs(value):
+                cfg["human_model"][key] = str(project_root / value)
+    cfg.update(
+        {
+            "results_dir": os.path.abspath(results_dir),
+            "use_lift4d_depth_prior": False,
+            "object_motion_state": {"enabled": False},
+            "vis_cfg": {"enable": False},
+            "opt_stage_specs": {},
+        }
+    )
+    return cfg
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-file", required=True)
@@ -77,30 +114,11 @@ def main() -> None:
     )
     if certification.get("synthetic_data_used") is not False:
         raise ValueError("Saved HOI result does not explicitly certify synthetic_data_used=False")
-    if "formal_joint_optimization" in result_meta:
-        vggt_meta = result_meta.get("vggt_depth")
-        if not isinstance(vggt_meta, dict):
-            raise ValueError("Formal HOI result has no real VGGT depth provenance")
-        _real_file(vggt_meta.get("depth_path", ""), "VGGT depth")
-        if vggt_meta.get("consumed_by_loss") != "depth_pointcloud":
-            raise ValueError("Formal HOI result does not prove VGGT depth loss participation")
+    _validate_vggt_provenance(result_meta)
 
     with open(config_file, "r") as handle:
         root_cfg = yaml.safe_load(handle)
-    cfg = dict(root_cfg["optimization"])
-    cfg["human_model"] = dict(root_cfg["human_model"])
-    project_root = Path(config_file).resolve().parents[2]
-    for key, value in list(cfg["human_model"].items()):
-        if (key.endswith("_path") or key.endswith("_dir")) and isinstance(value, str):
-            if value and not os.path.isabs(value):
-                cfg["human_model"][key] = str(project_root / value)
-    cfg.update(
-        {
-            "results_dir": os.path.abspath(args.results_dir),
-            "vis_cfg": {"enable": False},
-            "opt_stage_specs": {},
-        }
-    )
+    cfg = _build_render_setup_config(root_cfg, config_file, args.results_dir)
 
     output_file = Path(args.output_file).resolve()
     output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -167,10 +185,13 @@ def main() -> None:
             raise RuntimeError(f"Cannot read top-view frame {frame_idx}/{frame_num}")
         lines = [
             f"frame={frame_idx}",
-            f"Lift4D raw Z={float(row['lift_z_raw']):.4f}",
-            f"Lift4D smooth Z={float(row['lift_z_smooth']):.4f}",
+            f"Lift4D raw Z={float(row['center_cam_raw_z']):.4f}",
+            f"Lift4D smooth Z={float(row['lift4d_z_smooth']):.4f}",
+            f"Lift4D target Z={float(row['lift4d_z_target']):.4f}",
             f"optimized Z={float(row['optimized_z']):.4f}",
-            f"hand-object distance={float(row['hand_object_distance']):.4f} m",
+            f"left/right hand distance={float(row['left_hand_object_distance']):.4f}/{float(row['right_hand_object_distance']):.4f} m",
+            f"state={'static' if frame_idx < int(row['move_start_frame']) else 'moving'} t_move={int(row['move_start_frame'])}",
+            f"hint={int(row['contact_hint'])} window=[{int(row['contact_window_start'])},{int(row['contact_window_end'])}] selected={int(row['selected_contact_frame'])}",
         ]
         for line_idx, line in enumerate(lines):
             y = 28 + line_idx * 26

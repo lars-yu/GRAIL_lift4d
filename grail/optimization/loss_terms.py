@@ -169,6 +169,50 @@ def contact_anchor_distance_loss(distance, target=0.02, delta=0.02):
     return huber_loss(distance - float(target), delta=delta)
 
 
+def temporal_contact_prior(
+    frame_indices, contact_hint, *, hint_sigma=5.0, hint_floor=0.2
+):
+    """Positive weak hint weights; never crops the physical search window."""
+    if hint_sigma <= 0 or not 0 < hint_floor <= 1:
+        raise ValueError("hint_sigma must be positive and hint_floor must be in (0,1]")
+    frames = frame_indices.to(dtype=torch.float32)
+    if contact_hint is None:
+        return torch.ones_like(frames)
+    offset = frames - float(contact_hint)
+    return float(hint_floor) + torch.exp(-offset.square() / (2.0 * float(hint_sigma) ** 2))
+
+
+def temporal_soft_contact_loss(
+    distances,
+    frame_indices,
+    contact_hint,
+    *,
+    target=0.02,
+    hint_sigma=5.0,
+    hint_floor=0.2,
+    softmin_temperature=0.01,
+    delta=0.02,
+):
+    """Soft-min contact objective over every frame in the physical window."""
+    if distances.ndim != 1 or frame_indices.shape != distances.shape:
+        raise ValueError("distances and frame_indices must be matching 1D tensors")
+    if distances.numel() == 0 or softmin_temperature <= 0:
+        raise ValueError("contact window must be non-empty and temperature positive")
+    prior = temporal_contact_prior(
+        frame_indices, contact_hint, hint_sigma=hint_sigma, hint_floor=hint_floor
+    ).to(distances.device, distances.dtype)
+    logits = -distances / float(softmin_temperature) + torch.log(prior)
+    soft_weight = torch.softmax(logits, dim=0)
+    residual = distances - float(target)
+    abs_residual = residual.abs()
+    element_loss = torch.where(
+        abs_residual < float(delta),
+        0.5 * abs_residual.square(),
+        float(delta) * (abs_residual - 0.5 * float(delta)),
+    )
+    return (soft_weight * element_loss).sum(), soft_weight
+
+
 def approach_monotonic_loss(distances):
     if distances.numel() < 2:
         return distances.new_zeros(())

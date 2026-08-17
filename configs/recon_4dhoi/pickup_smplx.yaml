@@ -116,9 +116,27 @@ optimization:
   lift4d_depth_scale_lr: 0.001
   lift4d_depth_lr: 0.01
   max_human_approach_distance: 0.35
+  object_motion_state:
+    enabled: true
+    detection_median_window: 5
+    baseline_frames: 15
+    vote_window: 5
+    min_votes: 3
+    persistence_window: 7
+    min_persistence: 5
+    motion_score_threshold: 3.0
+    transition_frames: 4
+    latch_moving: true
+    low_confidence_action: error
   contact:
     frame: null
-    hand: "right"
+    hand: "auto"
+    hand_fallback: "right"
+    frames_before_motion: 8
+    frames_after_motion: 2
+    hint_sigma: 5
+    hint_floor: 0.2
+    softmin_temperature: 0.01
     approach_window: 30
     target_distance: 0.02
 

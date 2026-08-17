@@ -1,0 +1,24 @@
+Captured before source edits on 2026-08-17 (Asia/Shanghai).
+
+Protected source worktree:
+  path: /home/jiaoyufei_insta360.com/PRE/GRAIL_4d
+  HEAD: 0cf1c7d202afdc059b7ac7d5a906011be13921a6
+  branch: codex/lift4d-stage3-depth-approach
+  cached diff: empty
+  worktree: heavily modified and untracked by the user, including generated data,
+            imports, dynamic-camera work, configs, and unrelated GRAIL modules.
+
+Protection decision:
+  The source worktree was not switched, cleaned, reset, or used for this commit.
+  An isolated worktree was created from the requested GitHub main baseline.
+
+Experiment worktree before edits:
+  path: /home/jiaoyufei_insta360.com/PRE/GRAIL_4d_motion_state_soft_contact
+  HEAD: 8390b83343a9c080e71873d398c09752ac2b7592
+  branch: codex/lift4d-motion-state-soft-contact
+  git status --short: clean after sparse-checkout initialization recovery
+  git diff: empty
+  git diff --cached: empty
+
+The original full `git status --short` output was inspected before isolation. No
+pre-existing user changes are included in this experiment branch.

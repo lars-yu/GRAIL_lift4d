@@ -34,6 +34,7 @@ class Lift4DDepthPrior:
     frame_indices: np.ndarray
     prior_used: np.ndarray
     center_cam_raw: np.ndarray
+    center_cam_detection: np.ndarray
     center_cam: np.ndarray
     z_raw: np.ndarray
     z: np.ndarray
@@ -89,6 +90,7 @@ def load_lift4d_depth_prior(
     *,
     frame_num: int,
     median_window: int = 7,
+    detection_median_window: int = 5,
     smooth_window: int = 31,
     savgol_polyorder: int = 2,
     stable_point_count: int = 2500,
@@ -191,6 +193,12 @@ def load_lift4d_depth_prior(
             f"Lift4D stable center is invalid for frames {bad.tolist()}; no trajectory interpolation fallback is allowed"
         )
 
+    detection_median_window = _odd_window(
+        detection_median_window, t_count, minimum=3
+    )
+    detection_center = _local_median_filter(
+        centers, window=detection_median_window
+    )
     median_window = _odd_window(median_window, t_count, minimum=3)
     median_center = _local_median_filter(centers, window=median_window)
     sg_window = _odd_window(smooth_window, t_count, minimum=5)
@@ -223,6 +231,7 @@ def load_lift4d_depth_prior(
         frame_indices=frame_indices,
         prior_used=np.ones(t_count, dtype=bool),
         center_cam_raw=centers.astype(np.float32),
+        center_cam_detection=detection_center.astype(np.float32),
         center_cam=smoothed.astype(np.float32),
         z_raw=centers[:, 2].astype(np.float32),
         z=smoothed[:, 2].astype(np.float32),
@@ -238,6 +247,7 @@ def load_lift4d_depth_prior(
             "stable_point_count": int(stable_ids.size),
             "stable_score_threshold": threshold,
             "median_window": int(median_window),
+            "detection_median_window": int(detection_median_window),
             "smooth_window": int(sg_window),
             "savgol_polyorder": int(savgol_polyorder),
             "supervised_frame_count": int(t_count),

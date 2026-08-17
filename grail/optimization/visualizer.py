@@ -11,7 +11,19 @@ from tqdm import tqdm
 
 from grail.core.io import load_mesh, save_mesh
 from grail.core.torch_utils import tensor_to
-from grail.dynamic_camera.camera import camera_for_frame, is_batched_camera
+try:
+    from grail.dynamic_camera.camera import camera_for_frame, is_batched_camera
+except ModuleNotFoundError as exc:
+    if exc.name != "grail.dynamic_camera.camera":
+        raise
+
+    # The GitHub baseline is fixed-camera only and does not ship the optional
+    # dynamic-camera package. Keep fixed-camera rendering self-contained.
+    def camera_for_frame(camera, _frame_idx):
+        return camera
+
+    def is_batched_camera(_camera):
+        return False
 from grail.rendering.camera import get_camera
 from grail.rendering.renderer import create_renderer, render_frame
 from grail.rendering.textures import create_colored_meshes, create_mesh_with_vertex_colors

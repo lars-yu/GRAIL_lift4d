@@ -13,6 +13,7 @@ from grail.optimization.loss_terms import (
     contact_smoothness_loss,
     contact_anchor_distance_loss,
     ground_loss,
+    huber_loss,
     foundationpose_depth_anchor_loss,
     keypoint_loss,
     lift4d_depth_trend_loss,
@@ -24,6 +25,7 @@ from grail.optimization.loss_terms import (
     smoothness_loss,
     object_depth_smoothness_loss,
     relative_translation_consistency_loss,
+    temporal_soft_contact_loss,
 )
 from grail.optimization.approach import hand_to_mesh_surface_distance
 from grail.rendering.camera import project_world_to_screen, unproject_depth_map_to_world
@@ -78,6 +80,7 @@ class LossComputer:
         "contact_anchor": "_contact_anchor_loss",
         "approach_monotonic": "_approach_monotonic_loss",
         "postcontact_relative": "_postcontact_relative_loss",
+        "object_static_pre_motion": "_object_static_pre_motion_loss",
     }
 
     def compute_loss(self, data, pred, loss_cfg):
@@ -323,7 +326,7 @@ class LossComputer:
         prior = self._require_lift4d_depth(data, pred)
         raw = lift4d_depth_trend_loss(
             pred.obj.z_cam,
-            prior.z,
+            prior.z_target,
             prior.frame_weight,
             pred.obj.depth_scale,
             delta=cfg.get("delta", 0.03),
@@ -334,7 +337,7 @@ class LossComputer:
         prior = self._require_lift4d_depth(data, pred)
         raw = lift4d_depth_velocity_loss(
             pred.obj.z_cam,
-            prior.z,
+            prior.z_target,
             prior.frame_weight,
             pred.obj.depth_scale,
             delta=cfg.get("delta", 0.015),
@@ -375,37 +378,93 @@ class LossComputer:
         return torch.stack(distances)
 
     def _contact_anchor_loss(self, data, pred, cfg, weight):
-        if data.contact_frame is None:
-            raise ValueError("contact_anchor requires an explicit contact frame")
-        radius = int(cfg.get("frame_radius", 2))
-        start = max(0, int(data.contact_frame) - radius)
-        end = min(data.frame_num, int(data.contact_frame) + radius + 1)
-        distances = self._hand_surface_distances(data, pred, range(start, end), cfg)
-        raw = contact_anchor_distance_loss(
+        if data.object_motion_state is None:
+            if data.contact_frame is None:
+                raise ValueError("contact_anchor requires an explicit contact frame")
+            radius = int(cfg.get("frame_radius", 2))
+            start = max(0, int(data.contact_frame) - radius)
+            end = min(data.frame_num, int(data.contact_frame) + radius + 1)
+            distances = self._hand_surface_distances(data, pred, range(start, end), cfg)
+            raw = contact_anchor_distance_loss(
+                distances,
+                target=cfg.get("target_distance", 0.02),
+                delta=cfg.get("delta", 0.02),
+            )
+            return raw, float(weight) * raw
+        if data.contact_window_start is None or data.contact_window_end is None:
+            raise ValueError("contact_anchor requires an explicit physical contact window")
+        start = int(data.contact_window_start)
+        end = int(data.contact_window_end) + 1
+        frame_indices = torch.arange(start, end, device=pred.obj.trans.device)
+        distances = self._hand_surface_distances(data, pred, frame_indices, cfg)
+        raw, soft_weight = temporal_soft_contact_loss(
             distances,
+            frame_indices,
+            data.contact_hint,
             target=cfg.get("target_distance", 0.02),
+            hint_sigma=cfg.get("hint_sigma", 5.0),
+            hint_floor=cfg.get("hint_floor", 0.2),
+            softmin_temperature=cfg.get("softmin_temperature", 0.01),
             delta=cfg.get("delta", 0.02),
         )
+        data.contact_soft_weight = soft_weight.detach()
+        data.selected_contact_frame = int(frame_indices[soft_weight.argmax()].item())
         return raw, float(weight) * raw
 
     def _approach_monotonic_loss(self, data, pred, cfg, weight):
-        if data.contact_frame is None:
-            raise ValueError("approach_monotonic requires an explicit contact frame")
-        start = max(0, int(data.contact_frame) - int(data.approach_window))
-        end = int(data.contact_frame) + 1
+        move_start = (
+            int(data.object_motion_state.move_start_frame)
+            if data.object_motion_state is not None
+            else int(data.contact_frame)
+        )
+        start = max(0, move_start - int(data.approach_window))
+        end = move_start + 1
         distances = self._hand_surface_distances(data, pred, range(start, end), cfg)
         raw = approach_monotonic_loss(distances)
         return raw, float(weight) * raw
 
     def _postcontact_relative_loss(self, data, pred, cfg, weight):
-        if data.contact_frame is None:
-            raise ValueError("postcontact_relative requires an explicit contact frame")
         hand_seq = self.human_model.get_verts_segment(
             pred.human.verts_seq, self._contact_hand_labels(data)
         )
-        start = int(data.contact_frame)
+        if data.object_motion_state is None:
+            start = int(data.contact_frame)
+            relative = hand_seq[start:].mean(dim=1) - pred.obj.trans[start:]
+            raw = relative_translation_consistency_loss(
+                relative, delta=cfg.get("delta", 0.01)
+            )
+            return raw, float(weight) * raw
+        window_start = int(data.contact_window_start)
+        window_end = int(data.contact_window_end) + 1
+        window_relative = (
+            hand_seq[window_start:window_end].mean(dim=1)
+            - pred.obj.trans[window_start:window_end]
+        )
+        if data.contact_soft_weight is None:
+            anchor = window_relative.mean(dim=0)
+        else:
+            soft_weight = data.contact_soft_weight.to(window_relative)
+            anchor = (soft_weight[:, None] * window_relative).sum(dim=0)
+        start = int(data.object_motion_state.move_start_frame)
         relative = hand_seq[start:].mean(dim=1) - pred.obj.trans[start:]
-        raw = relative_translation_consistency_loss(relative, delta=cfg.get("delta", 0.01))
+        raw = huber_loss(
+            torch.linalg.norm(relative - anchor[None], dim=-1),
+            delta=cfg.get("delta", 0.01),
+        )
+        return raw, float(weight) * raw
+
+    def _object_static_pre_motion_loss(self, data, pred, cfg, weight):
+        if data.object_motion_state is None:
+            raise ValueError("object_static_pre_motion requires object motion state")
+        move_start = int(data.object_motion_state.move_start_frame)
+        if move_start < 2:
+            raw = pred.obj.z_cam.new_zeros(())
+        else:
+            static_target = pred.obj.z_cam[:move_start].detach().median()
+            raw = huber_loss(
+                pred.obj.z_cam[:move_start] - static_target,
+                delta=cfg.get("delta", 0.01),
+            )
         return raw, float(weight) * raw
 
     def _fp_depth_anchor_loss(self, data, pred, cfg, weight):

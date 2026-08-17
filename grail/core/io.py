@@ -16,6 +16,19 @@ except ImportError:
     pass
 
 
+class _NumpyCompatUnpickler(pickle.Unpickler):
+    """Read NumPy 2 pickles in environments that still use NumPy 1.x."""
+
+    def find_class(self, module, name):
+        if module == "numpy._core" or module.startswith("numpy._core."):
+            module = "numpy.core" + module[len("numpy._core") :]
+        return super().find_class(module, name)
+
+
+def _load_numpy_compatible_pickle(file_obj):
+    return _NumpyCompatUnpickler(file_obj).load()
+
+
 def vis_keypoints_data(video_path, vitpose, hand_keypoints_2d, cache_dir):
     """
     Visualize keypoints data on video frames.
@@ -451,7 +464,7 @@ def load_object_pose_data(pose_file_path, to_tensor=False, device="cuda"):
         raise FileNotFoundError(f"Object pose file not found: {pose_file_path}")
 
     with open(pose_file_path, "rb") as f:
-        pose_list = pickle.load(f)
+        pose_list = _load_numpy_compatible_pickle(f)
 
     print(f"Loaded object pose data: {len(pose_list)} frames")
 
@@ -472,7 +485,7 @@ def save_hoi_data(hoi_data, save_path):
 
 def load_hoi_data(load_path, output_eval_data=False):
     with open(load_path, "rb") as f:
-        hoi_data = pickle.load(f)
+        hoi_data = _load_numpy_compatible_pickle(f)
     return hoi_data
 
     # if output_eval_data:
@@ -495,7 +508,7 @@ def load_init_rendering_data(
     load_path, to_tensor=False, with_human_data=False, with_scene_data=False, device="cuda"
 ):
     with open(load_path, "rb") as handle:
-        init_rendering_data = pickle.load(handle)
+        init_rendering_data = _load_numpy_compatible_pickle(handle)
 
     obj_R = init_rendering_data["obj_R"]
     obj_t = init_rendering_data["obj_t"].reshape((3,))
@@ -609,7 +622,7 @@ def load_character_data(character_data_path):
     if not os.path.exists(character_data_path):
         return None
     with open(character_data_path, "rb") as f:
-        return pickle.load(f)
+        return _load_numpy_compatible_pickle(f)
 
 
 def load_mesh(mesh_path, mesh_scale=None, target_num_verts=None, device="cuda"):
