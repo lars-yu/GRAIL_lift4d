@@ -4,19 +4,28 @@ import torch
 from pytorch3d.structures import Meshes
 
 from grail.optimization.loss_terms import (
+    approach_monotonic_loss,
     bidirectional_chamfer_loss,
     contact_center_loss,
     contact_depth_loss,
     contact_distribution_smoothness_loss,
     contact_loss,
     contact_smoothness_loss,
+    contact_anchor_distance_loss,
     ground_loss,
+    foundationpose_depth_anchor_loss,
     keypoint_loss,
+    lift4d_depth_trend_loss,
+    lift4d_depth_acceleration_loss,
+    lift4d_depth_velocity_loss,
     l1_loss,
     penetration_loss,
     reg_loss,
     smoothness_loss,
+    object_depth_smoothness_loss,
+    relative_translation_consistency_loss,
 )
+from grail.optimization.approach import hand_to_mesh_surface_distance
 from grail.rendering.camera import project_world_to_screen, unproject_depth_map_to_world
 
 
@@ -60,19 +69,42 @@ class LossComputer:
         "contact_distribution_smoothness": "_contact_distribution_smoothness_loss",
         "obj_precontact_reg": "_obj_precontact_reg_loss",
         "penetration": "_penetration_loss",
+        "lift4d_depth": "_lift4d_depth_loss",
+        "lift4d_velocity": "_lift4d_velocity_loss",
+        "lift4d_acceleration": "_lift4d_acceleration_loss",
+        "fp_depth_anchor": "_fp_depth_anchor_loss",
+        "obj_depth_smoothness": "_obj_depth_smoothness_loss",
+        "lift4d_depth_scale_reg": "_lift4d_depth_scale_reg_loss",
+        "contact_anchor": "_contact_anchor_loss",
+        "approach_monotonic": "_approach_monotonic_loss",
+        "postcontact_relative": "_postcontact_relative_loss",
     }
 
     def compute_loss(self, data, pred, loss_cfg):
         total_loss = 0.0
         loss_dict = {}
+        self.last_weighted_terms = {}
         for loss_name, cfg in loss_cfg.items():
+            if cfg.get("enabled", True) is False:
+                continue
             weight = cfg["weight"]
             fn_name = self._LOSS_FN.get(loss_name)
             if fn_name is None:
                 raise ValueError(f"Invalid loss name: {loss_name}")
-            loss = getattr(self, fn_name)(data, pred, cfg, weight)
-            total_loss += loss
-            loss_dict[loss_name] = loss.item()
+            result = getattr(self, fn_name)(data, pred, cfg, weight)
+            if isinstance(result, tuple):
+                raw_loss, weighted_loss = result
+                total_loss += weighted_loss
+                loss_dict[f"{loss_name}_raw"] = raw_loss.detach().item()
+                loss_dict[f"{loss_name}_weighted"] = weighted_loss.detach().item()
+                self.last_weighted_terms[loss_name] = weighted_loss
+            else:
+                weighted_loss = result
+                total_loss += weighted_loss
+                raw_loss = weighted_loss / float(weight) if float(weight) != 0.0 else weighted_loss
+                loss_dict[f"{loss_name}_raw"] = raw_loss.detach().item()
+                loss_dict[f"{loss_name}_weighted"] = weighted_loss.detach().item()
+                self.last_weighted_terms[loss_name] = weighted_loss
         return total_loss, loss_dict
 
     # ── Individual loss methods ──────────────────────────────────────────────
@@ -271,6 +303,130 @@ class LossComputer:
     def _obj_rot_reg_loss(self, data, pred, cfg, weight):
         return weight * reg_loss(pred.obj.R, data.obj.poses[:, :3, :3])
 
+    def _require_lift4d_depth(self, data, pred):
+        prior = getattr(data, "lift4d_depth", None)
+        if prior is None or pred.obj.z_cam is None:
+            raise ValueError("Lift4D depth loss is enabled but no real Lift4D depth prior is loaded")
+        frame_num = int(pred.obj.z_cam.shape[0])
+        expected = torch.arange(frame_num, device=prior.frame_indices.device)
+        if prior.frame_indices.shape != expected.shape or not torch.equal(prior.frame_indices, expected):
+            raise ValueError("Lift4D frame_indices must be exactly torch.arange(frame_num)")
+        if prior.prior_used.shape != expected.shape or not bool(prior.prior_used.all()):
+            raise ValueError("Lift4D formal depth prior must supervise every frame without fallback")
+        if int(prior.prior_used.sum()) != frame_num:
+            raise AssertionError(
+                f"Lift4D supervised frames: {int(prior.prior_used.sum())} / {frame_num}"
+            )
+        return prior
+
+    def _lift4d_depth_loss(self, data, pred, cfg, weight):
+        prior = self._require_lift4d_depth(data, pred)
+        raw = lift4d_depth_trend_loss(
+            pred.obj.z_cam,
+            prior.z,
+            prior.frame_weight,
+            pred.obj.depth_scale,
+            delta=cfg.get("delta", 0.03),
+        )
+        return raw, float(weight) * raw
+
+    def _lift4d_velocity_loss(self, data, pred, cfg, weight):
+        prior = self._require_lift4d_depth(data, pred)
+        raw = lift4d_depth_velocity_loss(
+            pred.obj.z_cam,
+            prior.z,
+            prior.frame_weight,
+            pred.obj.depth_scale,
+            delta=cfg.get("delta", 0.015),
+        )
+        return raw, float(weight) * raw
+
+    def _lift4d_acceleration_loss(self, data, pred, cfg, weight):
+        self._require_lift4d_depth(data, pred)
+        raw = lift4d_depth_acceleration_loss(pred.obj.z_cam)
+        return raw, float(weight) * raw
+
+    def _contact_hand_labels(self, data):
+        mapping = {
+            "right": ["R_Hand"],
+            "left": ["L_Hand"],
+            "both": ["L_Hand", "R_Hand"],
+        }
+        hand = str(data.contact_hand).lower()
+        if hand not in mapping:
+            raise ValueError(f"contact.hand must be left/right/both, got {data.contact_hand!r}")
+        return mapping[hand]
+
+    def _hand_surface_distances(self, data, pred, frame_indices, cfg):
+        hand_seq = self.human_model.get_verts_segment(
+            pred.human.verts_seq, self._contact_hand_labels(data)
+        )
+        distances = []
+        for frame_idx in frame_indices:
+            i = int(frame_idx)
+            distances.append(
+                hand_to_mesh_surface_distance(
+                    hand_seq[i],
+                    pred.obj.verts_seq[i],
+                    data.obj.faces,
+                    top_k=cfg.get("top_k", 32),
+                )
+            )
+        return torch.stack(distances)
+
+    def _contact_anchor_loss(self, data, pred, cfg, weight):
+        if data.contact_frame is None:
+            raise ValueError("contact_anchor requires an explicit contact frame")
+        radius = int(cfg.get("frame_radius", 2))
+        start = max(0, int(data.contact_frame) - radius)
+        end = min(data.frame_num, int(data.contact_frame) + radius + 1)
+        distances = self._hand_surface_distances(data, pred, range(start, end), cfg)
+        raw = contact_anchor_distance_loss(
+            distances,
+            target=cfg.get("target_distance", 0.02),
+            delta=cfg.get("delta", 0.02),
+        )
+        return raw, float(weight) * raw
+
+    def _approach_monotonic_loss(self, data, pred, cfg, weight):
+        if data.contact_frame is None:
+            raise ValueError("approach_monotonic requires an explicit contact frame")
+        start = max(0, int(data.contact_frame) - int(data.approach_window))
+        end = int(data.contact_frame) + 1
+        distances = self._hand_surface_distances(data, pred, range(start, end), cfg)
+        raw = approach_monotonic_loss(distances)
+        return raw, float(weight) * raw
+
+    def _postcontact_relative_loss(self, data, pred, cfg, weight):
+        if data.contact_frame is None:
+            raise ValueError("postcontact_relative requires an explicit contact frame")
+        hand_seq = self.human_model.get_verts_segment(
+            pred.human.verts_seq, self._contact_hand_labels(data)
+        )
+        start = int(data.contact_frame)
+        relative = hand_seq[start:].mean(dim=1) - pred.obj.trans[start:]
+        raw = relative_translation_consistency_loss(relative, delta=cfg.get("delta", 0.01))
+        return raw, float(weight) * raw
+
+    def _fp_depth_anchor_loss(self, data, pred, cfg, weight):
+        self._require_lift4d_depth(data, pred)
+        raw = foundationpose_depth_anchor_loss(
+            pred.obj.z_cam,
+            data.obj.poses_cam[:, 2, 3],
+            delta=cfg.get("delta", 0.02),
+        )
+        return raw, float(weight) * raw
+
+    def _obj_depth_smoothness_loss(self, data, pred, cfg, weight):
+        self._require_lift4d_depth(data, pred)
+        raw = object_depth_smoothness_loss(pred.obj.z_cam, delta=cfg.get("delta", 0.015))
+        return raw, float(weight) * raw
+
+    def _lift4d_depth_scale_reg_loss(self, data, pred, cfg, weight):
+        self._require_lift4d_depth(data, pred)
+        raw = (pred.obj.depth_scale - 1.0).square()
+        return raw, float(weight) * raw
+
     def _depth_pointcloud_loss(self, data, pred, cfg, weight):
         if self._depth_loss_cache is None:
             num_gt_samples = cfg.get("num_gt_samples", 3000)
@@ -280,9 +436,17 @@ class LossComputer:
         human_verts_seq = pred.human.verts_seq
         obj_verts_seq = pred.obj.verts_seq
         trim_pct = cfg.get("trim_pct", 0.2)
+        include_human = bool(cfg.get("include_human", True))
+        include_object = bool(cfg.get("include_object", True))
+        if not include_human and not include_object:
+            raise ValueError("depth_pointcloud must include human, object, or both")
 
         frame_num = human_verts_seq.shape[0]
         interval = cfg.get("interval", 1)
+        if cfg.get("require_full_frame", False) and int(interval) != 1:
+            raise ValueError(
+                f"Formal depth_pointcloud optimization requires interval=1, got {interval}"
+            )
         all_frames = list(range(frame_num))
         if interval > 1:
             start_offset = torch.randint(0, interval, (1,)).item()
@@ -301,10 +465,12 @@ class LossComputer:
             gt_obj_pc = cache["gt_obj_pcs"][i]
 
             frame_loss = 0.0
-            for pred_vis, gt_pc in [
-                (pred_human_visible, gt_human_pc),
-                (pred_obj_visible, gt_obj_pc),
-            ]:
+            pairs = []
+            if include_human:
+                pairs.append((pred_human_visible, gt_human_pc))
+            if include_object:
+                pairs.append((pred_obj_visible, gt_obj_pc))
+            for pred_vis, gt_pc in pairs:
                 if pred_vis.shape[0] > 0 and gt_pc.shape[0] > 0:
                     frame_loss = frame_loss + bidirectional_chamfer_loss(
                         pred_vis, gt_pc, trim_pct=trim_pct
