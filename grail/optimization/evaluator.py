@@ -168,7 +168,10 @@ def truncate_data(data, new_frame_num, logger=None):
         data.hand_ray_target_world = data.hand_ray_target_world[:new_frame_num]
     if data.hand_ray_ramp is not None:
         data.hand_ray_ramp = data.hand_ray_ramp[:new_frame_num]
-    for name in ("hand_initial_cam_depth", "hand_target_cam_depth", "object_surface_depth"):
+    for name in (
+        "hand_initial_cam", "hand_pixels", "hand_ray_surface_fallback",
+        "hand_initial_cam_depth", "hand_target_cam_depth", "object_surface_depth",
+    ):
         value = getattr(data, name, None)
         if isinstance(value, torch.Tensor):
             setattr(data, name, value[:new_frame_num])

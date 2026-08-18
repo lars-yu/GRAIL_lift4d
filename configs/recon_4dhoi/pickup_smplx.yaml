@@ -128,6 +128,7 @@ optimization:
     iou_drop_floor: 0.03
     strong_iou_drop_floor: 0.20
     lift4d_speed_floor_m: 0.002
+    required_consecutive_mask_frames: 3
     transition_frames: 0
     latch_moving: true
     low_confidence_action: error
@@ -136,7 +137,10 @@ optimization:
     hand: "auto"
     hand_fallback: "right"
     approach_window: null
-    pre_contact_seconds: 0.67
+    max_hand_speed_mps: 0.4
+    min_approach_frames: 20
+    max_approach_frames: 60
+    boundary_tail: 2
     hand_selection_lookback: 5
     keypoint_confidence: 0.2
     both_distance_px: 12.0

@@ -216,9 +216,13 @@ class HOIOptimizer:
         hand_selection = None
         hand_ray_target_world = None
         hand_ray_ramp = None
+        hand_initial_cam = None
+        hand_pixels = None
+        hand_ray_surface_fallback = None
         hand_initial_cam_depth = None
         hand_target_cam_depth = None
         object_surface_depth = None
+        hand_approach_initial_distance = None
         if motion_cfg.get("enabled", False):
             if lift4d_depth is None:
                 raise ValueError("object_motion_state.enabled requires a real Lift4D depth prior")
@@ -260,14 +264,6 @@ class HOIOptimizer:
             if contact_hand not in ("left", "right", "both"):
                 raise ValueError(f"contact.hand must be auto/left/right/both, got {contact_hand!r}")
             explicit_window = contact_cfg.get("approach_window")
-            approach_window = (
-                approach_window_from_fps(
-                    video_fps, float(contact_cfg.get("pre_contact_seconds", 0.67))
-                )
-                if explicit_window is None
-                else int(explicit_window)
-            )
-            approach_window = int(np.clip(approach_window, 10, 30))
             hand_joints_for_ray = initial_hand_joints
             if contact_hand == "left":
                 hand_joints_for_ray = initial_hand_joints[:, : initial_hand_joints.shape[1] // 2]
@@ -290,22 +286,31 @@ class HOIOptimizer:
                 ],
                 dim=1,
             )
-            surface_depth = mesh_surface_depth_at_pixels(
-                object_cam_seq, hand_pixel.detach(), intrinsics, top_k=32
+            object_center_cam = object_cam_seq[move_start - 1].median(dim=0).values
+            required_displacement = float(
+                torch.abs(initial_hand_cam[move_start - 1, 2] - object_center_cam[2]).detach()
             )
-            target_cam, hand_ray_ramp = camera_ray_hand_targets(
-                initial_hand_cam.detach(),
-                surface_depth,
-                move_start,
-                approach_window,
-                target_distance=float(contact_cfg.get("target_distance", 0.02)),
-            )
-            hand_ray_target_world = transform_camera_to_world(
-                target_cam, opencv_cam_R, opencv_cam_t
-            ).detach()
+            if explicit_window is None:
+                approach_window = approach_window_from_fps(
+                    video_fps,
+                    required_displacement,
+                    max_hand_speed_mps=float(contact_cfg.get("max_hand_speed_mps", 0.4)),
+                    min_approach_frames=int(contact_cfg.get("min_approach_frames", 20)),
+                    max_approach_frames=int(contact_cfg.get("max_approach_frames", 60)),
+                )
+            else:
+                approach_window = int(
+                    np.clip(
+                        int(explicit_window),
+                        int(contact_cfg.get("min_approach_frames", 20)),
+                        int(contact_cfg.get("max_approach_frames", 60)),
+                    )
+                )
+            # Stage A has not run yet.  Keep only the fixed input ray/pixels;
+            # final detached surface targets are created after Stage A.
+            hand_initial_cam = initial_hand_cam.detach()
+            hand_pixels = hand_pixel.detach()
             hand_initial_cam_depth = initial_hand_cam[:, 2].detach()
-            hand_target_cam_depth = target_cam[:, 2].detach()
-            object_surface_depth = surface_depth.detach()
             window_start = max(0, move_start - approach_window)
             window_end = frame_num - 1
             # Compatibility fields are derived from physical motion only. They do
@@ -386,9 +391,13 @@ class HOIOptimizer:
             ),
             hand_ray_target_world=hand_ray_target_world,
             hand_ray_ramp=hand_ray_ramp,
+            hand_initial_cam=hand_initial_cam,
+            hand_pixels=hand_pixels,
+            hand_ray_surface_fallback=hand_ray_surface_fallback,
             hand_initial_cam_depth=hand_initial_cam_depth,
             hand_target_cam_depth=hand_target_cam_depth,
             object_surface_depth=object_surface_depth,
+            hand_approach_initial_distance=hand_approach_initial_distance,
         )
 
     @staticmethod
@@ -1162,6 +1171,92 @@ class HOIOptimizer:
         return HOIPrediction(human=pred_human, obj=pred_obj)
 
     @torch.no_grad()
+    def refresh_hand_ray_targets_after_object_stage(self, data):
+        """Rebuild detached hand targets from the Stage-A optimized object mesh."""
+        if data.object_motion_state is None:
+            raise ValueError("Ray target refresh requires formal object motion state")
+        if data.hand_initial_cam is None or data.hand_pixels is None:
+            raise ValueError("init_data did not preserve hand ray inputs")
+        pred = self.forward(data, self.params)
+        object_cam_seq = transform_world_to_camera(
+            pred.obj.verts_seq.detach().reshape(-1, 3),
+            self.opencv_cam_R,
+            self.opencv_cam_t,
+        ).reshape(data.frame_num, -1, 3)
+        intrinsics = data.lift4d_depth.camera_intrinsics.detach()
+        surface_depth, fallback = mesh_surface_depth_at_pixels(
+            object_cam_seq,
+            data.hand_pixels.detach(),
+            intrinsics,
+            object_faces=data.obj.faces.detach(),
+            current_hand_depth=data.hand_initial_cam[:, 2].detach(),
+            top_k=32,
+        )
+        target_cam, ramp = camera_ray_hand_targets(
+            data.hand_initial_cam.detach(),
+            surface_depth.detach(),
+            int(data.object_motion_state.move_start_frame),
+            int(data.approach_window),
+            target_distance=float((self.cfg.get("contact", {}) or {}).get("target_distance", 0.02)),
+        )
+        data.hand_ray_target_world = transform_camera_to_world(
+            target_cam.detach(), self.opencv_cam_R, self.opencv_cam_t
+        ).detach()
+        data.hand_ray_ramp = ramp.detach()
+        data.hand_initial_cam_depth = data.hand_initial_cam[:, 2].detach()
+        data.hand_target_cam_depth = target_cam[:, 2].detach()
+        data.object_surface_depth = surface_depth.detach()
+        data.hand_ray_surface_fallback = fallback.detach()
+        start = max(0, int(data.object_motion_state.move_start_frame) - int(data.approach_window))
+        data.hand_approach_initial_distance = float(
+            torch.abs(data.hand_initial_cam[start, 2] - surface_depth[start]).detach()
+        )
+        self.logger.info(
+            "Refreshed Stage-A hand ray targets | surface_z[move]=%.6f | "
+            "fallback_frames=%d | initial_distance=%.6f",
+            float(surface_depth[int(data.object_motion_state.move_start_frame)]),
+            int(fallback.sum()),
+            float(data.hand_approach_initial_distance),
+        )
+        return data.hand_ray_target_world
+
+    @torch.no_grad()
+    def capture_stage_boundary_state(self, data):
+        """Freeze Stage-B endpoint state for continuous Stage-C refinement."""
+        if data.object_motion_state is None:
+            raise ValueError("Boundary state requires formal object motion state")
+        move_start = int(data.object_motion_state.move_start_frame)
+        if move_start < 1:
+            raise ValueError("t_move must be >= 1 for boundary state")
+        pred = self.forward(data, self.params)
+        hand = self.human_model.get_verts_segment(
+            pred.human.verts_seq, self._contact_hand_labels_for_data(data)
+        ).mean(dim=1)
+        data.boundary_hand_position_at_move = hand[move_start].detach().clone()
+        data.boundary_hand_velocity_at_move = (
+            hand[move_start] - hand[move_start - 1]
+        ).detach().clone()
+        data.boundary_pose_residual_at_move = pred.human.pose_res[move_start].detach().clone()
+        data.boundary_relative_anchor = (
+            hand[move_start] - pred.obj.trans[move_start].detach()
+        ).detach().clone()
+        self.logger.info(
+            "Captured Stage-B boundary state at t_move=%d | hand_step=%.6f",
+            move_start,
+            float(torch.linalg.norm(data.boundary_hand_velocity_at_move)),
+        )
+
+    @staticmethod
+    def _contact_hand_labels_for_data(data):
+        if data.contact_hand == "left":
+            return ["L_Hand"]
+        if data.contact_hand == "right":
+            return ["R_Hand"]
+        if data.contact_hand == "both":
+            return ["L_Hand", "R_Hand"]
+        raise ValueError(f"invalid contact hand {data.contact_hand!r}")
+
+    @torch.no_grad()
     def initialize_human_approach_direction(self, data, gravity_axis="z"):
         """Freeze a ground direction from the optimized static object position."""
         pred = self.forward(data, self.params)
@@ -1422,7 +1517,8 @@ class HOIOptimizer:
                 start = max(0, motion_frame - int(data.approach_window))
                 end = min(data.frame_num, motion_frame + 1)
             elif "stage_3c" in stage:
-                start = motion_frame
+                overlap = int(opt_config.get("overlap_frames", 5))
+                start = max(0, motion_frame - overlap)
                 end = data.frame_num
             else:
                 start = max(0, motion_frame - int(data.approach_window))

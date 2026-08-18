@@ -206,30 +206,40 @@ def detect_object_motion(
         float(cfg.get("strong_iou_threshold_scale", 2.0)) * iou_threshold,
     )
 
-    mask_motion = (
-        (iou_drop > iou_threshold)
-        | (centroid_disp > centroid_threshold)
-        | (area_change > area_threshold)
-    )
+    # Mask IoU is the primary motion signal.  Centroid/area and Lift4D speed
+    # are confidence auxiliaries only; they must never delay a sustained mask
+    # onset when the Lift4D center is noisy or static.
+    mask_evidence = iou_drop > iou_threshold
     strong_mask_motion = iou_drop > strong_iou_threshold
     lift4d_motion = lift4d_speed > speed_threshold
-    evidence = strong_mask_motion | (mask_motion & lift4d_motion)
-    evidence[:baseline_frames] = False
+    auxiliary_motion = (
+        (centroid_disp > centroid_threshold)
+        | (area_change > area_threshold)
+        | lift4d_motion
+    )
+    mask_evidence[:baseline_frames] = False
+    auxiliary_motion[:baseline_frames] = False
 
-    vote_window = int(cfg.get("vote_window", 5))
-    min_votes = int(cfg.get("min_votes", 3))
-    if vote_window < 1 or not 1 <= min_votes <= vote_window:
-        raise ValueError("min_votes must be in [1, vote_window]")
+    required_consecutive = int(cfg.get("required_consecutive_mask_frames", 3))
+    if required_consecutive < 1:
+        raise ValueError("required_consecutive_mask_frames must be >= 1")
     move_start = None
-    vote_fraction = 0.0
-    for end in range(baseline_frames, frame_num):
-        start = max(baseline_frames, end - vote_window + 1)
-        window_indices = np.arange(start, end + 1)
-        active = window_indices[evidence[window_indices]]
-        if active.size >= min_votes:
-            move_start = int(active[0])
-            vote_fraction = float(active.size / vote_window)
-            break
+    run_start = None
+    run_length = 0
+    for frame in range(baseline_frames, frame_num):
+        if mask_evidence[frame]:
+            run_start = frame if run_start is None else run_start
+            run_length += 1
+            if run_length >= required_consecutive:
+                move_start = int(run_start)
+                break
+        else:
+            run_start = None
+            run_length = 0
+    if move_start is not None:
+        vote_fraction = min(1.0, run_length / float(required_consecutive))
+    else:
+        vote_fraction = 0.0
     thresholds = {
         "iou_drop": iou_threshold,
         "centroid_displacement_px": centroid_threshold,
@@ -248,11 +258,19 @@ def detect_object_motion(
     if move_start is None:
         summary = ", ".join(f"{key}={value:.6g}" for key, value in thresholds.items())
         raise ValueError(
-            "Low-confidence object motion onset: no reliable 3/5 adjacent-frame "
-            f"pickup evidence; {summary}"
+            "Low-confidence object motion onset: no reliable sustained mask-IoU "
+            f"evidence ({required_consecutive} consecutive frames); {summary}"
         )
 
-    confidence = min(1.0, vote_fraction + 0.2 * float(strong_mask_motion[move_start]))
+    auxiliary_fraction = float(
+        np.mean(auxiliary_motion[move_start : move_start + required_consecutive])
+    )
+    confidence = min(
+        1.0,
+        vote_fraction
+        + 0.15 * float(strong_mask_motion[move_start])
+        + 0.10 * auxiliary_fraction,
+    )
     min_confidence = float(cfg.get("min_confidence", 0.55))
     if confidence < min_confidence:
         raise ValueError(
@@ -287,7 +305,7 @@ def detect_object_motion(
         motion_score_3d=score_3d.astype(np.float32),
         motion_score_mask=score_mask.astype(np.float32),
         motion_score=score.astype(np.float32),
-        moving_evidence=evidence,
+        moving_evidence=mask_evidence,
         moving=moving,
         static=static,
         move_start_frame=move_start,

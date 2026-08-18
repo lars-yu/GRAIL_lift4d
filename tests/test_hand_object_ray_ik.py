@@ -71,6 +71,33 @@ class HandObjectRayIKTests(unittest.TestCase):
         depth = mesh_surface_depth_at_pixels(vertices, torch.tensor([[50.0, 50.0]]), K, top_k=2)
         self.assertLess(float(depth[0]), 2.2)
 
+    def test_ray_triangle_surface_and_hand_side(self):
+        vertices = torch.tensor(
+            [[[-0.5, -0.5, 2.0], [0.5, -0.5, 2.0], [0.0, 0.5, 2.0]]]
+        )
+        faces = torch.tensor([[0, 1, 2]])
+        K = torch.tensor([[[100.0, 0.0, 50.0], [0.0, 100.0, 50.0], [0.0, 0.0, 1.0]]])
+        surface, fallback = mesh_surface_depth_at_pixels(
+            vertices,
+            torch.tensor([[50.0, 50.0]]),
+            K,
+            object_faces=faces,
+            current_hand_depth=torch.tensor([2.3]),
+        )
+        self.assertAlmostEqual(float(surface[0]), 2.0, places=5)
+        self.assertFalse(bool(fallback[0]))
+        target, _ = camera_ray_hand_targets(
+            torch.tensor([[0.0, 0.0, 2.3], [0.0, 0.0, 2.3]]),
+            surface.repeat(2), 1, 1, target_distance=0.02
+        )
+        self.assertAlmostEqual(float(target[1, 2]), 2.02, places=5)
+
+    def test_ray_target_refreshes_when_surface_depth_changes(self):
+        initial = torch.tensor([[0.2, -0.1, 2.5]] * 4)
+        target_a, _ = camera_ray_hand_targets(initial, torch.full((4,), 2.0), 2, 2)
+        target_b, _ = camera_ray_hand_targets(initial, torch.full((4,), 2.4), 2, 2)
+        self.assertGreater(float(torch.abs(target_a[2, 2] - target_b[2, 2])), 0.1)
+
 
 if __name__ == "__main__":
     unittest.main()

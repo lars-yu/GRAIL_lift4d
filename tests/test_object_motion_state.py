@@ -93,6 +93,17 @@ class ObjectMotionStateTests(unittest.TestCase):
             places=6,
         )
 
+    def test_mask_motion_detected_when_lift4d_center_is_static(self):
+        centers = _centers(move_start=None)
+        masks = _masks(move_start=24)
+        state = detect_object_motion(
+            centers,
+            masks,
+            config={"lift4d_speed_floor_m": 1.0, "required_consecutive_mask_frames": 3},
+        )
+        self.assertEqual(state.move_start_frame, 24)
+        self.assertTrue(np.all(state.moving[24:]))
+
 
 if __name__ == "__main__":
     unittest.main()

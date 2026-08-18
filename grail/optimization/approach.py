@@ -5,7 +5,7 @@ from __future__ import annotations
 import torch
 
 
-def smoothstep_approach_ramp(
+def minimum_jerk_ramp(
     frame_num: int,
     contact_frame: int,
     approach_window: int,
@@ -28,7 +28,25 @@ def smoothstep_approach_ramp(
     frames = torch.arange(frame_num, device=device, dtype=dtype)
     start = float(contact_frame - approach_window)
     u = ((frames - start) / float(approach_window)).clamp(0.0, 1.0)
-    return 3.0 * u.square() - 2.0 * u.pow(3)
+    return 10.0 * u.pow(3) - 15.0 * u.pow(4) + 6.0 * u.pow(5)
+
+
+def smoothstep_approach_ramp(
+    frame_num: int,
+    contact_frame: int,
+    approach_window: int,
+    *,
+    device=None,
+    dtype=torch.float32,
+) -> torch.Tensor:
+    """Compatibility name for the shared minimum-jerk approach ramp."""
+    return minimum_jerk_ramp(
+        frame_num,
+        contact_frame,
+        approach_window,
+        device=device,
+        dtype=dtype,
+    )
 
 
 def ground_approach_direction(

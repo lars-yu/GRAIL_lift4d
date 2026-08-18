@@ -228,11 +228,21 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
             data,
             {
                 "stage": "stage_3c_joint_contact_refinement",
+                "overlap_frames": 2,
                 "opt_vars": {"human_pose_res": {"joint_scope": "arms"}},
             },
         )
-        self.assertTrue(torch.all(pose.grad[:3] == 0))
+        self.assertTrue(torch.all(pose.grad[:1] == 0))
         self.assertTrue(torch.all(torch.linalg.norm(pose.grad[3:, 13], dim=-1) > 0))
+        self.assertTrue(torch.all(torch.linalg.norm(pose.grad[1:3, 13], dim=-1) > 0))
+
+    def test_stage_losses_include_local_hand_trajectory_and_boundary_terms(self):
+        _, stage_b, stage_c = _build_stage_loss_configs(True, False)
+        for name in ("hand_path", "hand_velocity", "hand_acceleration", "hand_jerk"):
+            self.assertIn(name, stage_b)
+            self.assertIn(name, stage_c)
+        for name in ("boundary_position", "boundary_velocity", "pose_residual_continuity"):
+            self.assertIn(name, stage_c)
 
     def test_stage_c_initializes_every_post_motion_frame_from_motion_anchor(self):
         optimizer = HOIOptimizer.__new__(HOIOptimizer)

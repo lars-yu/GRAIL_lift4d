@@ -102,9 +102,17 @@ class HOIData:
     hand_selection_reason: str = "legacy"
     hand_ray_target_world: Optional[torch.Tensor] = None  # (L,3), detached camera-ray IK target
     hand_ray_ramp: Optional[torch.Tensor] = None  # (L,)
+    hand_initial_cam: Optional[torch.Tensor] = None  # (L,3), fixed initial hand ray points
+    hand_pixels: Optional[torch.Tensor] = None  # (L,2), original image pixels
+    hand_ray_surface_fallback: Optional[torch.Tensor] = None  # (L,), ray lookup fallback
     hand_initial_cam_depth: Optional[torch.Tensor] = None
     hand_target_cam_depth: Optional[torch.Tensor] = None
     object_surface_depth: Optional[torch.Tensor] = None
+    hand_approach_initial_distance: Optional[float] = None
+    boundary_hand_position_at_move: Optional[torch.Tensor] = None
+    boundary_hand_velocity_at_move: Optional[torch.Tensor] = None
+    boundary_pose_residual_at_move: Optional[torch.Tensor] = None
+    boundary_relative_anchor: Optional[torch.Tensor] = None
 
 
 @dataclass

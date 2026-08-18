@@ -28,7 +28,7 @@ from grail.core.io import save_hoi_data
 from grail.optimization.hoi_optimizer import HOIOptimizer
 from grail.optimization.loss_computer import LossComputer
 from grail.optimization.approach import hand_to_mesh_surface_distance
-from grail.rendering.camera import project_world_to_screen
+from grail.rendering.camera import project_world_to_screen, transform_world_to_camera
 
 
 def _real_file(path: str, label: str) -> str:
@@ -281,6 +281,41 @@ def _foot_sliding(optimizer, data, pred, threshold=0.5):
     )
 
 
+@torch.no_grad()
+def _hand_trajectory_arrays(optimizer, data, pred):
+    labels = {"right": ["R_Hand"], "left": ["L_Hand"], "both": ["L_Hand", "R_Hand"]}
+    hand = optimizer.human_model.get_verts_segment(
+        pred.human.verts_seq, labels[data.contact_hand]
+    ).mean(dim=1)
+    hand_cam = transform_world_to_camera(
+        hand, optimizer.opencv_cam_R, optimizer.opencv_cam_t
+    )
+    fps = float(optimizer.video_fps)
+    velocity = torch.zeros_like(hand_cam)
+    velocity[1:] = (hand_cam[1:] - hand_cam[:-1]) * fps
+    acceleration = torch.zeros_like(hand_cam)
+    acceleration[2:] = (hand_cam[2:] - 2.0 * hand_cam[1:-1] + hand_cam[:-2]) * fps * fps
+    jerk = torch.zeros_like(hand_cam)
+    jerk[3:] = (
+        hand_cam[3:] - 3.0 * hand_cam[2:-1] + 3.0 * hand_cam[1:-2] - hand_cam[:-3]
+    ) * fps * fps * fps
+    desired_world = (
+        data.hand_ray_target_world.detach()
+        if data.hand_ray_target_world is not None
+        else torch.zeros_like(hand)
+    )
+    pose_norm = torch.linalg.norm(pred.human.pose_res, dim=-1).mean(dim=-1)
+    return {
+        "world": hand.detach().cpu().numpy(),
+        "cam": hand_cam.detach().cpu().numpy(),
+        "velocity": velocity.detach().cpu().numpy(),
+        "acceleration": acceleration.detach().cpu().numpy(),
+        "jerk": jerk.detach().cpu().numpy(),
+        "desired_world": desired_world.detach().cpu().numpy(),
+        "pose_residual_norm": pose_norm.detach().cpu().numpy(),
+    }
+
+
 def _write_diagnostics(
     output_dir, data, optimizer, pred, initial_hand_distances=None, initial_pred=None
 ):
@@ -348,6 +383,71 @@ def _write_diagnostics(
     depth_res = optimizer.params.obj_depth_res.detach().cpu().numpy()
     ramp = pred.human.approach_ramp.detach().cpu().numpy()
     offset = torch.linalg.norm(pred.human.approach_offset, dim=1).detach().cpu().numpy()
+    trajectory = _hand_trajectory_arrays(optimizer, data, pred)
+    hand_cam = trajectory["cam"]
+    hand_world = trajectory["world"]
+    desired_world = trajectory["desired_world"]
+    hand_speed = np.linalg.norm(trajectory["velocity"], axis=1)
+    hand_acceleration = np.linalg.norm(trajectory["acceleration"], axis=1)
+    hand_jerk = np.linalg.norm(trajectory["jerk"], axis=1)
+    approach_start = max(0, move_start - int(data.approach_window))
+    boundary_tail = int((optimizer.cfg.get("contact", {}) or {}).get("boundary_tail", 2))
+    metric_start = max(0, approach_start - 1)
+    metric_end = min(frame_num, move_start + boundary_tail + 1)
+    selected_window = selected_distance[metric_start:metric_end]
+    selected_window_steps = np.abs(np.diff(selected_window))
+    boundary_step_tmove = float(np.linalg.norm(hand_cam[move_start] - hand_cam[move_start - 1]))
+    boundary_velocity_change = float(
+        np.linalg.norm(trajectory["velocity"][move_start] - trajectory["velocity"][move_start - 1])
+    )
+
+    trajectory_csv_path = os.path.join(output_dir, "hand_trajectory_diagnostics.csv")
+    with open(trajectory_csv_path, "w", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow([
+            "frame", "actual_hand_cam_x", "actual_hand_cam_y", "actual_hand_cam_z",
+            "actual_hand_world_x", "actual_hand_world_y", "actual_hand_world_z",
+            "hand_speed_mps", "hand_acceleration_mps2", "hand_jerk",
+            "hand_object_distance", "desired_hand_target_x", "desired_hand_target_y",
+            "desired_hand_target_z", "pose_residual_norm", "approach_ramp",
+            "boundary_step_tmove", "boundary_velocity_change_tmove", "ray_surface_fallback",
+        ])
+        fallback = (
+            np.zeros(frame_num, dtype=bool)
+            if data.hand_ray_surface_fallback is None
+            else data.hand_ray_surface_fallback.detach().cpu().numpy().astype(bool)
+        )
+        for i in range(frame_num):
+            writer.writerow([
+                i, *hand_cam[i], *hand_world[i], hand_speed[i], hand_acceleration[i],
+                hand_jerk[i], selected_distance[i], *desired_world[i],
+                trajectory["pose_residual_norm"][i], ramp[i],
+                boundary_step_tmove if i == move_start else "",
+                boundary_velocity_change if i == move_start else "", int(fallback[i]),
+            ])
+
+    trajectory_plot_path = os.path.join(output_dir, "hand_trajectory_diagnostics.png")
+    fig, axes = plt.subplots(3, 1, figsize=(13, 10), sharex=True)
+    axes[0].plot(frame, hand_cam[:, 0], label="actual hand cam X")
+    axes[0].plot(frame, hand_cam[:, 1], label="actual hand cam Y")
+    axes[0].plot(frame, hand_cam[:, 2], label="actual hand cam Z")
+    axes[0].axvline(move_start, color="orange", linestyle="--", label="t_move")
+    axes[0].legend(ncol=4)
+    axes[0].set_ylabel("camera position (m)")
+    axes[1].plot(frame, hand_speed, label="speed (m/s)")
+    axes[1].plot(frame, hand_acceleration, label="acceleration (m/s2)")
+    axes[1].plot(frame, hand_jerk, label="jerk")
+    axes[1].legend(ncol=3)
+    axes[1].set_ylabel("trajectory derivatives")
+    axes[2].plot(frame, selected_distance, label="hand-object distance")
+    axes[2].plot(frame, ramp, label="minimum-jerk ramp")
+    axes[2].axvline(move_start, color="orange", linestyle="--")
+    axes[2].legend(ncol=2)
+    axes[2].set_xlabel("frame")
+    axes[2].set_ylabel("m / ramp")
+    fig.tight_layout()
+    fig.savefig(trajectory_plot_path, dpi=160)
+    plt.close(fig)
 
     csv_path = os.path.join(output_dir, "lift4d_motion_diagnostics.csv")
     with open(csv_path, "w", newline="") as handle:
@@ -533,8 +633,18 @@ def _write_diagnostics(
         "contact_frame_hand_object_distance": float(selected_distance[move_start]),
         "moving_fraction_under_5cm": float(np.mean(selected_distance[move_start:] < 0.05)),
         "maximum_adjacent_hand_object_distance_change": float(
-            np.abs(np.diff(selected_distance[move_start:])).max(initial=0.0)
+            selected_window_steps.max(initial=0.0)
         ),
+        "diagnostic_distance_window_start": metric_start,
+        "diagnostic_distance_window_end": metric_end - 1,
+        "boundary_step_tmove": boundary_step_tmove,
+        "boundary_velocity_change_tmove": boundary_velocity_change,
+        "approach_max_hand_step": float(
+            np.linalg.norm(np.diff(hand_cam[approach_start : move_start + 1], axis=0), axis=1).max(initial=0.0)
+        ),
+        "maximum_hand_speed_mps": float(hand_speed.max(initial=0.0)),
+        "maximum_hand_acceleration_mps2": float(hand_acceleration.max(initial=0.0)),
+        "maximum_hand_jerk": float(hand_jerk.max(initial=0.0)),
         "static_raw_z_std": float(lift_raw[:move_start].std()),
         "static_target_z_std": float(lift_target[:move_start].std()),
         "optimized_static_z_std": float(optimized_z[:move_start].std()),
@@ -568,6 +678,8 @@ def _write_diagnostics(
         "contact_plot": contact_plot,
         "human_mask_iou_csv": human_mask_csv_path,
         "hand_ray_plot": hand_plot,
+        "hand_trajectory_csv": trajectory_csv_path,
+        "hand_trajectory_plot": trajectory_plot_path,
     }
     metrics["acceptance_gates"] = {
         "static_optimized_z_std_under_2mm": metrics["optimized_static_z_std"] < 0.002,
@@ -577,6 +689,8 @@ def _write_diagnostics(
         "adjacent_hand_object_change_under_5cm": (
             metrics["maximum_adjacent_hand_object_distance_change"] <= 0.05
         ),
+        "boundary_hand_step_under_3cm": metrics["boundary_step_tmove"] < 0.03,
+        "approach_hand_step_under_3cm": metrics["approach_max_hand_step"] < 0.03,
         "lift4d_all_frames": supervised == frame_num,
         "positive_opencv_z": bool(np.all(fp_z > 0) and np.all(optimized_z > 0)),
         "human_mask_iou_decrease_under_002": (
@@ -654,7 +768,12 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
         contact_anchor_cfg["frame_radius"] = 2
     stage_b_loss = {
         "contact_anchor": {**contact_anchor_cfg, "phase": "precontact"},
-        "hand_ray_ik": {"weight": 1000.0, "delta": 0.03},
+        "hand_ray_ik": {"weight": 1000.0, "delta": 0.03, "phase": "precontact"},
+        "hand_path": {"weight": 50.0, "delta": 0.03, "phase": "precontact"},
+        "hand_velocity": {"weight": 5.0, "delta": 0.02, "phase": "precontact"},
+        "hand_acceleration": {"weight": 20.0, "delta": 0.02, "phase": "precontact"},
+        "hand_jerk": {"weight": 20.0, "delta": 0.02, "phase": "precontact"},
+        "pose_residual_acceleration": {"weight": 50.0, "phase": "precontact"},
         "approach_monotonic": {"weight": 500.0, "top_k": 32},
         "human_smoothness": {"weight": 300.0},
         "human_pose_reg": {"weight": 100.0},
@@ -669,8 +788,16 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
         "lift4d_acceleration": {"weight": 20.0},
         "fp_depth_anchor": {"weight": fp_anchor_weight, "delta": 0.02},
         "contact_anchor": {**contact_anchor_cfg, "phase": "moving"},
-        "hand_ray_ik": {"weight": 1000.0, "delta": 0.03},
+        "hand_ray_ik": {"weight": 1000.0, "delta": 0.03, "phase": "moving", "overlap_frames": 5},
+        "hand_path": {"weight": 50.0, "delta": 0.03, "phase": "moving", "overlap_frames": 5},
+        "hand_velocity": {"weight": 5.0, "delta": 0.02, "phase": "moving", "overlap_frames": 5},
+        "hand_acceleration": {"weight": 20.0, "delta": 0.02, "phase": "moving", "overlap_frames": 5},
+        "hand_jerk": {"weight": 20.0, "delta": 0.02, "phase": "moving", "overlap_frames": 5},
+        "pose_residual_acceleration": {"weight": 50.0, "phase": "moving", "overlap_frames": 5},
         "postcontact_relative": {"weight": 500.0, "delta": 0.01},
+        "boundary_position": {"weight": 1000.0, "delta": 0.01},
+        "boundary_velocity": {"weight": 500.0, "delta": 0.01},
+        "pose_residual_continuity": {"weight": 100.0, "delta": 0.01},
         "human_smoothness": {"weight": 300.0},
         "human_pose_reg": {"weight": 100.0},
         "human_foot_contact": {"weight": 1000.0},
@@ -731,6 +858,7 @@ def main() -> None:
         "iou_drop_floor": 0.03,
         "strong_iou_drop_floor": 0.20,
         "lift4d_speed_floor_m": 0.002,
+        "required_consecutive_mask_frames": 3,
         "transition_frames": 0,
         "latch_moving": True,
         "low_confidence_action": "error",
@@ -740,7 +868,10 @@ def main() -> None:
         "frame": None,
         "hand": "auto",
         "approach_window": None,
-        "pre_contact_seconds": 0.67,
+        "max_hand_speed_mps": 0.4,
+        "min_approach_frames": 20,
+        "max_approach_frames": 60,
+        "boundary_tail": 2,
         "hand_selection_lookback": 5,
         "keypoint_confidence": 0.2,
         "both_distance_px": 12.0,
@@ -874,6 +1005,10 @@ def main() -> None:
         "motion_progress_interval": 50,
         })
         optimizer.optimize_main(data, stage)
+        if stage["stage"] == "stage_3a_lift4d_full_frame_object_depth":
+            optimizer.refresh_hand_ray_targets_after_object_stage(data)
+        elif stage["stage"] == "stage_3b_human_precontact_approach":
+            optimizer.capture_stage_boundary_state(data)
         _, final_total, final_losses = _stage_metrics(
             optimizer, data, stage["loss_cfg"]
         )
