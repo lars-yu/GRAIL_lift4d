@@ -1,0 +1,13 @@
+# Pre-change status
+
+The previous formal result was
+`pickup_table/generation/lift4d_mask_motion_ray_ik/rand00033_formal_20260818_retry6`.
+It detected `t_move=105` from the old mask/Lift4D AND rule. The stale detached
+ray target was created before Stage A object-depth optimization. The old
+diagnostic omitted the `t_move-1 -> t_move` interval and reported a maximum
+hand-object distance change of 2.22 mm even though the real hand path had
+approximately 8.72 cm and 9.33 cm jumps at 103->104 and 104->105.
+
+The object prior was already verified as real, OpenCV camera convention, and
+121/121 frames. FoundationPose image-plane translation and rotation were to be
+kept fixed throughout this change.

@@ -66,6 +66,7 @@ def _build_render_setup_config(root_cfg, config_file, results_dir):
             "results_dir": os.path.abspath(results_dir),
             "use_lift4d_depth_prior": False,
             "object_motion_state": {"enabled": False},
+            "skip_contact_label_loading": True,
             "vis_cfg": {"enable": False},
             "opt_stage_specs": {},
         }

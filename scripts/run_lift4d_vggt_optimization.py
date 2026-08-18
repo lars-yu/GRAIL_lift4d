@@ -640,7 +640,9 @@ def _write_diagnostics(
         "boundary_step_tmove": boundary_step_tmove,
         "boundary_velocity_change_tmove": boundary_velocity_change,
         "approach_max_hand_step": float(
-            np.linalg.norm(np.diff(hand_cam[approach_start : move_start + 1], axis=0), axis=1).max(initial=0.0)
+            np.linalg.norm(
+                np.diff(hand_cam[max(0, approach_start - 1) : move_start + 1], axis=0), axis=1
+            ).max(initial=0.0)
         ),
         "maximum_hand_speed_mps": float(hand_speed.max(initial=0.0)),
         "maximum_hand_acceleration_mps2": float(hand_acceleration.max(initial=0.0)),
@@ -769,31 +771,31 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
     stage_b_loss = {
         "contact_anchor": {**contact_anchor_cfg, "phase": "precontact"},
         "hand_ray_ik": {"weight": 1000.0, "delta": 0.03, "phase": "precontact"},
-        "hand_path": {"weight": 50.0, "delta": 0.03, "phase": "precontact"},
-        "hand_velocity": {"weight": 5.0, "delta": 0.02, "phase": "precontact"},
-        "hand_acceleration": {"weight": 20.0, "delta": 0.02, "phase": "precontact"},
+        "hand_path": {"weight": 500.0, "delta": 0.03, "phase": "precontact"},
+        "hand_velocity": {"weight": 500.0, "delta": 0.02, "phase": "precontact"},
+        "hand_acceleration": {"weight": 100.0, "delta": 0.02, "phase": "precontact"},
         "hand_jerk": {"weight": 20.0, "delta": 0.02, "phase": "precontact"},
         "pose_residual_acceleration": {"weight": 50.0, "phase": "precontact"},
         "approach_monotonic": {"weight": 500.0, "top_k": 32},
         "human_smoothness": {"weight": 300.0},
         "human_pose_reg": {"weight": 100.0},
         "human_foot_contact": {"weight": 1000.0},
-        "body_keypoint_reprojection": {"weight": 0.3},
-        "hand_keypoint_reprojection": {"weight": 0.1},
-        "human_silhouette": {"weight": 0.2, "output_size": (64, 64)},
+        "body_keypoint_reprojection": {"weight": 1.0},
+        "hand_keypoint_reprojection": {"weight": 0.3},
+        "human_silhouette": {"weight": 0.5, "output_size": (64, 64), "silhouette_num_samples": 512},
     }
     stage_c_loss = {
         "lift4d_depth": {"weight": depth_weight, "delta": 0.02},
         "lift4d_velocity": {"weight": velocity_weight, "delta": 0.02},
         "lift4d_acceleration": {"weight": 20.0},
         "fp_depth_anchor": {"weight": fp_anchor_weight, "delta": 0.02},
-        "contact_anchor": {**contact_anchor_cfg, "phase": "moving"},
-        "hand_ray_ik": {"weight": 1000.0, "delta": 0.03, "phase": "moving", "overlap_frames": 5},
-        "hand_path": {"weight": 50.0, "delta": 0.03, "phase": "moving", "overlap_frames": 5},
-        "hand_velocity": {"weight": 5.0, "delta": 0.02, "phase": "moving", "overlap_frames": 5},
-        "hand_acceleration": {"weight": 20.0, "delta": 0.02, "phase": "moving", "overlap_frames": 5},
-        "hand_jerk": {"weight": 20.0, "delta": 0.02, "phase": "moving", "overlap_frames": 5},
-        "pose_residual_acceleration": {"weight": 50.0, "phase": "moving", "overlap_frames": 5},
+        "contact_anchor": {**contact_anchor_cfg, "phase": "joint", "overlap_frames": 5},
+        "hand_ray_ik": {"weight": 1000.0, "delta": 0.03, "phase": "joint", "overlap_frames": 5},
+        "hand_path": {"weight": 500.0, "delta": 0.03, "phase": "joint", "overlap_frames": 5},
+        "hand_velocity": {"weight": 500.0, "delta": 0.02, "phase": "joint", "overlap_frames": 5},
+        "hand_acceleration": {"weight": 100.0, "delta": 0.02, "phase": "joint", "overlap_frames": 5},
+        "hand_jerk": {"weight": 20.0, "delta": 0.02, "phase": "joint", "overlap_frames": 5},
+        "pose_residual_acceleration": {"weight": 50.0, "phase": "joint", "overlap_frames": 5},
         "postcontact_relative": {"weight": 500.0, "delta": 0.01},
         "boundary_position": {"weight": 1000.0, "delta": 0.01},
         "boundary_velocity": {"weight": 500.0, "delta": 0.01},
@@ -801,9 +803,9 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
         "human_smoothness": {"weight": 300.0},
         "human_pose_reg": {"weight": 100.0},
         "human_foot_contact": {"weight": 1000.0},
-        "body_keypoint_reprojection": {"weight": 0.3},
-        "hand_keypoint_reprojection": {"weight": 0.1},
-        "human_silhouette": {"weight": 0.2, "output_size": (64, 64)},
+        "body_keypoint_reprojection": {"weight": 1.0},
+        "hand_keypoint_reprojection": {"weight": 0.3},
+        "human_silhouette": {"weight": 0.5, "output_size": (64, 64), "silhouette_num_samples": 512},
     }
     if motion_state_enabled:
         stage_c_loss["object_static_pre_motion"] = {"weight": 100.0, "delta": 0.01}
@@ -871,6 +873,7 @@ def main() -> None:
         "max_hand_speed_mps": 0.4,
         "min_approach_frames": 20,
         "max_approach_frames": 60,
+        "max_root_approach_distance": 0.03,
         "boundary_tail": 2,
         "hand_selection_lookback": 5,
         "keypoint_confidence": 0.2,
@@ -894,7 +897,7 @@ def main() -> None:
             "lift4d_savgol_polyorder": 2,
             "lift4d_depth_scale": 1.0,
             "learn_lift4d_depth_scale": False,
-            "max_human_approach_distance": 0.35,
+            "max_human_approach_distance": float(contact_cfg.get("max_root_approach_distance", 0.03)),
             "object_motion_state": motion_state_cfg,
             "contact": contact_cfg,
             "vis_cfg": {"enable": False},
@@ -967,10 +970,11 @@ def main() -> None:
         },
         {
             "stage": "stage_3b_human_precontact_approach",
+            "overlap_frames": 5,
             "opt_vars": {
                 "human_approach_distance": {"lr": 0.003},
                 "human_pose_res": {
-                    "lr": 0.0001, "joint_scope": "upper_body_and_arms", "frame_radius": 2,
+                    "lr": 0.0003, "joint_scope": "upper_body_and_arms", "frame_radius": 2,
                 },
             },
             "niter": args.stage_b_niter,

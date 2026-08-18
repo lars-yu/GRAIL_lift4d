@@ -183,7 +183,14 @@ def camera_ray_hand_targets(
         device=initial_hand_cam.device,
         dtype=initial_hand_cam.dtype,
     )
-    z = initial_hand_cam[:, 2] + ramp * (target_z - initial_hand_cam[:, 2])
+    # A per-frame surface target can jump when the image ray crosses from one
+    # mesh side to another.  The pre-contact path therefore uses the single
+    # physical endpoint at t_move; moving frames follow their own object
+    # surface after contact.
+    contact_target_z = target_z[int(t_move)].detach()
+    z = initial_hand_cam[:, 2] + ramp * (contact_target_z - initial_hand_cam[:, 2])
+    frames = torch.arange(initial_hand_cam.shape[0], device=z.device)
+    z = torch.where(frames > int(t_move), target_z, z)
     return ray * z[:, None], ramp
 
 

@@ -241,16 +241,17 @@ class LossComputer:
             torch.as_tensor(mask, device=pred.human.body_keypoints_seq.device)
             for mask in data.human.masks
         ])
-        projected_vertices = project_world_to_screen(
-            pred.human.verts_seq.reshape(-1, 3), self.cameras
-        ).reshape(data.frame_num, -1, 3)[..., :2]
         sample_count = int(cfg.get("silhouette_num_samples", 2048))
-        if projected_vertices.shape[1] > sample_count:
+        silhouette_vertices = pred.human.verts_seq
+        if silhouette_vertices.shape[1] > sample_count:
             sample_idx = torch.linspace(
-                0, projected_vertices.shape[1] - 1, sample_count,
-                device=projected_vertices.device,
+                0, silhouette_vertices.shape[1] - 1, sample_count,
+                device=silhouette_vertices.device,
             ).long()
-            projected_vertices = projected_vertices[:, sample_idx]
+            silhouette_vertices = silhouette_vertices[:, sample_idx]
+        projected_vertices = project_world_to_screen(
+            silhouette_vertices.reshape(-1, 3), self.cameras
+        ).reshape(data.frame_num, -1, 3)[..., :2]
         raw = human_silhouette_loss(
             projected_vertices,
             target_masks,
@@ -453,6 +454,9 @@ class LossComputer:
         phase = str(cfg.get("phase", "moving"))
         if phase == "precontact":
             start, end = max(0, move_start - int(data.approach_window)), move_start
+        elif phase == "joint":
+            start = max(0, move_start - int(cfg.get("overlap_frames", 5)))
+            end = data.frame_num - 1
         else:
             start, end = move_start, data.frame_num - 1
         frame_indices = torch.arange(start, end + 1, device=pred.obj.trans.device)
@@ -460,7 +464,7 @@ class LossComputer:
             data, pred, frame_indices, cfg, detach_object=True
         )
         target_distance = float(cfg.get("target_distance", 0.02))
-        if phase == "precontact":
+        if phase in {"precontact", "joint"}:
             ramp = pred.human.approach_ramp[start : end + 1].detach()
             initial_distance = data.hand_approach_initial_distance
             if initial_distance is None:
@@ -468,9 +472,24 @@ class LossComputer:
             targets = float(initial_distance) + ramp * (
                 target_distance - float(initial_distance)
             )
+            if phase == "joint":
+                frames = torch.arange(start, end + 1, device=distances.device)
+                targets = torch.where(
+                    frames > move_start,
+                    torch.full_like(targets, target_distance),
+                    targets,
+                )
+            terms = torch.nn.functional.huber_loss(
+                distances,
+                targets,
+                delta=cfg.get("delta", 0.02),
+                reduction="none",
+            )
+            weights = ramp.clamp_min(1e-4)
+            raw = (weights * terms).sum() / weights.sum()
         else:
             targets = torch.full_like(distances, target_distance)
-        raw = huber_loss(distances - targets, delta=cfg.get("delta", 0.02))
+            raw = huber_loss(distances - targets, delta=cfg.get("delta", 0.02))
         return raw, float(weight) * raw
 
     def _approach_monotonic_loss(self, data, pred, cfg, weight):
@@ -556,7 +575,8 @@ class LossComputer:
         )
         phase = str(cfg.get("phase", "all"))
         if phase == "precontact":
-            return max(0, move_start - int(data.approach_window)), move_start + 1
+            overlap = int(cfg.get("overlap_frames", 5))
+            return max(0, move_start - int(data.approach_window) - overlap), move_start + 1
         overlap = int(cfg.get("overlap_frames", 5))
         return max(0, move_start - overlap), data.frame_num
 

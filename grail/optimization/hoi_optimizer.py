@@ -171,7 +171,8 @@ class HOIOptimizer:
         formal_motion_enabled = bool(
             (self.cfg.get("object_motion_state", {}) or {}).get("enabled", False)
         )
-        if formal_motion_enabled:
+        skip_contact_labels = bool(self.cfg.get("skip_contact_label_loading", False))
+        if formal_motion_enabled or skip_contact_labels:
             contact_labels, contact_interval, contact_start_idx = [], 1, None
         else:
             contact_labels, contact_interval, contact_start_idx = self._detect_contact_labels(
@@ -1514,7 +1515,8 @@ class HOIOptimizer:
             motion_frame = int(data.object_motion_state.move_start_frame)
             stage = str(opt_config.get("stage", ""))
             if "stage_3b" in stage:
-                start = max(0, motion_frame - int(data.approach_window))
+                overlap = int(opt_config.get("overlap_frames", 5))
+                start = max(0, motion_frame - int(data.approach_window) - overlap)
                 end = min(data.frame_num, motion_frame + 1)
             elif "stage_3c" in stage:
                 overlap = int(opt_config.get("overlap_frames", 5))

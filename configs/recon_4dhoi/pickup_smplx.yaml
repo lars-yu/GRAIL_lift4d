@@ -140,6 +140,7 @@ optimization:
     max_hand_speed_mps: 0.4
     min_approach_frames: 20
     max_approach_frames: 60
+    max_root_approach_distance: 0.03
     boundary_tail: 2
     hand_selection_lookback: 5
     keypoint_confidence: 0.2

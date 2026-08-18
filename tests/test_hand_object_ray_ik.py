@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 from grail.optimization.hand_object_ray_ik import (
+    approach_window_from_fps,
     camera_ray_hand_targets,
     continuous_grasp_losses,
     mesh_surface_depth_at_pixels,
@@ -97,6 +98,18 @@ class HandObjectRayIKTests(unittest.TestCase):
         target_a, _ = camera_ray_hand_targets(initial, torch.full((4,), 2.0), 2, 2)
         target_b, _ = camera_ray_hand_targets(initial, torch.full((4,), 2.4), 2, 2)
         self.assertGreater(float(torch.abs(target_a[2, 2] - target_b[2, 2])), 0.1)
+
+    def test_precontact_path_uses_single_contact_surface_endpoint(self):
+        initial = torch.tensor([[0.0, 0.0, 3.0]] * 4)
+        surface = torch.tensor([1.0, 1.5, 2.5, 2.6])
+        target, ramp = camera_ray_hand_targets(initial, surface, 2, 2, target_distance=0.02)
+        contact_target = 2.52
+        expected_mid = 3.0 + float(ramp[1]) * (contact_target - 3.0)
+        self.assertAlmostEqual(float(target[1, 2]), expected_mid, places=5)
+
+    def test_approach_window_uses_distance_and_speed_bounds(self):
+        self.assertEqual(approach_window_from_fps(30.0, 0.1), 20)
+        self.assertEqual(approach_window_from_fps(30.0, 0.8), 60)
 
 
 if __name__ == "__main__":

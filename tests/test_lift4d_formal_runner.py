@@ -102,6 +102,7 @@ class FormalRunnerArgumentTests(unittest.TestCase):
         )
         self.assertFalse(cfg["use_lift4d_depth_prior"])
         self.assertFalse(cfg["object_motion_state"]["enabled"])
+        self.assertTrue(cfg["skip_contact_label_loading"])
 
 
 class ObjectDepthStageConstraintTests(unittest.TestCase):
@@ -243,6 +244,8 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
             self.assertIn(name, stage_c)
         for name in ("boundary_position", "boundary_velocity", "pose_residual_continuity"):
             self.assertIn(name, stage_c)
+        self.assertEqual(stage_c["contact_anchor"]["phase"], "joint")
+        self.assertEqual(stage_c["contact_anchor"]["overlap_frames"], 5)
 
     def test_stage_c_initializes_every_post_motion_frame_from_motion_anchor(self):
         optimizer = HOIOptimizer.__new__(HOIOptimizer)
@@ -261,6 +264,30 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
         self.assertTrue(torch.all(pose[4:, 13] == 2.0))
         self.assertTrue(torch.all(pose[4:, 1] == 0.0))
         self.assertTrue(torch.all(pose[:3] == 0.0))
+
+    def test_stage_b_overlap_makes_approach_entry_trainable(self):
+        optimizer = HOIOptimizer.__new__(HOIOptimizer)
+        optimizer.num_body_joints = 22
+        pose = torch.zeros(10, 22, 6, requires_grad=True)
+        pose.grad = torch.ones_like(pose)
+        optimizer.params = SimpleNamespace(human_pose_res=pose)
+        data = SimpleNamespace(
+            frame_num=10,
+            approach_window=2,
+            contact_frame=None,
+            object_motion_state=SimpleNamespace(move_start_frame=7),
+        )
+        optimizer._apply_stage_gradient_masks(
+            data,
+            {
+                "stage": "stage_3b_human_precontact_approach",
+                "overlap_frames": 2,
+                "opt_vars": {"human_pose_res": {"joint_scope": "arms"}},
+            },
+        )
+        self.assertTrue(torch.all(pose.grad[:3] == 0))
+        self.assertTrue(torch.all(torch.linalg.norm(pose.grad[3:8, 13], dim=-1) > 0))
+        self.assertTrue(torch.all(pose.grad[8:] == 0))
 
     def test_joint_stage_is_bounded_to_reference(self):
         optimizer = self._optimizer([0.0, 0.1, -0.1])

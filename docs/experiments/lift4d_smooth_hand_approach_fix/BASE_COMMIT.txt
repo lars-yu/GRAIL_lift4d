@@ -1,0 +1,3 @@
+Base branch: codex/lift4d-mask-motion-ray-ik
+Base commit: 84afafa0c00f271ca970b37135f997247b82ebe1
+New branch: codex/lift4d-smooth-hand-approach-fix
