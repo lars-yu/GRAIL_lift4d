@@ -1,4 +1,4 @@
-"""Offline object motion-onset detection for Lift4D depth supervision."""
+"""Mask-first object motion-state detection for formal Lift4D supervision."""
 
 from __future__ import annotations
 
@@ -11,14 +11,21 @@ from scipy.ndimage import median_filter
 @dataclass(frozen=True)
 class ObjectMotionState:
     detection_center_cam: np.ndarray
+    lift4d_center_speed: np.ndarray
+    mask_iou_drop: np.ndarray
+    mask_centroid_displacement_px: np.ndarray
+    mask_area_change_ratio: np.ndarray
     motion_score_3d: np.ndarray
     motion_score_mask: np.ndarray
     motion_score: np.ndarray
+    moving_evidence: np.ndarray
     moving: np.ndarray
+    static: np.ndarray
     move_start_frame: int
     confidence: float
     static_z: float
     z_target: np.ndarray
+    thresholds: dict[str, float]
 
 
 def resolve_contact_hint(
@@ -29,6 +36,10 @@ def resolve_contact_hint(
     *,
     explicit_source: str = "cli",
 ) -> tuple[int, str]:
+    """Legacy-only contact hint resolver.
+
+    Formal mask-motion/ray-IK code must not call this function.
+    """
     if explicit_frame is not None:
         hint, source = int(explicit_frame), explicit_source
     elif isinstance(contact_start_idx, (int, np.integer)) and 0 <= int(contact_start_idx) < frame_num:
@@ -37,14 +48,13 @@ def resolve_contact_hint(
         hint, source = int(inter_start_idx), "inter_start"
     if not 0 <= hint < frame_num:
         raise ValueError(f"contact hint must be in [0,{frame_num - 1}], got {hint}")
-    if source not in ("cli", "cache", "inter_start"):
-        raise ValueError(f"Invalid contact hint source {source!r}")
     return hint, source
 
 
 def infer_contact_hand(
     configured: str, contact_labels: list, *, fallback: str = "right"
 ) -> str:
+    """Legacy-only label-based hand resolver."""
     configured = str(configured).lower()
     if configured in ("left", "right", "both"):
         return configured
@@ -74,56 +84,53 @@ def _odd_window(value: int, frame_num: int) -> int:
     return min(value, largest)
 
 
-def _robust_scale(values: np.ndarray, floor: float = 1e-6) -> tuple[float, float]:
-    values = np.asarray(values, dtype=np.float64)
-    finite = values[np.isfinite(values)]
+def _robust_threshold(values: np.ndarray, floor: float, mad_scale: float) -> tuple[float, float, float]:
+    finite = np.asarray(values, dtype=np.float64)
+    finite = finite[np.isfinite(finite)]
     if finite.size == 0:
-        return 0.0, floor
-    center = float(np.median(finite))
-    scale = float(1.4826 * np.median(np.abs(finite - center)))
-    return center, max(scale, floor)
+        raise ValueError("Cannot estimate a motion threshold from empty/non-finite values")
+    median = float(np.median(finite))
+    mad = float(1.4826 * np.median(np.abs(finite - median)))
+    return max(float(floor), median + float(mad_scale) * max(mad, 1e-9)), median, mad
 
 
-def _rolling_forward_sum(values: np.ndarray, window: int) -> np.ndarray:
-    values = np.asarray(values, dtype=np.float64)
-    result = np.zeros_like(values)
-    for frame in range(values.size):
-        result[frame] = values[frame : min(values.size, frame + window)].sum()
-    return result
+def _normalize_signal(values: np.ndarray, threshold: float) -> np.ndarray:
+    return np.asarray(values, dtype=np.float64) / max(float(threshold), 1e-9)
 
 
-def _mask_signals(masks: np.ndarray | list, horizon: int) -> tuple[np.ndarray, np.ndarray]:
+def _adjacent_mask_signals(masks: np.ndarray | list) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     masks = np.asarray(masks).astype(bool)
     if masks.ndim == 4 and masks.shape[1] == 1:
         masks = masks[:, 0]
     if masks.ndim != 3:
         raise ValueError(f"object masks must have shape [T,H,W], got {masks.shape}")
-    frame_num, height, width = masks.shape
-    centroids = np.full((frame_num, 2), np.nan, dtype=np.float64)
+    frame_num = masks.shape[0]
+    centroids = np.empty((frame_num, 2), dtype=np.float64)
     areas = masks.reshape(frame_num, -1).sum(axis=1).astype(np.float64)
     for frame, mask in enumerate(masks):
         y, x = np.nonzero(mask)
         if x.size < 4:
             raise ValueError(f"object mask has fewer than four pixels at frame {frame}")
-        centroids[frame] = [x.mean() / max(width, 1), y.mean() / max(height, 1)]
+        centroids[frame] = (float(x.mean()), float(y.mean()))
 
-    centroid_motion = np.zeros(frame_num, dtype=np.float64)
-    shape_motion = np.zeros(frame_num, dtype=np.float64)
-    for frame in range(frame_num):
-        end = min(frame_num - 1, frame + horizon)
-        centroid_motion[frame] = np.linalg.norm(centroids[end] - centroids[frame])
-        union = np.logical_or(masks[frame], masks[end]).sum()
-        intersection = np.logical_and(masks[frame], masks[end]).sum()
-        iou_change = 1.0 - (intersection / max(union, 1))
-        area_change = abs(areas[end] - areas[frame]) / max(areas[frame], 1.0)
-        shape_motion[frame] = iou_change + area_change
-    return centroid_motion, shape_motion
+    iou_drop = np.zeros(frame_num, dtype=np.float64)
+    centroid_disp = np.zeros(frame_num, dtype=np.float64)
+    area_change = np.zeros(frame_num, dtype=np.float64)
+    for frame in range(1, frame_num):
+        previous = masks[frame - 1]
+        current = masks[frame]
+        union = np.logical_or(previous, current).sum()
+        intersection = np.logical_and(previous, current).sum()
+        iou_drop[frame] = 1.0 - intersection / max(int(union), 1)
+        centroid_disp[frame] = np.linalg.norm(centroids[frame] - centroids[frame - 1])
+        area_change[frame] = abs(areas[frame] - areas[frame - 1]) / max(areas[frame - 1], 1.0)
+    return iou_drop, centroid_disp, area_change
 
 
 def build_static_relative_depth_target(
-    z: np.ndarray, move_start_frame: int, transition_frames: int = 4
+    z: np.ndarray, move_start_frame: int, transition_frames: int = 0
 ) -> tuple[float, np.ndarray]:
-    """Lock the pre-motion target and retain only post-onset Lift4D relative depth."""
+    """Hard-lock static frames, then retain Lift4D motion relative to onset."""
     z = np.asarray(z, dtype=np.float64).reshape(-1)
     frame_num = z.size
     move_start_frame = int(move_start_frame)
@@ -157,136 +164,135 @@ def detect_object_motion(
     contact_hint: int | None = None,
     config: dict | None = None,
 ) -> ObjectMotionState:
-    """Detect the first persistent static-to-moving transition without SG leakage."""
+    """Detect pickup onset from adjacent masks; GPT/contact hints are ignored."""
+    del contact_hint
     cfg = dict(config or {})
     centers = np.asarray(center_cam_raw, dtype=np.float64)
-    if centers.ndim != 2 or centers.shape[1] != 3 or centers.shape[0] < 12:
-        raise ValueError(f"center_cam_raw must be [T,3] with T>=12, got {centers.shape}")
+    if centers.ndim != 2 or centers.shape[1] != 3 or centers.shape[0] < 16:
+        raise ValueError(f"center_cam_raw must be [T,3] with T>=16, got {centers.shape}")
     if not np.isfinite(centers).all() or np.any(centers[:, 2] <= 0):
         raise ValueError("center_cam_raw must contain finite positive-depth OpenCV points")
     frame_num = centers.shape[0]
-    if contact_hint is not None and not 0 <= int(contact_hint) < frame_num:
-        raise ValueError(f"contact_hint must be in [0,{frame_num - 1}], got {contact_hint}")
-
     detection_window = _odd_window(cfg.get("detection_median_window", 5), frame_num)
     detection = median_filter(centers, size=(detection_window, 1), mode="nearest")
+    lift4d_speed = np.linalg.norm(
+        np.diff(detection, axis=0, prepend=detection[:1]), axis=1
+    )
+    iou_drop, centroid_disp, area_change = _adjacent_mask_signals(object_masks)
+    if iou_drop.shape != (frame_num,):
+        raise ValueError(
+            f"object mask frame count {iou_drop.size} does not match Lift4D {frame_num}"
+        )
+
+    baseline_frames = int(cfg.get("baseline_frames", 15))
+    if not 5 <= baseline_frames < frame_num:
+        raise ValueError(f"baseline_frames must be in [5,{frame_num - 1}], got {baseline_frames}")
+    baseline = slice(1, baseline_frames)
+    mad_scale = float(cfg.get("threshold_mad_scale", 4.0))
+    iou_threshold, iou_median, iou_mad = _robust_threshold(
+        iou_drop[baseline], cfg.get("iou_drop_floor", 0.03), mad_scale
+    )
+    centroid_threshold, centroid_median, centroid_mad = _robust_threshold(
+        centroid_disp[baseline], cfg.get("centroid_displacement_floor_px", 2.0), mad_scale
+    )
+    area_threshold, area_median, area_mad = _robust_threshold(
+        area_change[baseline], cfg.get("area_change_floor", 0.02), mad_scale
+    )
+    speed_threshold, speed_median, speed_mad = _robust_threshold(
+        lift4d_speed[baseline], cfg.get("lift4d_speed_floor_m", 0.002), mad_scale
+    )
+    strong_iou_threshold = max(
+        float(cfg.get("strong_iou_drop_floor", 0.20)),
+        float(cfg.get("strong_iou_threshold_scale", 2.0)) * iou_threshold,
+    )
+
+    mask_motion = (
+        (iou_drop > iou_threshold)
+        | (centroid_disp > centroid_threshold)
+        | (area_change > area_threshold)
+    )
+    strong_mask_motion = iou_drop > strong_iou_threshold
+    lift4d_motion = lift4d_speed > speed_threshold
+    evidence = strong_mask_motion | (mask_motion & lift4d_motion)
+    evidence[:baseline_frames] = False
+
     vote_window = int(cfg.get("vote_window", 5))
     min_votes = int(cfg.get("min_votes", 3))
-    persistence_window = int(cfg.get("persistence_window", 7))
-    min_persistence = int(cfg.get("min_persistence", 5))
-    threshold = float(cfg.get("motion_score_threshold", 3.0))
-    baseline_frames = int(cfg.get("baseline_frames", 15))
-    if contact_hint is not None:
-        # Contact may precede lift-off by many frames. Use the known pre-contact
-        # interval to estimate stationary noise, but keep onset search global so
-        # a genuinely earlier physical transition can still be detected.
-        baseline_frames = max(baseline_frames, int(contact_hint))
-    baseline_frames = min(baseline_frames, frame_num - 1)
     if vote_window < 1 or not 1 <= min_votes <= vote_window:
         raise ValueError("min_votes must be in [1, vote_window]")
-    if persistence_window < 1 or not 1 <= min_persistence <= persistence_window:
-        raise ValueError("min_persistence must be in [1, persistence_window]")
-
-    step_3d = np.linalg.norm(np.diff(detection, axis=0, prepend=detection[:1]), axis=1)
-    cumulative_3d = _rolling_forward_sum(step_3d, vote_window)
-    centroid_motion, shape_motion = _mask_signals(object_masks, vote_window)
-
-    first_indices = np.arange(baseline_frames)
-    quiet_fraction = float(cfg.get("fallback_quiet_fraction", 0.25))
-    if not 0.2 <= quiet_fraction <= 0.3:
-        raise ValueError("fallback_quiet_fraction must be in [0.2,0.3]")
-    scales = np.array(
-        [
-            max(float(np.median(cumulative_3d)), 1e-6),
-            max(float(np.median(centroid_motion)), 1e-6),
-            max(float(np.median(shape_motion)), 1e-6),
-        ]
-    )
-    raw_activity = (
-        cumulative_3d / scales[0]
-        + centroid_motion / scales[1]
-        + shape_motion / scales[2]
-    )
-    quiet_cut = float(np.quantile(raw_activity, quiet_fraction))
-    first_baseline_is_quiet = float(np.median(raw_activity[first_indices])) <= max(
-        1e-6, 1.5 * quiet_cut
-    )
-    if first_baseline_is_quiet:
-        baseline_indices = first_indices
-    else:
-        quiet_count = max(3, int(round(frame_num * quiet_fraction)))
-        baseline_indices = np.argsort(raw_activity, kind="stable")[:quiet_count]
-
-    base3, scale3 = _robust_scale(cumulative_3d[baseline_indices])
-    base_centroid, scale_centroid = _robust_scale(centroid_motion[baseline_indices])
-    base_shape, scale_shape = _robust_scale(shape_motion[baseline_indices])
-    score_3d = np.maximum(0.0, (cumulative_3d - base3) / scale3)
-    score_centroid = np.maximum(0.0, (centroid_motion - base_centroid) / scale_centroid)
-    score_shape = np.maximum(0.0, (shape_motion - base_shape) / scale_shape)
-    score_mask = (2.0 / 3.0) * score_centroid + (1.0 / 3.0) * score_shape
-    score = 0.70 * score_3d + 0.20 * score_centroid + 0.10 * score_shape
-
-    static_center = np.median(detection[baseline_indices], axis=0)
-    baseline_radius = np.linalg.norm(detection[baseline_indices] - static_center, axis=1)
-    radius_center, radius_scale = _robust_scale(baseline_radius)
-    departure = np.linalg.norm(detection - static_center, axis=1)
-    departed = departure > (radius_center + threshold * radius_scale)
-    above = score > threshold
-
     move_start = None
     vote_fraction = 0.0
-    persistence_fraction = 0.0
-    search_end = frame_num - persistence_window + 1
-    for candidate in range(1, max(1, search_end)):
-        votes = int(above[candidate : min(frame_num, candidate + vote_window)].sum())
-        persistence = int(
-            departed[candidate : min(frame_num, candidate + persistence_window)].sum()
-        )
-        if votes >= min_votes and persistence >= min_persistence:
-            move_start = candidate
-            vote_fraction = votes / vote_window
-            persistence_fraction = persistence / persistence_window
+    for end in range(baseline_frames, frame_num):
+        start = max(baseline_frames, end - vote_window + 1)
+        window_indices = np.arange(start, end + 1)
+        active = window_indices[evidence[window_indices]]
+        if active.size >= min_votes:
+            move_start = int(active[0])
+            vote_fraction = float(active.size / vote_window)
             break
-
+    thresholds = {
+        "iou_drop": iou_threshold,
+        "centroid_displacement_px": centroid_threshold,
+        "area_change_ratio": area_threshold,
+        "lift4d_center_speed_m": speed_threshold,
+        "strong_iou_drop": strong_iou_threshold,
+        "baseline_iou_drop_median": iou_median,
+        "baseline_iou_drop_mad": iou_mad,
+        "baseline_centroid_median_px": centroid_median,
+        "baseline_centroid_mad_px": centroid_mad,
+        "baseline_area_change_median": area_median,
+        "baseline_area_change_mad": area_mad,
+        "baseline_lift4d_speed_median_m": speed_median,
+        "baseline_lift4d_speed_mad_m": speed_mad,
+    }
     if move_start is None:
-        confidence = 0.0
-        action = str(cfg.get("low_confidence_action", "error")).lower()
-        if action == "error":
-            raise ValueError(
-                "Low-confidence object motion onset: no persistent static-to-moving "
-                f"transition found; max_score={float(score.max()):.4f}"
-            )
-        move_start = frame_num - 1
-    else:
-        margin = min(1.0, max(0.0, float(score[move_start] / max(threshold, 1e-6) - 1.0)))
-        confidence = 0.4 * vote_fraction + 0.4 * persistence_fraction + 0.2 * margin
+        summary = ", ".join(f"{key}={value:.6g}" for key, value in thresholds.items())
+        raise ValueError(
+            "Low-confidence object motion onset: no reliable 3/5 adjacent-frame "
+            f"pickup evidence; {summary}"
+        )
 
+    confidence = min(1.0, vote_fraction + 0.2 * float(strong_mask_motion[move_start]))
     min_confidence = float(cfg.get("min_confidence", 0.55))
-    if confidence < min_confidence and str(cfg.get("low_confidence_action", "error")).lower() == "error":
+    if confidence < min_confidence:
         raise ValueError(
             f"Low-confidence object motion onset at frame {move_start}: "
             f"confidence={confidence:.4f} < {min_confidence:.4f}"
         )
-
     target_source_z = detection[:, 2] if smoothed_z is None else np.asarray(smoothed_z)
     if target_source_z.shape != (frame_num,):
         raise ValueError(f"smoothed_z must have shape [{frame_num}], got {target_source_z.shape}")
     static_z, z_target = build_static_relative_depth_target(
-        target_source_z, move_start, cfg.get("transition_frames", 4)
+        target_source_z, move_start, cfg.get("transition_frames", 0)
     )
+
     moving = np.zeros(frame_num, dtype=bool)
-    if cfg.get("latch_moving", True):
-        moving[move_start:] = True
-    else:
-        moving[move_start:] = above[move_start:]
+    moving[move_start:] = True
+    static = ~moving
+    score_3d = _normalize_signal(lift4d_speed, speed_threshold)
+    score_mask = np.maximum.reduce(
+        [
+            _normalize_signal(iou_drop, iou_threshold),
+            _normalize_signal(centroid_disp, centroid_threshold),
+            _normalize_signal(area_change, area_threshold),
+        ]
+    )
+    score = np.maximum(score_mask, score_3d)
     return ObjectMotionState(
         detection_center_cam=detection.astype(np.float32),
+        lift4d_center_speed=lift4d_speed.astype(np.float32),
+        mask_iou_drop=iou_drop.astype(np.float32),
+        mask_centroid_displacement_px=centroid_disp.astype(np.float32),
+        mask_area_change_ratio=area_change.astype(np.float32),
         motion_score_3d=score_3d.astype(np.float32),
         motion_score_mask=score_mask.astype(np.float32),
         motion_score=score.astype(np.float32),
+        moving_evidence=evidence,
         moving=moving,
-        move_start_frame=int(move_start),
-        confidence=float(confidence),
+        static=static,
+        move_start_frame=move_start,
+        confidence=confidence,
         static_z=static_z,
         z_target=z_target,
+        thresholds=thresholds,
     )

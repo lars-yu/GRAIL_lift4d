@@ -265,10 +265,13 @@ def main():
             f"Motion-state mismatch between HOI and diagnostics: {move_start} vs "
             f"{csv_move_start}"
         )
-    contact_hint = int(rows[0]["contact_hint"])
-    window_start = int(rows[0]["contact_window_start"])
-    window_end = int(rows[0]["contact_window_end"])
-    selected_contact = int(rows[0]["selected_contact_frame"])
+    # Formal motion-state diagnostics intentionally do not carry legacy GPT
+    # contact fields. Derive renderer annotations from the physical motion
+    # onset when those optional columns are absent.
+    contact_hint = int(rows[0].get("contact_hint", csv_move_start))
+    window_start = int(rows[0].get("contact_window_start", max(0, csv_move_start - 30)))
+    window_end = int(rows[0].get("contact_window_end", frame_num - 1))
+    selected_contact = int(rows[0].get("selected_contact_frame", csv_move_start))
     depth_scale = float(meta_prior.get("depth_scale", 1.0))
     depth_error = (obj_z - obj_z[0]) - depth_scale * (z_target - z_target[0])
     depth_loss_frame = prior.frame_weight * _huber_per_frame(depth_error, 0.03)

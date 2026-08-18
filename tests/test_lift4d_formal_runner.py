@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 import torch
 
 from grail.optimization.hoi_optimizer import HOIOptimizer
@@ -184,6 +185,72 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
         self.assertTrue(
             torch.equal(optimizer.params.obj_depth_res.grad[1:], torch.ones(2))
         )
+
+    def test_static_state_has_highest_priority_for_pose_and_gradient(self):
+        optimizer = self._optimizer([0.0, 0.1, 0.2, 0.3])
+        optimizer.params.obj_depth_res.grad = torch.ones(4)
+        data = SimpleNamespace(
+            frame_num=4,
+            object_motion_state=SimpleNamespace(
+                move_start_frame=2,
+                static=np.array([True, True, False, True]),
+            ),
+        )
+        optimizer._apply_obj_depth_gradient_constraints(
+            {"opt_vars": {"obj_depth_res": {"freeze_anchor": True}}}, data=data
+        )
+        torch.testing.assert_close(
+            optimizer.params.obj_depth_res.grad, torch.tensor([0.0, 0.0, 1.0, 0.0])
+        )
+        poses = torch.eye(4).repeat(4, 1, 1)
+        rays = torch.tensor([[0.1 * i, 0.0, 1.0] for i in range(4)])
+        depths = torch.arange(4, dtype=torch.float32) + 2.0
+        _, frozen_rays, frozen_depths = HOIOptimizer._freeze_static_object_pose_inputs(
+            data, poses, rays, depths
+        )
+        self.assertEqual(float(frozen_depths[1]), float(frozen_depths[0]))
+        self.assertEqual(float(frozen_depths[3]), float(frozen_depths[2]))
+        torch.testing.assert_close(frozen_rays[3], frozen_rays[2])
+
+    def test_stage_c_keeps_every_post_motion_human_frame_trainable(self):
+        optimizer = HOIOptimizer.__new__(HOIOptimizer)
+        optimizer.num_body_joints = 22
+        pose = torch.zeros(7, 22, 6, requires_grad=True)
+        pose.grad = torch.ones_like(pose)
+        optimizer.params = SimpleNamespace(human_pose_res=pose)
+        data = SimpleNamespace(
+            frame_num=7,
+            approach_window=2,
+            contact_frame=None,
+            object_motion_state=SimpleNamespace(move_start_frame=3),
+        )
+        optimizer._apply_stage_gradient_masks(
+            data,
+            {
+                "stage": "stage_3c_joint_contact_refinement",
+                "opt_vars": {"human_pose_res": {"joint_scope": "arms"}},
+            },
+        )
+        self.assertTrue(torch.all(pose.grad[:3] == 0))
+        self.assertTrue(torch.all(torch.linalg.norm(pose.grad[3:, 13], dim=-1) > 0))
+
+    def test_stage_c_initializes_every_post_motion_frame_from_motion_anchor(self):
+        optimizer = HOIOptimizer.__new__(HOIOptimizer)
+        optimizer.num_body_joints = 22
+        pose = torch.zeros(7, 22, 6, requires_grad=True)
+        with torch.no_grad():
+            pose[3, 13] = 2.0
+            pose[3, 1] = 4.0
+        optimizer.params = SimpleNamespace(human_pose_res=pose)
+        optimizer.logger = SimpleNamespace(info=lambda *args, **kwargs: None)
+        data = SimpleNamespace(
+            frame_num=7,
+            object_motion_state=SimpleNamespace(move_start_frame=3),
+        )
+        optimizer.initialize_postcontact_pose_residuals(data, "upper_body_and_arms")
+        self.assertTrue(torch.all(pose[4:, 13] == 2.0))
+        self.assertTrue(torch.all(pose[4:, 1] == 0.0))
+        self.assertTrue(torch.all(pose[:3] == 0.0))
 
     def test_joint_stage_is_bounded_to_reference(self):
         optimizer = self._optimizer([0.0, 0.1, -0.1])

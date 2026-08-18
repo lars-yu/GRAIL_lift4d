@@ -183,6 +183,11 @@ def main() -> None:
         if not ok:
             writer.release()
             raise RuntimeError(f"Cannot read top-view frame {frame_idx}/{frame_num}")
+        move_start = int(row["move_start_frame"])
+        hint = int(row.get("contact_hint", move_start))
+        window_start = int(row.get("contact_window_start", max(0, move_start - 30)))
+        window_end = int(row.get("contact_window_end", len(diagnostics) - 1))
+        selected = int(row.get("selected_contact_frame", move_start))
         lines = [
             f"frame={frame_idx}",
             f"Lift4D raw Z={float(row['center_cam_raw_z']):.4f}",
@@ -190,8 +195,8 @@ def main() -> None:
             f"Lift4D target Z={float(row['lift4d_z_target']):.4f}",
             f"optimized Z={float(row['optimized_z']):.4f}",
             f"left/right hand distance={float(row['left_hand_object_distance']):.4f}/{float(row['right_hand_object_distance']):.4f} m",
-            f"state={'static' if frame_idx < int(row['move_start_frame']) else 'moving'} t_move={int(row['move_start_frame'])}",
-            f"hint={int(row['contact_hint'])} window=[{int(row['contact_window_start'])},{int(row['contact_window_end'])}] selected={int(row['selected_contact_frame'])}",
+            f"state={'static' if frame_idx < move_start else 'moving'} t_move={move_start}",
+            f"hint={hint} window=[{window_start},{window_end}] selected={selected}",
         ]
         for line_idx, line in enumerate(lines):
             y = 28 + line_idx * 26

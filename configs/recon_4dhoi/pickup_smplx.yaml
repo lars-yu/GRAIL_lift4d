@@ -122,22 +122,25 @@ optimization:
     baseline_frames: 15
     vote_window: 5
     min_votes: 3
-    persistence_window: 7
-    min_persistence: 5
-    motion_score_threshold: 3.0
-    transition_frames: 4
+    threshold_mad_scale: 4.0
+    centroid_displacement_floor_px: 2.0
+    area_change_floor: 0.02
+    iou_drop_floor: 0.03
+    strong_iou_drop_floor: 0.20
+    lift4d_speed_floor_m: 0.002
+    transition_frames: 0
     latch_moving: true
     low_confidence_action: error
   contact:
     frame: null
     hand: "auto"
     hand_fallback: "right"
-    frames_before_motion: 8
-    frames_after_motion: 2
-    hint_sigma: 5
-    hint_floor: 0.2
-    softmin_temperature: 0.01
-    approach_window: 30
+    approach_window: null
+    pre_contact_seconds: 0.67
+    hand_selection_lookback: 5
+    keypoint_confidence: 0.2
+    both_distance_px: 12.0
+    both_ratio: 1.25
     target_distance: 0.02
 
   human_precontact_approach_opt:

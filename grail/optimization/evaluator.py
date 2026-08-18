@@ -137,6 +137,42 @@ def truncate_data(data, new_frame_num, logger=None):
     data.obj.verts_tracking_seq = data.obj.verts_tracking_seq[:new_frame_num]
     data.obj.masks = data.obj.masks[:new_frame_num]
 
+    if data.lift4d_depth is not None:
+        for name in (
+            "frame_indices", "prior_used", "center_cam_raw", "center_cam_detection",
+            "center_cam", "z_raw", "z", "z_target", "delta_z", "frame_weight",
+            "valid_point_count", "camera_intrinsics",
+        ):
+            value = getattr(data.lift4d_depth, name, None)
+            if isinstance(value, torch.Tensor) and value.shape[0] >= new_frame_num:
+                setattr(data.lift4d_depth, name, value[:new_frame_num])
+    if data.object_motion_state is not None:
+        state = data.object_motion_state
+        import dataclasses
+        data.object_motion_state = dataclasses.replace(
+            state,
+            detection_center_cam=state.detection_center_cam[:new_frame_num],
+            lift4d_center_speed=state.lift4d_center_speed[:new_frame_num],
+            mask_iou_drop=state.mask_iou_drop[:new_frame_num],
+            mask_centroid_displacement_px=state.mask_centroid_displacement_px[:new_frame_num],
+            mask_area_change_ratio=state.mask_area_change_ratio[:new_frame_num],
+            motion_score_3d=state.motion_score_3d[:new_frame_num],
+            motion_score_mask=state.motion_score_mask[:new_frame_num],
+            motion_score=state.motion_score[:new_frame_num],
+            moving_evidence=state.moving_evidence[:new_frame_num],
+            moving=state.moving[:new_frame_num],
+            static=state.static[:new_frame_num],
+            z_target=state.z_target[:new_frame_num],
+        )
+    if data.hand_ray_target_world is not None:
+        data.hand_ray_target_world = data.hand_ray_target_world[:new_frame_num]
+    if data.hand_ray_ramp is not None:
+        data.hand_ray_ramp = data.hand_ray_ramp[:new_frame_num]
+    for name in ("hand_initial_cam_depth", "hand_target_cam_depth", "object_surface_depth"):
+        value = getattr(data, name, None)
+        if isinstance(value, torch.Tensor):
+            setattr(data, name, value[:new_frame_num])
+
     # Truncate other sequence data
     data.images_path = data.images_path[:new_frame_num]
     data.depth_maps = data.depth_maps[:new_frame_num]

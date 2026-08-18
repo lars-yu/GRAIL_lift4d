@@ -276,6 +276,8 @@ site/
 
 # Runtime artifacts not already covered by upstream rules
 out/
-models/
+/models/
+!grail/models/
+!grail/models/**
 wandb/
 logs_rl/

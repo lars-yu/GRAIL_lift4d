@@ -1,0 +1,5 @@
+Baseline branch: codex/lift4d-motion-state-soft-contact
+
+The baseline used future-window motion signals, cache/GPT contact hints, and a
+single-frame soft contact weight. Static object frames were not an explicit
+highest-priority hard-freeze state.

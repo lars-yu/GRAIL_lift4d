@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from pytorch3d.loss import point_mesh_distance
 
 
@@ -70,6 +71,52 @@ def full_frame_indices(frame_num, *, interval=1, device=None):
     if len(indices) != frame_num:
         raise AssertionError(f"Expected {frame_num} Lift4D indices, got {len(indices)}")
     return indices
+
+
+def human_silhouette_loss(
+    projected_points_xy: torch.Tensor,
+    target_masks: torch.Tensor,
+    image_size: tuple[int, int],
+    *,
+    output_size: tuple[int, int] = (64, 64),
+    sigma: float = 1.5,
+    boundary_weight: float = 0.25,
+) -> torch.Tensor:
+    """Differentiable all-frame soft occupancy + boundary loss.
+
+    Projected body vertices/joints are Gaussian splatted at half resolution;
+    no hard rasterization or detached object geometry is involved.
+    """
+    if projected_points_xy.ndim != 3 or projected_points_xy.shape[-1] != 2:
+        raise ValueError("projected_points_xy must have shape [T,N,2]")
+    target = target_masks.to(device=projected_points_xy.device, dtype=projected_points_xy.dtype)
+    if target.ndim == 3:
+        target = target[:, None]
+    target = F.interpolate(target, size=output_size, mode="nearest")[:, 0]
+    height, width = image_size
+    out_h, out_w = output_size
+    points = projected_points_xy.clone()
+    points[..., 0] = points[..., 0] * (out_w / max(float(width), 1.0))
+    points[..., 1] = points[..., 1] * (out_h / max(float(height), 1.0))
+    yy, xx = torch.meshgrid(
+        torch.arange(out_h, device=points.device, dtype=points.dtype),
+        torch.arange(out_w, device=points.device, dtype=points.dtype),
+        indexing="ij",
+    )
+    dx = xx[None, None] - points[..., 0, None, None]
+    dy = yy[None, None] - points[..., 1, None, None]
+    occupancy = torch.exp(-(dx.square() + dy.square()) / (2.0 * float(sigma) ** 2)).sum(dim=1)
+    soft_mask = 1.0 - torch.exp(-occupancy)
+    intersection = (soft_mask * target).sum(dim=(1, 2))
+    dice = 1.0 - (2.0 * intersection + 1e-6) / (
+        soft_mask.sum(dim=(1, 2)) + target.sum(dim=(1, 2)) + 1e-6
+    )
+    target_boundary = (
+        F.max_pool2d(target[:, None], 3, stride=1, padding=1)[:, 0]
+        - F.avg_pool2d(target[:, None], 3, stride=1, padding=1)[:, 0]
+    ).abs()
+    boundary = (torch.abs(soft_mask - target) * (0.25 + target_boundary)).mean(dim=(1, 2))
+    return (dice + float(boundary_weight) * boundary).mean()
 
 
 def lift4d_depth_trend_loss(

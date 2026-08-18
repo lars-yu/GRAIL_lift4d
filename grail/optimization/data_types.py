@@ -97,6 +97,14 @@ class HOIData:
     contact_soft_weight: torch.Tensor | None = None
     contact_hand: str = "right"
     approach_window: int = 30
+    hand_selection_left_distance_px: Any = None
+    hand_selection_right_distance_px: Any = None
+    hand_selection_reason: str = "legacy"
+    hand_ray_target_world: Optional[torch.Tensor] = None  # (L,3), detached camera-ray IK target
+    hand_ray_ramp: Optional[torch.Tensor] = None  # (L,)
+    hand_initial_cam_depth: Optional[torch.Tensor] = None
+    hand_target_cam_depth: Optional[torch.Tensor] = None
+    object_surface_depth: Optional[torch.Tensor] = None
 
 
 @dataclass

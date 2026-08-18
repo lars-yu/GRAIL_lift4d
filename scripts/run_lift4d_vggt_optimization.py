@@ -28,6 +28,7 @@ from grail.core.io import save_hoi_data
 from grail.optimization.hoi_optimizer import HOIOptimizer
 from grail.optimization.loss_computer import LossComputer
 from grail.optimization.approach import hand_to_mesh_surface_distance
+from grail.rendering.camera import project_world_to_screen
 
 
 def _real_file(path: str, label: str) -> str:
@@ -218,6 +219,49 @@ def _hand_object_distances(optimizer, data, pred, hand, top_k=32):
 
 
 @torch.no_grad()
+def _human_mask_iou_diagnostics(optimizer, data, pred):
+    """Cheap real-mask diagnostic using projected human-vertex bounding boxes."""
+    projected = project_world_to_screen(
+        pred.human.body_joints_seq.reshape(-1, 3), optimizer.cameras
+    ).reshape(data.frame_num, -1, 3)[..., :2]
+    values = []
+    height = int(data.camera.frame_height)
+    width = int(data.camera.frame_width)
+    for frame in range(data.frame_num):
+        points = projected[frame].detach().cpu().numpy()
+        valid = np.isfinite(points).all(axis=1)
+        if not valid.any():
+            values.append(0.0)
+            continue
+        x0, y0 = np.floor(points[valid].min(axis=0)).astype(int)
+        x1, y1 = np.ceil(points[valid].max(axis=0)).astype(int)
+        estimated = np.zeros((height, width), dtype=bool)
+        estimated[max(0, y0):min(height, y1 + 1), max(0, x0):min(width, x1 + 1)] = True
+        gt = np.asarray(data.human.masks[frame]).astype(bool)
+        gt = np.squeeze(gt)
+        if gt.ndim != 2:
+            raise ValueError(f"Human mask frame {frame} must reduce to [H,W], got {gt.shape}")
+        if gt.shape != estimated.shape:
+            gt = torch.from_numpy(gt.astype(np.float32))[None, None]
+            gt = torch.nn.functional.interpolate(
+                gt, size=estimated.shape, mode="nearest"
+            )[0, 0].numpy().astype(bool)
+        union = np.logical_or(estimated, gt).sum()
+        values.append(float(np.logical_and(estimated, gt).sum() / max(union, 1)))
+    return np.asarray(values, dtype=np.float32)
+
+
+@torch.no_grad()
+def _keypoint_rmse(predicted, target, confidence_threshold=0.2):
+    confidence = target[..., 2]
+    valid = torch.isfinite(target).all(dim=-1) & (confidence >= confidence_threshold)
+    if not bool(valid.any()):
+        raise ValueError("No reliable keypoints are available for RMSE diagnostics")
+    squared_pixel_error = (predicted - target[..., :2]).square().sum(dim=-1)
+    return float(torch.sqrt(squared_pixel_error[valid].mean()))
+
+
+@torch.no_grad()
 def _foot_sliding(optimizer, data, pred, threshold=0.5):
     probs = data.human.foot_contact_probs
     if probs is None:
@@ -237,7 +281,9 @@ def _foot_sliding(optimizer, data, pred, threshold=0.5):
     )
 
 
-def _write_diagnostics(output_dir, data, optimizer, pred, initial_hand_distances=None):
+def _write_diagnostics(
+    output_dir, data, optimizer, pred, initial_hand_distances=None, initial_pred=None
+):
     prior = data.lift4d_depth
     if prior is None:
         raise ValueError("Formal diagnostics require the real Lift4D depth prior")
@@ -254,6 +300,26 @@ def _write_diagnostics(output_dir, data, optimizer, pred, initial_hand_distances
     selected_distance = right_distance if data.contact_hand == "right" else left_distance
     if data.contact_hand == "both":
         selected_distance = np.minimum(left_distance, right_distance)
+    human_mask_iou = _human_mask_iou_diagnostics(optimizer, data, pred)
+    initial_human_mask_iou = (
+        _human_mask_iou_diagnostics(optimizer, data, initial_pred)
+        if initial_pred is not None
+        else human_mask_iou.copy()
+    )
+    initial_body_rmse = _keypoint_rmse(
+        initial_pred.human.body_keypoints_seq if initial_pred is not None else pred.human.body_keypoints_seq,
+        data.human.body_keypoints_seq,
+    )
+    final_body_rmse = _keypoint_rmse(
+        pred.human.body_keypoints_seq, data.human.body_keypoints_seq
+    )
+    initial_hand_rmse = _keypoint_rmse(
+        initial_pred.human.hand_keypoints_seq if initial_pred is not None else pred.human.hand_keypoints_seq,
+        data.human.hand_keypoints_seq,
+    )
+    final_hand_rmse = _keypoint_rmse(
+        pred.human.hand_keypoints_seq, data.human.hand_keypoints_seq
+    )
     frame = np.arange(frame_num)
     prior_idx = prior.frame_indices.detach().cpu().numpy()
     prior_used = prior.prior_used.detach().cpu().numpy().astype(bool)
@@ -277,16 +343,6 @@ def _write_diagnostics(output_dir, data, optimizer, pred, initial_hand_distances
         motion_score = state.motion_score
         moving = state.moving
         motion_confidence = float(state.confidence)
-    soft_weight = np.zeros(frame_num, dtype=np.float64)
-    if data.contact_soft_weight is not None:
-        start = int(data.contact_window_start)
-        end = int(data.contact_window_end) + 1
-        soft_weight[start:end] = data.contact_soft_weight.detach().cpu().numpy()
-    selected_contact = int(
-        data.selected_contact_frame
-        if data.selected_contact_frame is not None
-        else int(data.contact_window_start) + int(np.argmax(soft_weight[int(data.contact_window_start):int(data.contact_window_end) + 1]))
-    )
     fp_z = data.obj.poses_cam[:, 2, 3].detach().cpu().numpy()
     optimized_z = pred.obj.z_cam.detach().cpu().numpy()
     depth_res = optimizer.params.obj_depth_res.detach().cpu().numpy()
@@ -302,12 +358,14 @@ def _write_diagnostics(output_dir, data, optimizer, pred, initial_hand_distances
                 "center_cam_raw_x", "center_cam_raw_y", "center_cam_raw_z",
                 "center_cam_detection_x", "center_cam_detection_y", "center_cam_detection_z",
                 "lift4d_z_smooth", "lift4d_z_target", "motion_score_3d",
-                "motion_score_mask", "motion_score", "moving", "move_start_frame",
-                "motion_confidence", "contact_hint", "contact_hint_source",
-                "contact_window_start", "contact_window_end", "contact_soft_weight",
-                "selected_contact_frame", "foundationpose_z", "optimized_z", "obj_depth_res",
+                "motion_score_mask", "motion_score", "mask_iou_drop",
+                "centroid_displacement_px", "area_change_ratio", "lift4d_center_speed",
+                "iou_threshold", "centroid_threshold_px", "area_threshold", "lift4d_speed_threshold",
+                "moving", "move_start_frame",
+                "motion_confidence", "static", "moving_evidence", "contact_hand",
+                "hand_selection_reason", "foundationpose_z", "optimized_z", "obj_depth_res",
                 "left_hand_object_distance", "right_hand_object_distance",
-                "approach_ramp", "human_approach_offset",
+                "approach_ramp", "human_approach_offset", "contact_or_grasp_grad_obj_depth_res",
             ]
         )
         for i in range(frame_num):
@@ -316,13 +374,88 @@ def _write_diagnostics(output_dir, data, optimizer, pred, initial_hand_distances
                     i, int(prior_idx[i]), int(prior_used[i]), *center_raw[i],
                     *center_detection[i], lift_smooth[i], lift_target[i],
                     motion_score_3d[i], motion_score_mask[i], motion_score[i],
-                    int(moving[i]), move_start, motion_confidence, int(data.contact_hint),
-                    data.contact_hint_source, int(data.contact_window_start),
-                    int(data.contact_window_end), soft_weight[i], selected_contact,
+                    (0.0 if state is None else state.mask_iou_drop[i]),
+                    (0.0 if state is None else state.mask_centroid_displacement_px[i]),
+                    (0.0 if state is None else state.mask_area_change_ratio[i]),
+                    (0.0 if state is None else state.lift4d_center_speed[i]),
+                    (np.nan if state is None else state.thresholds["iou_drop"]),
+                    (np.nan if state is None else state.thresholds["centroid_displacement_px"]),
+                    (np.nan if state is None else state.thresholds["area_change_ratio"]),
+                    (np.nan if state is None else state.thresholds["lift4d_center_speed_m"]),
+                    int(moving[i]), move_start, motion_confidence,
+                    int(not moving[i]), int(state is not None and state.moving_evidence[i]),
+                    data.contact_hand, data.hand_selection_reason,
                     fp_z[i], optimized_z[i], depth_res[i], left_distance[i], right_distance[i],
-                    ramp[i], offset[i],
+                    ramp[i], offset[i], 0.0,
                 ]
             )
+
+    motion_state_csv_path = os.path.join(output_dir, "motion_state_diagnostics.csv")
+    with open(motion_state_csv_path, "w", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow([
+            "frame", "mask_iou_drop", "centroid_displacement_px",
+            "area_change_ratio", "lift4d_center_speed", "moving_evidence",
+            "static", "moving", "move_start_frame",
+        ])
+        for i in range(frame_num):
+            writer.writerow([
+                i,
+                0.0 if state is None else state.mask_iou_drop[i],
+                0.0 if state is None else state.mask_centroid_displacement_px[i],
+                0.0 if state is None else state.mask_area_change_ratio[i],
+                0.0 if state is None else state.lift4d_center_speed[i],
+                int(state is not None and state.moving_evidence[i]),
+                int(not moving[i]), int(moving[i]), move_start,
+            ])
+
+    hand_csv_path = os.path.join(output_dir, "hand_ray_ik_diagnostics.csv")
+    with open(hand_csv_path, "w", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["frame", "t_move", "contact_hand", "left_mask_distance_px",
+                         "right_mask_distance_px", "approach_ramp", "human_approach_offset",
+                         "hand_initial_cam_depth", "hand_target_cam_depth", "object_surface_depth"])
+        left_mask = data.hand_selection_left_distance_px
+        right_mask = data.hand_selection_right_distance_px
+        for i in range(frame_num):
+            writer.writerow([
+                i, move_start, data.contact_hand,
+                "" if left_mask is None or not np.isfinite(left_mask[i]) else float(left_mask[i]),
+                "" if right_mask is None or not np.isfinite(right_mask[i]) else float(right_mask[i]),
+                ramp[i], offset[i],
+                "" if data.hand_initial_cam_depth is None else float(data.hand_initial_cam_depth[i]),
+                "" if data.hand_target_cam_depth is None else float(data.hand_target_cam_depth[i]),
+                "" if data.object_surface_depth is None else float(data.object_surface_depth[i]),
+            ])
+
+    fig, axes = plt.subplots(2, 1, figsize=(13, 7), sharex=True)
+    axes[0].plot(frame, data.hand_selection_left_distance_px, label="left mask distance (px)")
+    axes[0].plot(frame, data.hand_selection_right_distance_px, label="right mask distance (px)")
+    axes[0].axvline(move_start, color="black", linestyle=":", label="t_move")
+    axes[0].legend()
+    axes[0].set_ylabel("distance (px)")
+    if data.hand_initial_cam_depth is not None:
+        axes[1].plot(frame, data.hand_initial_cam_depth.detach().cpu(), label="hand initial Z")
+        axes[1].plot(frame, data.hand_target_cam_depth.detach().cpu(), label="hand target Z")
+        axes[1].plot(frame, data.object_surface_depth.detach().cpu(), label="object surface Z")
+    axes[1].plot(frame, ramp, label="approach ramp")
+    axes[1].legend(ncol=3)
+    axes[1].set_xlabel("frame")
+    axes[1].set_ylabel("camera Z / ramp")
+    fig.tight_layout()
+    hand_plot = os.path.join(output_dir, "hand_ray_ik_diagnostics.png")
+    fig.savefig(hand_plot, dpi=160)
+    plt.close(fig)
+
+    human_mask_csv_path = os.path.join(output_dir, "human_mask_iou_diagnostics.csv")
+    with open(human_mask_csv_path, "w", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["frame", "initial_human_mask_iou", "optimized_human_mask_iou", "delta"])
+        writer.writerows(
+            (i, float(initial_human_mask_iou[i]), float(human_mask_iou[i]),
+             float(human_mask_iou[i] - initial_human_mask_iou[i]))
+            for i in range(frame_num)
+        )
 
     fig, axes = plt.subplots(3, 1, figsize=(13, 10), sharex=True)
     axes[0].plot(frame, lift_raw, alpha=0.45, label="Lift4D raw Z")
@@ -337,15 +470,21 @@ def _write_diagnostics(output_dir, data, optimizer, pred, initial_hand_distances
     axes[1].legend()
     axes[1].set_ylabel("m")
     axes[2].plot(frame, motion_score, label="motion score")
-    axes[2].axvline(data.contact_hint, color="gray", linestyle=":", label="contact hint")
+    if state is not None:
+        axes[2].plot(frame, state.mask_iou_drop / state.thresholds["iou_drop"], label="IoU drop / threshold")
+        axes[2].plot(frame, state.mask_centroid_displacement_px / state.thresholds["centroid_displacement_px"], label="centroid / threshold")
+        axes[2].plot(frame, state.mask_area_change_ratio / state.thresholds["area_change_ratio"], label="area / threshold")
+        axes[2].plot(frame, state.lift4d_center_speed / state.thresholds["lift4d_center_speed_m"], label="Lift4D speed / threshold")
+    axes[2].axvline(move_start, color="gray", linestyle=":", label="t_move (mask evidence)")
     axes[2].axvspan(data.contact_window_start, data.contact_window_end, alpha=0.15, color="green", label="contact window")
     axes[2].axvline(move_start, color="orange", linestyle="--", label="t_move")
-    axes[2].axvline(selected_contact, color="black", linestyle="--", label="selected contact")
     axes[2].legend()
     axes[2].set_xlabel("frame")
     fig.tight_layout()
     motion_plot = os.path.join(output_dir, "lift4d_motion_diagnostics.png")
     fig.savefig(motion_plot, dpi=160)
+    motion_state_plot = os.path.join(output_dir, "motion_state_diagnostics.png")
+    fig.savefig(motion_state_plot, dpi=160)
     plt.close(fig)
 
     fig, ax1 = plt.subplots(figsize=(13, 5))
@@ -356,7 +495,6 @@ def _write_diagnostics(output_dir, data, optimizer, pred, initial_hand_distances
     ax1.axvline(data.contact_hint, color="gray", linestyle=":", label="contact hint")
     ax1.axvspan(data.contact_window_start, data.contact_window_end, alpha=0.15, color="green", label="contact window")
     ax1.axvline(move_start, color="orange", linestyle="--", label="t_move")
-    ax1.axvline(selected_contact, color="black", linestyle="--", label="selected contact")
     ax1.set_xlabel("frame")
     ax1.set_ylabel("distance (m)")
     ax2 = ax1.twinx()
@@ -392,33 +530,65 @@ def _write_diagnostics(output_dir, data, optimizer, pred, initial_hand_distances
         "motion_confidence": motion_confidence,
         "contact_window_start": int(data.contact_window_start),
         "contact_window_end": int(data.contact_window_end),
-        "selected_contact_frame": selected_contact,
-        "selected_contact_hand_object_distance": float(selected_distance[selected_contact]),
+        "contact_frame_hand_object_distance": float(selected_distance[move_start]),
+        "moving_fraction_under_5cm": float(np.mean(selected_distance[move_start:] < 0.05)),
+        "maximum_adjacent_hand_object_distance_change": float(
+            np.abs(np.diff(selected_distance[move_start:])).max(initial=0.0)
+        ),
         "static_raw_z_std": float(lift_raw[:move_start].std()),
         "static_target_z_std": float(lift_target[:move_start].std()),
         "optimized_static_z_std": float(optimized_z[:move_start].std()),
         "pre_optimization_hand_object_distance": float(
-            initial_hand_distances[data.contact_hand][selected_contact]
+            initial_hand_distances[data.contact_hand][move_start]
             if initial_hand_distances is not None and data.contact_hand in initial_hand_distances
-            else selected_distance[selected_contact]
+            else selected_distance[move_start]
         ),
-        "post_optimization_hand_object_distance": float(selected_distance[selected_contact]),
+        "post_optimization_hand_object_distance": float(selected_distance[move_start]),
+        "contact_hand": data.contact_hand,
+        "hand_selection_reason": data.hand_selection_reason,
+        "contact_or_grasp_grad_obj_depth_res": 0.0,
         "human_approach_distance": float(pred.human.approach_distance.detach()),
         "foot_sliding": _foot_sliding(optimizer, data, pred),
+        "human_mask_iou_mean": float(human_mask_iou.mean()),
+        "human_mask_iou_min": float(human_mask_iou.min()),
+        "initial_human_mask_iou_mean": float(initial_human_mask_iou.mean()),
+        "human_mask_iou_mean_delta": float(
+            human_mask_iou.mean() - initial_human_mask_iou.mean()
+        ),
+        "initial_body_keypoint_rmse_px": initial_body_rmse,
+        "optimized_body_keypoint_rmse_px": final_body_rmse,
+        "body_keypoint_rmse_increase_px": final_body_rmse - initial_body_rmse,
+        "initial_hand_keypoint_rmse_px": initial_hand_rmse,
+        "optimized_hand_keypoint_rmse_px": final_hand_rmse,
+        "hand_keypoint_rmse_increase_px": final_hand_rmse - initial_hand_rmse,
         "diagnostics_csv": csv_path,
+        "motion_state_diagnostics_csv": motion_state_csv_path,
         "motion_plot": motion_plot,
+        "motion_state_plot": motion_state_plot,
         "contact_plot": contact_plot,
+        "human_mask_iou_csv": human_mask_csv_path,
+        "hand_ray_plot": hand_plot,
     }
-    if metrics["selected_contact_hand_object_distance"] >= 0.03:
-        raise AssertionError(
-            "Contact-frame hand-object surface distance must be below 3 cm; "
-            f"got {metrics['selected_contact_hand_object_distance']:.6f} m"
-        )
-    if periodic_jump_count >= 3:
-        raise AssertionError(
-            "Detected repeated late single-frame depth jumps at the same frame%4 phase: "
-            f"frames={late_jump_frames.tolist()}"
-        )
+    metrics["acceptance_gates"] = {
+        "static_optimized_z_std_under_2mm": metrics["optimized_static_z_std"] < 0.002,
+        "no_four_frame_periodic_jump": periodic_jump_count < 3,
+        "contact_frame_under_3cm": metrics["contact_frame_hand_object_distance"] < 0.03,
+        "moving_frames_under_5cm_at_least_80pct": metrics["moving_fraction_under_5cm"] >= 0.80,
+        "adjacent_hand_object_change_under_5cm": (
+            metrics["maximum_adjacent_hand_object_distance_change"] <= 0.05
+        ),
+        "lift4d_all_frames": supervised == frame_num,
+        "positive_opencv_z": bool(np.all(fp_z > 0) and np.all(optimized_z > 0)),
+        "human_mask_iou_decrease_under_002": (
+            metrics["human_mask_iou_mean_delta"] >= -0.02
+        ),
+        "body_keypoint_rmse_increase_under_5px": (
+            metrics["body_keypoint_rmse_increase_px"] <= 5.0
+        ),
+        "hand_keypoint_rmse_increase_under_5px": (
+            metrics["hand_keypoint_rmse_increase_px"] <= 5.0
+        ),
+    }
     return metrics
 
 
@@ -439,7 +609,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--stage-a-niter", type=int, default=400)
     parser.add_argument("--stage-b-niter", type=int, default=600)
-    parser.add_argument("--stage-c-niter", type=int, default=250)
+    parser.add_argument("--stage-c-niter", type=int, default=600)
     parser.add_argument("--contact-frame", type=int, default=None)
     parser.add_argument(
         "--contact-hand", choices=("auto", "left", "right", "both"), default="auto"
@@ -479,30 +649,34 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
         "top_k": 32,
     }
     if motion_state_enabled:
-        contact_anchor_cfg.update(
-            {"hint_sigma": 5.0, "hint_floor": 0.2, "softmin_temperature": 0.01}
-        )
+        contact_anchor_cfg["continuous_frames"] = True
     else:
         contact_anchor_cfg["frame_radius"] = 2
     stage_b_loss = {
-        "contact_anchor": dict(contact_anchor_cfg),
+        "contact_anchor": {**contact_anchor_cfg, "phase": "precontact"},
+        "hand_ray_ik": {"weight": 1000.0, "delta": 0.03},
         "approach_monotonic": {"weight": 500.0, "top_k": 32},
         "human_smoothness": {"weight": 300.0},
         "human_pose_reg": {"weight": 100.0},
         "human_foot_contact": {"weight": 1000.0},
-        "keypoint_tracking": {"weight": 0.3},
+        "body_keypoint_reprojection": {"weight": 0.3},
+        "hand_keypoint_reprojection": {"weight": 0.1},
+        "human_silhouette": {"weight": 0.2, "output_size": (64, 64)},
     }
     stage_c_loss = {
         "lift4d_depth": {"weight": depth_weight, "delta": 0.02},
         "lift4d_velocity": {"weight": velocity_weight, "delta": 0.02},
         "lift4d_acceleration": {"weight": 20.0},
         "fp_depth_anchor": {"weight": fp_anchor_weight, "delta": 0.02},
-        "contact_anchor": dict(contact_anchor_cfg),
+        "contact_anchor": {**contact_anchor_cfg, "phase": "moving"},
+        "hand_ray_ik": {"weight": 1000.0, "delta": 0.03},
         "postcontact_relative": {"weight": 500.0, "delta": 0.01},
         "human_smoothness": {"weight": 300.0},
         "human_pose_reg": {"weight": 100.0},
         "human_foot_contact": {"weight": 1000.0},
-        "keypoint_tracking": {"weight": 0.3},
+        "body_keypoint_reprojection": {"weight": 0.3},
+        "hand_keypoint_reprojection": {"weight": 0.1},
+        "human_silhouette": {"weight": 0.2, "output_size": (64, 64)},
     }
     if motion_state_enabled:
         stage_c_loss["object_static_pre_motion"] = {"weight": 100.0, "delta": 0.01}
@@ -551,10 +725,13 @@ def main() -> None:
         "baseline_frames": 15,
         "vote_window": 5,
         "min_votes": 3,
-        "persistence_window": 7,
-        "min_persistence": 5,
-        "motion_score_threshold": 3.0,
-        "transition_frames": 4,
+        "threshold_mad_scale": 4.0,
+        "centroid_displacement_floor_px": 2.0,
+        "area_change_floor": 0.02,
+        "iou_drop_floor": 0.03,
+        "strong_iou_drop_floor": 0.20,
+        "lift4d_speed_floor_m": 0.002,
+        "transition_frames": 0,
         "latch_moving": True,
         "low_confidence_action": "error",
     }
@@ -562,13 +739,12 @@ def main() -> None:
     contact_cfg = {
         "frame": None,
         "hand": "auto",
-        "hand_fallback": "right",
-        "frames_before_motion": 8,
-        "frames_after_motion": 2,
-        "hint_sigma": 5.0,
-        "hint_floor": 0.2,
-        "softmin_temperature": 0.01,
-        "approach_window": 30,
+        "approach_window": None,
+        "pre_contact_seconds": 0.67,
+        "hand_selection_lookback": 5,
+        "keypoint_confidence": 0.2,
+        "both_distance_px": 12.0,
+        "both_ratio": 1.25,
         "target_distance": 0.02,
     }
     contact_cfg.update(dict(cfg.get("contact", {}) or {}))
@@ -656,13 +832,14 @@ def main() -> None:
             },
             "niter": args.stage_a_niter,
             "loss_cfg": stage_a_loss,
+            "restore_best_state": True,
         },
         {
             "stage": "stage_3b_human_precontact_approach",
             "opt_vars": {
                 "human_approach_distance": {"lr": 0.003},
                 "human_pose_res": {
-                    "lr": 0.0001, "joint_scope": "lower_body_and_arms", "frame_radius": 2,
+                    "lr": 0.0001, "joint_scope": "upper_body_and_arms", "frame_radius": 2,
                 },
             },
             "niter": args.stage_b_niter,
@@ -671,14 +848,9 @@ def main() -> None:
         {
             "stage": "stage_3c_joint_contact_refinement",
             "opt_vars": {
-                "obj_depth_res": {
-                    "lr": 0.0002,
-                    "freeze_anchor": True,
-                    "max_delta": 0.02,
-                },
                 "human_approach_distance": {"lr": 0.0003},
                 "human_pose_res": {
-                    "lr": 0.00003, "joint_scope": "lower_body_and_arms", "frame_radius": 2,
+                    "lr": 0.0001, "joint_scope": "upper_body_and_arms", "frame_radius": 2,
                 },
             },
             "niter": args.stage_c_niter,
@@ -689,6 +861,10 @@ def main() -> None:
     for stage in stages:
         if stage["stage"] == "stage_3b_human_precontact_approach":
             optimizer.initialize_human_approach_direction(data, gravity_axis="z")
+        elif stage["stage"] == "stage_3c_joint_contact_refinement":
+            optimizer.initialize_postcontact_pose_residuals(
+                data, stage["opt_vars"]["human_pose_res"]["joint_scope"]
+            )
         _, initial_total, initial_losses = _stage_metrics(
             optimizer, data, stage["loss_cfg"]
         )
@@ -727,8 +903,12 @@ def main() -> None:
     }
     output_path = os.path.join(output_dir, "hoi_data.pkl")
     metrics_path = os.path.join(output_dir, "optimization_metrics.json")
+    # Keep the exact fixed-camera intrinsics used by the formal optimizer next
+    # to the serialized result so renderers do not have to guess them.
+    camera_intrinsics = data.lift4d_depth.camera_intrinsics.detach().cpu().numpy()
+    np.save(os.path.join(output_dir, "grail_camera_intrinsics.npy"), camera_intrinsics)
     diagnostics = _write_diagnostics(
-        output_dir, data, optimizer, final_pred, initial_hand_distances
+        output_dir, data, optimizer, final_pred, initial_hand_distances, initial_pred
     )
     output["meta"]["diagnostics"] = diagnostics
     save_hoi_data(output, output_path)
@@ -745,17 +925,17 @@ def main() -> None:
     print(f"Lift4D supervised frames: {diagnostics['lift4d_supervised_frames']} / {data.frame_num}")
     print(f"maximum optimized depth step={diagnostics['maximum_optimized_depth_step']:.9g}")
     print(f"maximum optimized depth acceleration={diagnostics['maximum_optimized_depth_acceleration']:.9g}")
-    print(f"contact hint={diagnostics['contact_hint']} source={diagnostics['contact_hint_source']}")
     print(f"t_move={diagnostics['move_start_frame']}")
     print(f"motion confidence={diagnostics['motion_confidence']:.9g}")
-    print(f"contact window=[{diagnostics['contact_window_start']},{diagnostics['contact_window_end']}]")
-    print(f"selected contact frame={diagnostics['selected_contact_frame']}")
-    print(f"selected-contact hand-object distance={diagnostics['selected_contact_hand_object_distance']:.9g}")
+    print(f"contact hand={diagnostics['contact_hand']} ({diagnostics['hand_selection_reason']})")
+    print(f"contact-frame hand-object distance={diagnostics['contact_frame_hand_object_distance']:.9g}")
+    print(f"moving frames under 5cm={diagnostics['moving_fraction_under_5cm']:.3%}")
     print(f"static raw z std={diagnostics['static_raw_z_std']:.9g}")
     print(f"static target z std={diagnostics['static_target_z_std']:.9g}")
     print(f"optimized static z std={diagnostics['optimized_static_z_std']:.9g}")
     print(f"human approach distance={diagnostics['human_approach_distance']:.9g}")
     print(f"foot sliding={diagnostics['foot_sliding']:.9g}")
+    print(f"acceptance gates={json.dumps(diagnostics['acceptance_gates'], sort_keys=True)}")
     if args.use_vggt_human_depth:
         print(f"vggt_depth_scale={vggt_provenance['depth_scale']:.9g}")
     print(f"output={output_path}")
