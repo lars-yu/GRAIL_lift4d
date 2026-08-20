@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn.functional as F
+import trimesh
 import yaml
 
 import matplotlib
@@ -283,10 +284,9 @@ def _foot_sliding(optimizer, data, pred, threshold=0.5):
 
 @torch.no_grad()
 def _hand_trajectory_arrays(optimizer, data, pred):
-    labels = {"right": ["R_Hand"], "left": ["L_Hand"], "both": ["L_Hand", "R_Hand"]}
-    hand = optimizer.human_model.get_verts_segment(
-        pred.human.verts_seq, labels[data.contact_hand]
-    ).mean(dim=1)
+    hand = optimizer.human_model.get_palm_center_from_hand_joints(
+        pred.human.hand_joints_seq, data.contact_hand
+    )
     hand_cam = transform_world_to_camera(
         hand, optimizer.opencv_cam_R, optimizer.opencv_cam_t
     )
@@ -313,6 +313,70 @@ def _hand_trajectory_arrays(optimizer, data, pred):
         "jerk": jerk.detach().cpu().numpy(),
         "desired_world": desired_world.detach().cpu().numpy(),
         "pose_residual_norm": pose_norm.detach().cpu().numpy(),
+    }
+
+
+@torch.no_grad()
+def _palm_contact_arrays(optimizer, data, pred):
+    """Compute semantic palm/finger diagnostics, separate from legacy hand metrics."""
+    palm_idx = optimizer.human_model.get_palm_patch_indices(data.contact_hand)
+    finger_idx = optimizer.human_model.get_finger_patch_indices(data.contact_hand)
+    palm = pred.human.verts_seq[:, list(palm_idx)]
+    finger = pred.human.verts_seq[:, list(finger_idx)]
+    obj = pred.obj.verts_seq.detach()
+    palm_dist = []
+    finger_dist = []
+    exact_surface = []
+    max_penetration = []
+    penetrating_fraction = []
+    faces_np = data.obj.faces.detach().cpu().numpy()
+    for i in range(data.frame_num):
+        palm_dist.append(torch.cdist(palm[i], obj[i]).amin(dim=1))
+        finger_dist.append(torch.cdist(finger[i], obj[i]).amin(dim=1))
+        exact_surface.append(
+            hand_to_mesh_surface_distance(
+                palm[i], obj[i], data.obj.faces, top_k=64, candidate_faces=64
+            )
+        )
+        mesh = trimesh.Trimesh(
+            vertices=obj[i].detach().cpu().numpy(), faces=faces_np, process=False
+        )
+        try:
+            # trimesh uses positive signed distance for points inside a watertight mesh.
+            signed = trimesh.proximity.signed_distance(
+                mesh, palm[i].detach().cpu().numpy()
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Could not compute signed palm-object penetration at frame {i}"
+            ) from exc
+        inside = np.maximum(np.asarray(signed, dtype=np.float64), 0.0)
+        max_penetration.append(float(inside.max(initial=0.0)))
+        penetrating_fraction.append(float(np.mean(inside > 0.0)))
+    palm_dist = torch.stack(palm_dist)
+    finger_dist = torch.stack(finger_dist)
+    palm_center = optimizer.human_model.get_palm_center_from_hand_joints(
+        pred.human.hand_joints_seq, data.contact_hand
+    )
+    palm_cam = transform_world_to_camera(
+        palm_center, optimizer.opencv_cam_R, optimizer.opencv_cam_t
+    )
+    palm_px = project_world_to_screen(palm_center, optimizer.cameras)[:, :2]
+    observed = data.observed_palm_pixels
+    reproj = torch.linalg.norm(palm_px - observed, dim=-1) if observed is not None else torch.full(
+        (data.frame_num,), float("nan"), device=palm_px.device
+    )
+    return {
+        "center_cam": palm_cam.detach().cpu().numpy(),
+        "actual_px": palm_px.detach().cpu().numpy(),
+        "observed_px": None if observed is None else observed.detach().cpu().numpy(),
+        "reprojection_px": reproj.detach().cpu().numpy(),
+        "surface_mean": torch.stack(exact_surface).detach().cpu().numpy(),
+        "surface_median": torch.stack(exact_surface).detach().cpu().numpy(),
+        "palm_fraction_under_1cm": (palm_dist < 0.01).float().mean(dim=1).detach().cpu().numpy(),
+        "finger_fraction_under_1cm": (finger_dist < 0.01).float().mean(dim=1).detach().cpu().numpy(),
+        "maximum_penetration": np.asarray(max_penetration, dtype=np.float32),
+        "penetrating_fraction": np.asarray(penetrating_fraction, dtype=np.float32),
     }
 
 
@@ -384,12 +448,18 @@ def _write_diagnostics(
     ramp = pred.human.approach_ramp.detach().cpu().numpy()
     offset = torch.linalg.norm(pred.human.approach_offset, dim=1).detach().cpu().numpy()
     trajectory = _hand_trajectory_arrays(optimizer, data, pred)
+    palm_diag = _palm_contact_arrays(optimizer, data, pred)
+    selected_distance = palm_diag["surface_median"]
     hand_cam = trajectory["cam"]
     hand_world = trajectory["world"]
     desired_world = trajectory["desired_world"]
     hand_speed = np.linalg.norm(trajectory["velocity"], axis=1)
     hand_acceleration = np.linalg.norm(trajectory["acceleration"], axis=1)
     hand_jerk = np.linalg.norm(trajectory["jerk"], axis=1)
+    palm_center_cam = palm_diag["center_cam"]
+    palm_speed = np.linalg.norm(np.vstack([np.zeros((1, 3)), np.diff(palm_center_cam, axis=0)]) * float(optimizer.video_fps), axis=1)
+    palm_acceleration = np.linalg.norm(np.vstack([np.zeros((2, 3)), np.diff(palm_center_cam, n=2, axis=0)]) * float(optimizer.video_fps) ** 2, axis=1)
+    palm_jerk = np.linalg.norm(np.vstack([np.zeros((3, 3)), np.diff(palm_center_cam, n=3, axis=0)]) * float(optimizer.video_fps) ** 3, axis=1)
     approach_start = max(0, move_start - int(data.approach_window))
     boundary_tail = int((optimizer.cfg.get("contact", {}) or {}).get("boundary_tail", 2))
     metric_start = max(0, approach_start - 1)
@@ -408,8 +478,8 @@ def _write_diagnostics(
             "frame", "actual_hand_cam_x", "actual_hand_cam_y", "actual_hand_cam_z",
             "actual_hand_world_x", "actual_hand_world_y", "actual_hand_world_z",
             "hand_speed_mps", "hand_acceleration_mps2", "hand_jerk",
-            "hand_object_distance", "desired_hand_target_x", "desired_hand_target_y",
-            "desired_hand_target_z", "pose_residual_norm", "approach_ramp",
+            "hand_object_distance", "desired_palm_target_world_x", "desired_palm_target_world_y",
+            "desired_palm_target_world_z", "pose_residual_norm", "approach_ramp",
             "boundary_step_tmove", "boundary_velocity_change_tmove", "ray_surface_fallback",
         ])
         fallback = (
@@ -425,6 +495,88 @@ def _write_diagnostics(
                 boundary_step_tmove if i == move_start else "",
                 boundary_velocity_change if i == move_start else "", int(fallback[i]),
             ])
+
+    palm_csv_path = os.path.join(output_dir, "palm_contact_diagnostics.csv")
+    target_cam = (
+        np.full((frame_num, 3), np.nan, dtype=np.float32)
+        if data.palm_target_cam is None
+        else data.palm_target_cam.detach().cpu().numpy()
+    )
+    target_world = (
+        np.full((frame_num, 3), np.nan, dtype=np.float32)
+        if data.palm_target_world is None
+        else data.palm_target_world.detach().cpu().numpy()
+    )
+    pixel_fallback = (
+        np.zeros(frame_num, dtype=bool)
+        if data.palm_pixel_fallback is None
+        else data.palm_pixel_fallback.detach().cpu().numpy().astype(bool)
+    )
+    surface_fallback = (
+        np.zeros(frame_num, dtype=bool)
+        if data.palm_surface_fallback is None
+        else data.palm_surface_fallback.detach().cpu().numpy().astype(bool)
+    )
+    with open(palm_csv_path, "w", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow([
+            "frame", "t_move", "contact_hand", "observed_palm_u", "observed_palm_v",
+            "actual_palm_u", "actual_palm_v", "palm_reprojection_error_px",
+            "palm_pixel_fallback", "actual_palm_cam_x", "actual_palm_cam_y", "actual_palm_cam_z",
+            "target_palm_cam_x", "target_palm_cam_y", "target_palm_cam_z", "palm_depth_error_m",
+            "palm_target_3d_error_m", "palm_surface_mean_distance_m", "palm_surface_median_distance_m",
+            "palm_patch_fraction_under_1cm", "finger_patch_fraction_under_1cm",
+            "maximum_penetration_m", "penetrating_vertex_fraction", "palm_speed_mps",
+            "palm_acceleration_mps2", "palm_jerk", "approach_ramp", "human_approach_offset",
+            "surface_pixel_fallback",
+        ])
+        observed_px = palm_diag["observed_px"]
+        for i in range(frame_num):
+            obs = (np.nan, np.nan) if observed_px is None else observed_px[i]
+            writer.writerow([
+                i, move_start, data.contact_hand, obs[0], obs[1],
+                *palm_diag["actual_px"][i], palm_diag["reprojection_px"][i], int(pixel_fallback[i]),
+                *palm_center_cam[i], *target_cam[i], palm_center_cam[i, 2] - target_cam[i, 2],
+                float(np.linalg.norm(palm_center_cam[i] - target_cam[i])),
+                palm_diag["surface_mean"][i], palm_diag["surface_median"][i],
+                palm_diag["palm_fraction_under_1cm"][i], palm_diag["finger_fraction_under_1cm"][i],
+                palm_diag["maximum_penetration"][i], palm_diag["penetrating_fraction"][i],
+                palm_speed[i], palm_acceleration[i], palm_jerk[i], ramp[i], offset[i], int(surface_fallback[i]),
+            ])
+
+    palm_plot_path = os.path.join(output_dir, "palm_contact_diagnostics.png")
+    fig, axes = plt.subplots(3, 1, figsize=(13, 10), sharex=True)
+    axes[0].plot(frame, palm_diag["center_cam"][:, 2], label="actual palm Z")
+    axes[0].plot(frame, target_cam[:, 2], label="target palm Z")
+    axes[0].axvline(move_start, color="orange", linestyle="--", label="t_move")
+    axes[0].set_ylabel("camera Z (m)")
+    axes[0].legend()
+    axes[1].plot(frame, palm_diag["surface_median"], label="palm surface median")
+    axes[1].plot(frame, palm_diag["palm_fraction_under_1cm"], label="palm coverage <1cm")
+    axes[1].plot(frame, palm_diag["finger_fraction_under_1cm"], label="finger coverage <1cm")
+    axes[1].legend()
+    axes[1].set_ylabel("distance / fraction")
+    axes[2].plot(frame, palm_diag["reprojection_px"], label="palm reprojection error (px)")
+    axes[2].plot(frame, palm_speed, label="palm speed (m/s)")
+    axes[2].plot(frame, palm_acceleration, label="palm acceleration")
+    axes[2].legend()
+    axes[2].set_xlabel("frame")
+    fig.tight_layout()
+    fig.savefig(palm_plot_path, dpi=160)
+    plt.close(fig)
+
+    reproj_plot_path = os.path.join(output_dir, "palm_reprojection_diagnostics.png")
+    fig, ax = plt.subplots(figsize=(13, 5))
+    ax.plot(frame, palm_diag["reprojection_px"], label="reprojection error (px)")
+    ax.axhline(5.0, color="green", linestyle="--", label="median gate 5px")
+    ax.axhline(10.0, color="red", linestyle=":", label="p95 gate 10px")
+    ax.axvline(move_start, color="orange", linestyle="--", label="t_move")
+    ax.set_xlabel("frame")
+    ax.set_ylabel("pixels")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(reproj_plot_path, dpi=160)
+    plt.close(fig)
 
     trajectory_plot_path = os.path.join(output_dir, "hand_trajectory_diagnostics.png")
     fig, axes = plt.subplots(3, 1, figsize=(13, 10), sharex=True)
@@ -673,6 +825,14 @@ def _write_diagnostics(
         "initial_hand_keypoint_rmse_px": initial_hand_rmse,
         "optimized_hand_keypoint_rmse_px": final_hand_rmse,
         "hand_keypoint_rmse_increase_px": final_hand_rmse - initial_hand_rmse,
+        "median_palm_reprojection_error_px": float(np.nanmedian(palm_diag["reprojection_px"])),
+        "p95_palm_reprojection_error_px": float(np.nanpercentile(palm_diag["reprojection_px"], 95)),
+        "palm_depth_error_at_t_move_m": float(abs(palm_center_cam[move_start, 2] - target_cam[move_start, 2])),
+        "palm_target_3d_error_at_t_move_m": float(np.linalg.norm(palm_center_cam[move_start] - target_cam[move_start])),
+        "moving_median_palm_surface_distance_m": float(np.median(palm_diag["surface_median"][move_start:])),
+        "moving_fraction_palm_surface_under_1p5cm": float(np.mean(palm_diag["surface_median"][move_start:] <= 0.015)),
+        "moving_mean_palm_patch_fraction_under_1cm": float(np.mean(palm_diag["palm_fraction_under_1cm"][move_start:])),
+        "maximum_penetration_m": float(np.max(palm_diag["maximum_penetration"])),
         "diagnostics_csv": csv_path,
         "motion_state_diagnostics_csv": motion_state_csv_path,
         "motion_plot": motion_plot,
@@ -682,6 +842,9 @@ def _write_diagnostics(
         "hand_ray_plot": hand_plot,
         "hand_trajectory_csv": trajectory_csv_path,
         "hand_trajectory_plot": trajectory_plot_path,
+        "palm_contact_csv": palm_csv_path,
+        "palm_contact_plot": palm_plot_path,
+        "palm_reprojection_plot": reproj_plot_path,
     }
     metrics["acceptance_gates"] = {
         "static_optimized_z_std_under_2mm": metrics["optimized_static_z_std"] < 0.002,
@@ -704,6 +867,16 @@ def _write_diagnostics(
         "hand_keypoint_rmse_increase_under_5px": (
             metrics["hand_keypoint_rmse_increase_px"] <= 5.0
         ),
+        "palm_reprojection_median_under_5px": metrics["median_palm_reprojection_error_px"] <= 5.0,
+        "palm_reprojection_p95_under_10px": metrics["p95_palm_reprojection_error_px"] <= 10.0,
+        "palm_depth_at_move_under_1cm": metrics["palm_depth_error_at_t_move_m"] <= 0.01,
+        "palm_3d_at_move_under_1p5cm": metrics["palm_target_3d_error_at_t_move_m"] <= 0.015,
+        "moving_palm_surface_median_under_1cm": metrics["moving_median_palm_surface_distance_m"] <= 0.01,
+        "moving_palm_surface_under_1p5cm_at_least_90pct": metrics["moving_fraction_palm_surface_under_1p5cm"] >= 0.90,
+        "palm_patch_coverage_at_least_30pct": metrics["moving_mean_palm_patch_fraction_under_1cm"] >= 0.30,
+        "maximum_penetration_under_3mm": metrics["maximum_penetration_m"] <= 0.003,
+        "boundary_palm_step_under_1p6cm": metrics["boundary_step_tmove"] <= 0.016,
+        "maximum_adjacent_palm_object_change_under_1p3cm": metrics["maximum_adjacent_hand_object_distance_change"] <= 0.013,
     }
     return metrics
 
@@ -760,8 +933,8 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
 
     contact_anchor_cfg = {
         "weight": 5000.0,
-        "target_distance": 0.02,
-        "delta": 0.02,
+        "target_distance": 0.005,
+        "delta": 0.005,
         "top_k": 32,
     }
     if motion_state_enabled:
@@ -783,6 +956,13 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
         "body_keypoint_reprojection": {"weight": 1.0},
         "hand_keypoint_reprojection": {"weight": 0.3},
         "human_silhouette": {"weight": 0.5, "output_size": (64, 64), "silhouette_num_samples": 512},
+        "palm_reprojection": {"weight": 5.0, "delta": 5.0, "phase": "precontact"},
+        "palm_depth": {"weight": 30.0, "delta": 0.01, "terminal_weight": 2000.0, "terminal_frame": "contact", "phase": "precontact"},
+        "palm_target_3d": {"weight": 5.0, "delta": 0.015, "terminal_weight": 500.0, "terminal_frame": "contact", "phase": "precontact"},
+        "palm_surface": {"weight": 100.0, "target_distance": 0.005, "delta": 0.005, "terminal_weight": 10.0, "terminal_frame": "contact", "phase": "precontact"},
+        "contact_coverage": {"weight": 50.0, "threshold": 0.01, "target_fraction": 0.30, "phase": "precontact"},
+        "hand_roi_reprojection": {"weight": 1.0, "roi_radius_px": 32.0, "phase": "precontact"},
+        "boundary_velocity": {"weight": 10000.0, "delta": 0.01, "target": "ray"},
     }
     stage_c_loss = {
         "lift4d_depth": {"weight": depth_weight, "delta": 0.02},
@@ -806,6 +986,17 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
         "body_keypoint_reprojection": {"weight": 1.0},
         "hand_keypoint_reprojection": {"weight": 0.3},
         "human_silhouette": {"weight": 0.5, "output_size": (64, 64), "silhouette_num_samples": 512},
+        "palm_reprojection": {"weight": 10.0, "delta": 5.0, "phase": "joint", "overlap_frames": 5},
+        "palm_depth": {"weight": 30.0, "delta": 0.01, "terminal_weight": 2000.0, "terminal_frame": "contact", "phase": "joint", "overlap_frames": 5},
+        "palm_target_3d": {"weight": 5.0, "delta": 0.015, "terminal_weight": 500.0, "terminal_frame": "contact", "phase": "joint", "overlap_frames": 5},
+        "palm_surface": {"weight": 100.0, "target_distance": 0.005, "delta": 0.005, "terminal_weight": 10.0, "terminal_frame": "contact", "phase": "joint", "overlap_frames": 5},
+        "palm_normal": {"weight": 10.0, "phase": "joint", "overlap_frames": 5},
+        "contact_coverage": {"weight": 50.0, "threshold": 0.01, "target_fraction": 0.30, "terminal_weight": 10.0, "terminal_frame": "contact", "phase": "joint", "overlap_frames": 5},
+        "hand_object_penetration": {"weight": 1000.0, "minimum_clearance": 0.001, "phase": "joint", "overlap_frames": 5},
+        "hand_roi_reprojection": {"weight": 1.0, "roi_radius_px": 32.0, "phase": "joint", "overlap_frames": 5},
+        "hand_pose_reg": {"weight": 100.0},
+        "hand_pose_velocity": {"weight": 10.0},
+        "hand_pose_acceleration": {"weight": 20.0},
     }
     if motion_state_enabled:
         stage_c_loss["object_static_pre_motion"] = {"weight": 100.0, "delta": 0.01}
@@ -873,13 +1064,14 @@ def main() -> None:
         "max_hand_speed_mps": 0.4,
         "min_approach_frames": 20,
         "max_approach_frames": 60,
-        "max_root_approach_distance": 0.03,
+        "max_approach_distance": 0.35,
+        "max_root_approach_distance": 0.08,
         "boundary_tail": 2,
         "hand_selection_lookback": 5,
         "keypoint_confidence": 0.2,
         "both_distance_px": 12.0,
         "both_ratio": 1.25,
-        "target_distance": 0.02,
+        "target_distance": 0.005,
     }
     contact_cfg.update(dict(cfg.get("contact", {}) or {}))
     contact_cfg["frame"] = args.contact_frame
@@ -897,7 +1089,10 @@ def main() -> None:
             "lift4d_savgol_polyorder": 2,
             "lift4d_depth_scale": 1.0,
             "learn_lift4d_depth_scale": False,
-            "max_human_approach_distance": float(contact_cfg.get("max_root_approach_distance", 0.03)),
+            "max_human_approach_distance": float(contact_cfg.get("max_approach_distance", 0.35)),
+            "max_root_approach_distance": float(
+                contact_cfg.get("max_root_approach_distance", 0.03)
+            ),
             "object_motion_state": motion_state_cfg,
             "contact": contact_cfg,
             "vis_cfg": {"enable": False},
@@ -972,34 +1167,45 @@ def main() -> None:
             "stage": "stage_3b_human_precontact_approach",
             "overlap_frames": 5,
             "opt_vars": {
-                "human_approach_distance": {"lr": 0.003},
+                "human_approach_distance": {"lr": 0.00005},
                 "human_pose_res": {
-                    "lr": 0.0003, "joint_scope": "upper_body_and_arms", "frame_radius": 2,
+                    "lr": 0.001, "joint_scope": "arms", "frame_radius": 2,
                 },
             },
             "niter": args.stage_b_niter,
             "loss_cfg": stage_b_loss,
+            "restore_best_state": True,
         },
         {
             "stage": "stage_3c_joint_contact_refinement",
             "opt_vars": {
-                "human_approach_distance": {"lr": 0.0003},
                 "human_pose_res": {
-                    "lr": 0.0001, "joint_scope": "upper_body_and_arms", "frame_radius": 2,
+                    "lr": 0.00005, "joint_scope": "arms", "frame_radius": 2,
                 },
+                "hand_pose_res": {"lr": 0.00005, "hand": "contact", "frame_radius": 5},
             },
             "niter": args.stage_c_niter,
             "loss_cfg": stage_c_loss,
+            "restore_best_state": True,
         },
     ]
     stage_records = []
+    stage_b_base_pose_residual = None
     for stage in stages:
         if stage["stage"] == "stage_3b_human_precontact_approach":
             optimizer.initialize_human_approach_direction(data, gravity_axis="z")
+            # Start from the observed HMR trajectory.  The single scalar is
+            # learned gradually in Stage B; directly seeding it from the
+            # palm target can move the whole body out of image alignment.
+            optimizer.capture_approach_target_boundary(data)
         elif stage["stage"] == "stage_3c_joint_contact_refinement":
             optimizer.initialize_postcontact_pose_residuals(
-                data, stage["opt_vars"]["human_pose_res"]["joint_scope"]
+                data,
+                stage["opt_vars"]["human_pose_res"]["joint_scope"],
+                base_pose_residual=stage_b_base_pose_residual,
             )
+        if stage["stage"] == "stage_3b_human_precontact_approach":
+            stage_b_base_pose_residual = optimizer.params.human_pose_res.detach().clone()
         _, initial_total, initial_losses = _stage_metrics(
             optimizer, data, stage["loss_cfg"]
         )
@@ -1044,11 +1250,19 @@ def main() -> None:
     metrics_path = os.path.join(output_dir, "optimization_metrics.json")
     # Keep the exact fixed-camera intrinsics used by the formal optimizer next
     # to the serialized result so renderers do not have to guess them.
-    camera_intrinsics = data.lift4d_depth.camera_intrinsics.detach().cpu().numpy()
-    np.save(os.path.join(output_dir, "grail_camera_intrinsics.npy"), camera_intrinsics)
+    grail_camera_intrinsics = data.grail_camera_intrinsics.detach().cpu().numpy()
+    lift4d_camera_intrinsics = data.lift4d_depth.camera_intrinsics.detach().cpu().numpy()
+    np.save(os.path.join(output_dir, "grail_camera_intrinsics.npy"), grail_camera_intrinsics)
+    np.save(os.path.join(output_dir, "lift4d_camera_intrinsics.npy"), lift4d_camera_intrinsics)
     diagnostics = _write_diagnostics(
         output_dir, data, optimizer, final_pred, initial_hand_distances, initial_pred
     )
+    formal_result = bool(all(diagnostics.get("acceptance_gates", {}).values()))
+    output["meta"]["formal_joint_optimization"]["formal_result"] = formal_result
+    output["meta"]["formal_joint_optimization"]["failed_gates"] = [
+        name for name, passed in diagnostics.get("acceptance_gates", {}).items()
+        if not passed
+    ]
     output["meta"]["diagnostics"] = diagnostics
     save_hoi_data(output, output_path)
     with open(metrics_path, "w") as handle:
@@ -1060,6 +1274,12 @@ def main() -> None:
             },
             handle,
             indent=2,
+        )
+    if not formal_result:
+        failed = output["meta"]["formal_joint_optimization"]["failed_gates"]
+        raise RuntimeError(
+            "Formal acceptance gates failed; output retained as debug only: "
+            + ", ".join(failed)
         )
     print(f"Lift4D supervised frames: {diagnostics['lift4d_supervised_frames']} / {data.frame_num}")
     print(f"maximum optimized depth step={diagnostics['maximum_optimized_depth_step']:.9g}")

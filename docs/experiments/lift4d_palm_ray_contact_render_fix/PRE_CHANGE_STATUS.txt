@@ -1,0 +1,23 @@
+Baseline worktree was checked before creating the change branch.
+
+The runtime imports/ and data/ symlink layout appears as tracked deletions in
+git status. Those entries are environment artifacts and are excluded from all
+staging operations. No source changes were present outside that runtime tree.
+
+retry5 retained output:
+/home/jiaoyufei_insta360.com/PRE/GRAIL_4d/pickup_table/generation/lift4d_mask_motion_ray_ik/rand00033_smooth_hand_approach_20260819_retry5
+
+retry5 key metrics:
+- frames supervised: 121 / 121
+- t_move: 89, from object-mask motion detection
+- old nearest/top-k contact distance at frame 89: 0.0191540495 m
+- palm camera-Z residual at frame 89: approximately 0.0855 m
+- palm 3D target residual at frame 89: approximately 0.104 m
+- body keypoint RMSE after optimization: 20.3341 px
+- hand keypoint RMSE after optimization: 13.1034 px
+- human mask IoU delta: +0.00457184
+- boundary step: 0.015336033 m
+- maximum diagnostic-window adjacent distance change: 0.0129728764 m
+
+The old nearest-32 metric is retained only for historical comparison and is
+not accepted as formal palm-contact evidence in this change.

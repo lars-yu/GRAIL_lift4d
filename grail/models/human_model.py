@@ -91,6 +91,33 @@ class HumanModel(ABC):
     def get_hand_joints(self, motion_data: dict, *, require_grad: bool = False) -> torch.Tensor: ...
 
     @abstractmethod
+    def get_palm_center_from_hand_joints(
+        self, hand_joints: torch.Tensor, hand: str
+    ) -> torch.Tensor:
+        """Return a semantic wrist/MCP palm center, never a whole-hand mean."""
+        ...
+
+    @abstractmethod
+    def get_palm_joint_indices(self, hand: str) -> tuple[int, ...]: ...
+
+    @abstractmethod
+    def get_finger_contact_indices(self, hand: str) -> tuple[int, ...]: ...
+
+    @abstractmethod
+    def get_finger_patch_indices(self, hand: str) -> tuple[int, ...]: ...
+
+    @abstractmethod
+    def get_palm_normal_from_hand_joints(
+        self, hand_joints: torch.Tensor, hand: str
+    ) -> torch.Tensor: ...
+
+    @abstractmethod
+    def get_palm_patch_indices(self, hand: str) -> tuple[int, ...]: ...
+
+    @abstractmethod
+    def palm_metadata(self) -> dict: ...
+
+    @abstractmethod
     def get_foot_joint_indices(self) -> tuple[int, int]:
         """(left_ankle_idx, right_ankle_idx) in body-joint space."""
         ...
@@ -313,6 +340,30 @@ class SomaHumanModel(HumanModel):
         right = joints[:, self.RIGHT_HAND_JOINT_INDICES, :]
         return torch.cat([left, right], dim=1)
 
+    def get_palm_center_from_hand_joints(self, hand_joints, hand):
+        raise NotImplementedError(
+            "Formal palm contact is not supported by the SOMA backend; "
+            "use the explicit SMPL-X/G1-SMPL-X palm mapping."
+        )
+
+    def get_palm_joint_indices(self, hand):
+        raise NotImplementedError("SOMA has no verified palm joint mapping")
+
+    def get_finger_contact_indices(self, hand):
+        raise NotImplementedError("SOMA has no verified finger contact mapping")
+
+    def get_finger_patch_indices(self, hand):
+        raise NotImplementedError("SOMA has no verified finger patch")
+
+    def get_palm_normal_from_hand_joints(self, hand_joints, hand):
+        raise NotImplementedError("SOMA has no verified palm normal")
+
+    def get_palm_patch_indices(self, hand):
+        raise NotImplementedError("SOMA has no verified palm mesh patch")
+
+    def palm_metadata(self):
+        raise NotImplementedError("SOMA has no verified palm metadata")
+
     def get_foot_joint_indices(self):
         return (21, 26)
 
@@ -405,6 +456,18 @@ class SomaHumanModel(HumanModel):
 
 
 class SmplxHumanModel(HumanModel):
+
+    # get_hand_joints returns [L wrist, L index/middle/pinky/ring/thumb x 3,
+    # R wrist, R index/middle/pinky/ring/thumb x 3]. These are explicit SMPL-X
+    # joint names, not inferred from geometric proximity.
+    PALM_JOINTS = {
+        "left": (0, 1, 4, 10, 7),
+        "right": (16, 17, 20, 26, 23),
+    }
+    FINGER_CONTACT_JOINTS = {
+        "left": (3, 6, 9, 12, 15),
+        "right": (19, 22, 25, 28, 31),
+    }
 
     def __init__(self, cfg: dict, device: str):
         from grail.models.smplx_model import (
@@ -574,6 +637,111 @@ class SmplxHumanModel(HumanModel):
             ],
             dim=1,
         )
+
+    def get_palm_joint_indices(self, hand):
+        hand = str(hand).lower()
+        if hand == "both":
+            return self.PALM_JOINTS["left"] + self.PALM_JOINTS["right"]
+        if hand not in self.PALM_JOINTS:
+            raise ValueError(f"Unsupported palm hand: {hand!r}")
+        return self.PALM_JOINTS[hand]
+
+    def get_finger_contact_indices(self, hand):
+        hand = str(hand).lower()
+        if hand == "both":
+            return self.FINGER_CONTACT_JOINTS["left"] + self.FINGER_CONTACT_JOINTS["right"]
+        if hand not in self.FINGER_CONTACT_JOINTS:
+            raise ValueError(f"Unsupported finger hand: {hand!r}")
+        return self.FINGER_CONTACT_JOINTS[hand]
+
+    def get_finger_patch_indices(self, hand):
+        hand = str(hand).lower()
+        if hand == "both":
+            return tuple(self.get_finger_patch_indices("left")) + tuple(
+                self.get_finger_patch_indices("right")
+            )
+        if hand not in ("left", "right"):
+            raise ValueError(f"Unsupported finger patch hand: {hand!r}")
+        # The checked-in SMPL-X segmentation exposes an explicit index-finger
+        # segment. Do not silently substitute the whole hand for a finger patch.
+        from grail.models.smplx_model import get_smplx_raw_segment_indices
+
+        segment = "leftHandIndex1" if hand == "left" else "rightHandIndex1"
+        indices = get_smplx_raw_segment_indices([segment])
+        if indices is None or len(indices) == 0:
+            raise ValueError(f"SMPL-X finger patch segment is empty for {hand}")
+        return tuple(int(i) for i in indices)
+
+    def get_palm_normal_from_hand_joints(self, hand_joints, hand):
+        hand = str(hand).lower()
+        if hand == "both":
+            left = self.get_palm_normal_from_hand_joints(hand_joints, "left")
+            right = self.get_palm_normal_from_hand_joints(hand_joints, "right")
+            return torch.nn.functional.normalize(left + right, dim=-1, eps=1e-8)
+        idx = torch.as_tensor(
+            self.get_palm_joint_indices(hand), device=hand_joints.device, dtype=torch.long
+        )
+        points = hand_joints[:, idx]
+        # Index/Middle and Ring/Pinky baselines define the palm plane. The
+        # normal sign is intentionally not assumed; normal loss compares |dot|.
+        edge_a = points[:, 2] - points[:, 0]
+        edge_b = points[:, 4] - points[:, 1]
+        return torch.nn.functional.normalize(
+            torch.cross(edge_a, edge_b, dim=-1), dim=-1, eps=1e-8
+        )
+
+    def get_palm_center_from_hand_joints(self, hand_joints, hand):
+        indices = torch.as_tensor(
+            self.get_palm_joint_indices(hand), device=hand_joints.device, dtype=torch.long
+        )
+        if hand_joints.ndim != 3 or hand_joints.shape[1] < int(indices.max()) + 1:
+            raise ValueError(
+                f"SMPL-X hand joints do not match the verified palm mapping: {tuple(hand_joints.shape)}"
+            )
+        if str(hand).lower() == "both":
+            left = hand_joints[:, indices[:5]].mean(dim=1)
+            right = hand_joints[:, indices[5:]].mean(dim=1)
+            return torch.stack((left, right), dim=1).mean(dim=1)
+        return hand_joints[:, indices].mean(dim=1)
+
+    def get_palm_patch_indices(self, hand):
+        hand = str(hand).lower()
+        if hand == "both":
+            return tuple(self.get_palm_patch_indices("left")) + tuple(
+                self.get_palm_patch_indices("right")
+            )
+        if hand not in ("left", "right"):
+            raise ValueError(f"Unsupported palm patch hand: {hand!r}")
+        from grail.models.smplx_model import get_smplx_raw_segment_indices
+
+        segment = "leftHand" if hand == "left" else "rightHand"
+        indices = get_smplx_raw_segment_indices([segment])
+        if indices is None or len(indices) == 0:
+            raise ValueError(f"SMPL-X palm patch segment is empty for {hand}")
+        return tuple(int(i) for i in indices)
+
+    def palm_metadata(self):
+        return {
+            "backend": self.model_type,
+            "palm_joint_names": {
+                "left": ["L_Wrist", "L_Index1", "L_Middle1", "L_Ring1", "L_Pinky1"],
+                "right": ["R_Wrist", "R_Index1", "R_Middle1", "R_Ring1", "R_Pinky1"],
+            },
+            "palm_joint_indices": {
+                hand: list(indices) for hand, indices in self.PALM_JOINTS.items()
+            },
+            "finger_contact_joint_indices": {
+                hand: list(indices) for hand, indices in self.FINGER_CONTACT_JOINTS.items()
+            },
+            "palm_patch_vertex_indices": {
+                hand: list(self.get_palm_patch_indices(hand)) for hand in ("left", "right")
+            },
+            "finger_patch_vertex_indices": {
+                hand: list(self.get_finger_patch_indices(hand)) for hand in ("left", "right")
+            },
+            "finger_patch_source": "verified_smplx_hand_segment",
+            "palm_patch_source": "verified_smplx_leftHand_rightHand_segments",
+        }
 
     def get_foot_joint_indices(self):
         return (15, 16)

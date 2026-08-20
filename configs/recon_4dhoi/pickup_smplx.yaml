@@ -140,13 +140,15 @@ optimization:
     max_hand_speed_mps: 0.4
     min_approach_frames: 20
     max_approach_frames: 60
-    max_root_approach_distance: 0.03
+    max_approach_distance: 0.35
+    max_root_approach_distance: 0.08
     boundary_tail: 2
     hand_selection_lookback: 5
     keypoint_confidence: 0.2
     both_distance_px: 12.0
     both_ratio: 1.25
-    target_distance: 0.02
+    palm_target_distance: 0.005
+    target_distance: 0.005
 
   human_precontact_approach_opt:
     enabled: false

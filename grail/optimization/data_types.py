@@ -20,6 +20,8 @@ class HOIData:
         frame_height: int
         frame_width: int
         focal_length: float
+        opencv_R: Optional[torch.Tensor] = None
+        opencv_t: Optional[torch.Tensor] = None
 
     @dataclass
     class Human:
@@ -101,6 +103,13 @@ class HOIData:
     hand_selection_right_distance_px: Any = None
     hand_selection_reason: str = "legacy"
     hand_ray_target_world: Optional[torch.Tensor] = None  # (L,3), detached camera-ray IK target
+    observed_palm_pixels: Optional[torch.Tensor] = None  # (L,2), wrist/MCP video evidence
+    palm_pixel_fallback: Optional[torch.Tensor] = None  # (L,), low-confidence fallback flags
+    palm_target_cam: Optional[torch.Tensor] = None  # (L,3), GRAIL-K camera-ray target
+    palm_target_world: Optional[torch.Tensor] = None  # (L,3), detached world target
+    palm_target_normal_world: Optional[torch.Tensor] = None  # (L,3), optional surface normal
+    grail_camera_intrinsics: Optional[torch.Tensor] = None  # (L,3,3), renderer K
+    palm_metadata: dict[str, Any] | None = None
     hand_ray_ramp: Optional[torch.Tensor] = None  # (L,)
     hand_initial_cam: Optional[torch.Tensor] = None  # (L,3), fixed initial hand ray points
     hand_pixels: Optional[torch.Tensor] = None  # (L,2), original image pixels
@@ -108,9 +117,11 @@ class HOIData:
     hand_initial_cam_depth: Optional[torch.Tensor] = None
     hand_target_cam_depth: Optional[torch.Tensor] = None
     object_surface_depth: Optional[torch.Tensor] = None
+    palm_surface_fallback: Optional[torch.Tensor] = None  # (L,), mask-nearest fallback flags
     hand_approach_initial_distance: Optional[float] = None
     boundary_hand_position_at_move: Optional[torch.Tensor] = None
     boundary_hand_velocity_at_move: Optional[torch.Tensor] = None
+    approach_target_velocity_at_move: Optional[torch.Tensor] = None
     boundary_pose_residual_at_move: Optional[torch.Tensor] = None
     boundary_relative_anchor: Optional[torch.Tensor] = None
 
@@ -146,6 +157,7 @@ class HOIPrediction:
         hand_joints_seq: torch.Tensor  # (L, J_hand, 3)
         hand_keypoints_seq: torch.Tensor  # (L, J_hand, 2)
         pose_res: torch.Tensor  # (L, J_body, 6)
+        hand_pose_res: torch.Tensor  # (L, J_hand, 6)
         trans_res: torch.Tensor  # (L, 1, 3)
         approach_ramp: torch.Tensor  # (L,)
         approach_offset: torch.Tensor  # (L, 3)

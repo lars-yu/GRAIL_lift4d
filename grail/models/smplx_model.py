@@ -365,6 +365,23 @@ def get_smplx_segment_indices(segment_name=["L_Hand", "R_Hand"]):
     return indices
 
 
+def get_smplx_raw_segment_indices(segment_names):
+    """Return indices for exact checked-in segmentation keys.
+
+    This bypasses the semantic SMPLH_SEGMENT unions and is used only where a
+    palm patch and finger patch must remain disjoint and auditable.
+    """
+    json_path = os.path.join(os.path.dirname(__file__), "smplx_vert_segmentation_contact.json")
+    with open(json_path, "r") as handle:
+        segments = json.load(handle)
+    indices = []
+    for name in segment_names:
+        if name not in segments:
+            raise KeyError(f"Unknown SMPL-X raw vertex segment: {name}")
+        indices.extend(segments[name])
+    return indices
+
+
 def get_tpose_human_height(smplx_model, betas=None, device="cuda"):
     """
     Generate T-pose human and calculate height

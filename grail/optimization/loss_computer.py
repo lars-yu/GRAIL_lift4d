@@ -1,5 +1,7 @@
 """Loss computation for HOI optimization, extracted from HOIOptimizer."""
 
+import math
+
 import torch
 from pytorch3d.structures import Meshes
 
@@ -28,7 +30,11 @@ from grail.optimization.loss_terms import (
     relative_translation_consistency_loss,
 )
 from grail.optimization.approach import hand_to_mesh_surface_distance
-from grail.rendering.camera import project_world_to_screen, unproject_depth_map_to_world
+from grail.rendering.camera import (
+    project_world_to_screen,
+    transform_world_to_camera,
+    unproject_depth_map_to_world,
+)
 
 
 class LossComputer:
@@ -84,6 +90,17 @@ class LossComputer:
         "approach_monotonic": "_approach_monotonic_loss",
         "postcontact_relative": "_postcontact_relative_loss",
         "hand_ray_ik": "_hand_ray_ik_loss",
+        "palm_reprojection": "_palm_reprojection_loss",
+        "palm_depth": "_palm_depth_loss",
+        "palm_target_3d": "_palm_target_3d_loss",
+        "palm_surface": "_palm_surface_loss",
+        "palm_normal": "_palm_normal_loss",
+        "contact_coverage": "_contact_coverage_loss",
+        "hand_object_penetration": "_hand_object_penetration_loss",
+        "hand_pose_reg": "_hand_pose_reg_loss",
+        "hand_pose_velocity": "_hand_pose_velocity_loss",
+        "hand_pose_acceleration": "_hand_pose_acceleration_loss",
+        "hand_roi_reprojection": "_hand_roi_reprojection_loss",
         "hand_path": "_hand_path_loss",
         "hand_velocity": "_hand_velocity_loss",
         "hand_acceleration": "_hand_acceleration_loss",
@@ -316,6 +333,29 @@ class LossComputer:
         )
         return weight * reg_loss(res, reg_target)
 
+    def _hand_pose_reg_loss(self, data, pred, cfg, weight):
+        res = pred.human.hand_pose_res
+        identity = torch.tensor(
+            [1.0, 0.0, 0.0, 0.0, 1.0, 0.0], device=res.device, dtype=res.dtype
+        ).reshape(1, 1, 6)
+        target = identity.expand_as(res)
+        return weight * reg_loss(res, target)
+
+    def _hand_pose_velocity_loss(self, data, pred, cfg, weight):
+        res = pred.human.hand_pose_res
+        if res.shape[0] < 2:
+            zero = pred.human.verts_seq.new_zeros(())
+            return zero
+        return weight * res[1:].sub(res[:-1]).abs().mean()
+
+    def _hand_pose_acceleration_loss(self, data, pred, cfg, weight):
+        res = pred.human.hand_pose_res
+        if res.shape[0] < 3:
+            zero = pred.human.verts_seq.new_zeros(())
+            return zero
+        accel = res[2:] - 2.0 * res[1:-1] + res[:-2]
+        return weight * accel.abs().mean()
+
     def _human_foot_contact_loss(self, data, pred, cfg, weight):
         body_joints_seq = pred.human.body_joints_seq
         foot_contact_probs = data.human.foot_contact_probs
@@ -419,9 +459,8 @@ class LossComputer:
         return mapping[hand]
 
     def _hand_surface_distances(self, data, pred, frame_indices, cfg, *, detach_object=False):
-        hand_seq = self.human_model.get_verts_segment(
-            pred.human.verts_seq, self._contact_hand_labels(data)
-        )
+        patch_indices = self.human_model.get_palm_patch_indices(data.contact_hand)
+        hand_seq = pred.human.verts_seq[:, list(patch_indices)]
         object_seq = pred.obj.verts_seq.detach() if detach_object else pred.obj.verts_seq
         distances = []
         for frame_idx in frame_indices:
@@ -446,7 +485,7 @@ class LossComputer:
             distances = self._hand_surface_distances(data, pred, range(start, end), cfg)
             raw = contact_anchor_distance_loss(
                 distances,
-                target=cfg.get("target_distance", 0.02),
+                target=cfg.get("target_distance", 0.005),
                 delta=cfg.get("delta", 0.02),
             )
             return raw, float(weight) * raw
@@ -463,7 +502,7 @@ class LossComputer:
         distances = self._hand_surface_distances(
             data, pred, frame_indices, cfg, detach_object=True
         )
-        target_distance = float(cfg.get("target_distance", 0.02))
+        target_distance = float(cfg.get("target_distance", 0.005))
         if phase in {"precontact", "joint"}:
             ramp = pred.human.approach_ramp[start : end + 1].detach()
             initial_distance = data.hand_approach_initial_distance
@@ -507,25 +546,23 @@ class LossComputer:
         return raw, float(weight) * raw
 
     def _postcontact_relative_loss(self, data, pred, cfg, weight):
-        hand_seq = self.human_model.get_verts_segment(
-            pred.human.verts_seq, self._contact_hand_labels(data)
-        )
+        hand_center = self._selected_palm_center(data, pred)
         if data.object_motion_state is None:
             start = int(data.contact_frame)
-            relative = hand_seq[start:].mean(dim=1) - pred.obj.trans[start:].detach()
+            relative = hand_center[start:] - pred.obj.trans[start:].detach()
             raw = relative_translation_consistency_loss(
                 relative, delta=cfg.get("delta", 0.01)
             )
             return raw, float(weight) * raw
         start = int(data.object_motion_state.move_start_frame)
-        relative = hand_seq[start:].mean(dim=1) - pred.obj.trans[start:].detach()
+        relative = hand_center[start:] - pred.obj.trans[start:].detach()
         anchor = (
             data.boundary_relative_anchor.detach()
             if data.boundary_relative_anchor is not None
             else relative[0].detach()
         )
         relative_error = torch.linalg.norm(relative - anchor[None], dim=-1)
-        hand_velocity = hand_seq[start:].mean(dim=1)
+        hand_velocity = hand_center[start:]
         object_velocity = pred.obj.trans[start:].detach()
         velocity_error = torch.linalg.norm(
             (hand_velocity[1:] - hand_velocity[:-1])
@@ -542,13 +579,7 @@ class LossComputer:
         target = data.hand_ray_target_world
         if target is None:
             raise ValueError("hand_ray_ik requires a real camera-ray target")
-        hand = pred.human.hand_joints_seq
-        half = hand.shape[1] // 2
-        if data.contact_hand == "left":
-            hand = hand[:, :half]
-        elif data.contact_hand == "right":
-            hand = hand[:, half:]
-        predicted = hand.mean(dim=1)
+        predicted = self._selected_palm_center(data, pred)
         error = torch.linalg.norm(predicted - target.detach(), dim=-1)
         start, end = self._hand_loss_window(data, cfg)
         selected_error = error[start:end]
@@ -580,17 +611,258 @@ class LossComputer:
         overlap = int(cfg.get("overlap_frames", 5))
         return max(0, move_start - overlap), data.frame_num
 
-    def _selected_hand_center(self, data, pred):
-        hand = self.human_model.get_verts_segment(
-            pred.human.verts_seq, self._contact_hand_labels(data)
+    @staticmethod
+    def _terminal_window_index(data, cfg, start, end):
+        """Return the explicit terminal frame inside a selected loss window."""
+        if cfg.get("terminal_frame", "last") == "contact":
+            if data.object_motion_state is None:
+                frame = int(data.contact_frame)
+            else:
+                frame = int(data.object_motion_state.move_start_frame)
+            if not start <= frame < end:
+                raise ValueError(
+                    f"contact terminal frame {frame} is outside loss window [{start}, {end})"
+                )
+            return frame - start
+        return end - start - 1
+
+    def _selected_palm_center(self, data, pred):
+        return self.human_model.get_palm_center_from_hand_joints(
+            pred.human.hand_joints_seq, data.contact_hand
         )
-        return hand.mean(dim=1)
+
+    def _palm_reprojection_loss(self, data, pred, cfg, weight):
+        if data.observed_palm_pixels is None:
+            raise ValueError("palm_reprojection requires observed wrist/MCP pixels")
+        actual = project_world_to_screen(
+            self._selected_palm_center(data, pred), self.cameras
+        )[:, :2]
+        start, end = self._hand_loss_window(data, cfg)
+        error = actual[start:end] - data.observed_palm_pixels[start:end].detach()
+        raw = torch.nn.functional.huber_loss(
+            error, torch.zeros_like(error), delta=cfg.get("delta", 5.0), reduction="mean"
+        )
+        return raw, float(weight) * raw
+
+    def _actual_palm_cam(self, data, pred):
+        if data.camera.opencv_R is None or data.camera.opencv_t is None:
+            raise ValueError("Palm camera losses require the real OpenCV renderer camera")
+        return transform_world_to_camera(
+            self._selected_palm_center(data, pred),
+            data.camera.opencv_R,
+            data.camera.opencv_t,
+        )
+
+    def _palm_depth_loss(self, data, pred, cfg, weight):
+        if data.palm_target_cam is None:
+            raise ValueError("palm_depth requires refreshed GRAIL-K targets")
+        start, end = self._hand_loss_window(data, cfg)
+        error = self._actual_palm_cam(data, pred)[start:end, 2] - data.palm_target_cam[start:end, 2].detach()
+        base_raw = huber_loss(error, delta=cfg.get("delta", 0.01))
+        terminal_weight = float(cfg.get("terminal_weight", 0.0))
+        terminal_raw = error.new_zeros(())
+        if terminal_weight > 0.0 and error.numel():
+            terminal_index = self._terminal_window_index(data, cfg, start, end)
+            terminal_raw = huber_loss(
+                error[terminal_index : terminal_index + 1], delta=cfg.get("delta", 0.01)
+            )
+        # terminal_weight is an independent coefficient. Multiplying it inside
+        # raw and then multiplying raw by the component weight makes the final
+        # frame coefficient weight * terminal_weight and can destabilize IK.
+        raw = base_raw + terminal_raw
+        weighted = float(weight) * base_raw + terminal_weight * terminal_raw
+        return raw, weighted
+
+    def _palm_target_3d_loss(self, data, pred, cfg, weight):
+        if data.palm_target_world is None:
+            raise ValueError("palm_target_3d requires refreshed targets")
+        start, end = self._hand_loss_window(data, cfg)
+        error = self._selected_palm_center(data, pred)[start:end] - data.palm_target_world[start:end].detach()
+        base_raw = torch.nn.functional.huber_loss(
+            error, torch.zeros_like(error), delta=cfg.get("delta", 0.015), reduction="mean"
+        )
+        terminal_weight = float(cfg.get("terminal_weight", 0.0))
+        terminal_raw = error.new_zeros(())
+        if terminal_weight > 0.0 and error.numel():
+            terminal_index = self._terminal_window_index(data, cfg, start, end)
+            terminal_raw = torch.nn.functional.huber_loss(
+                error[terminal_index : terminal_index + 1],
+                torch.zeros_like(error[terminal_index : terminal_index + 1]),
+                delta=cfg.get("delta", 0.015), reduction="mean"
+            )
+        raw = base_raw + terminal_raw
+        weighted = float(weight) * base_raw + terminal_weight * terminal_raw
+        return raw, weighted
+
+    def _palm_vertex_distances(self, data, pred, start, end):
+        patch = pred.human.verts_seq[start:end, list(
+            self.human_model.get_palm_patch_indices(data.contact_hand)
+        )]
+        obj = pred.obj.verts_seq[start:end].detach()
+        # Contact losses run inside every optimizer iteration. Use a fixed,
+        # deterministic surface sample here to keep memory bounded; formal
+        # diagnostics use the full real mesh after optimization.
+        max_object_samples = 512
+        if obj.shape[1] > max_object_samples:
+            sample = torch.linspace(
+                0, obj.shape[1] - 1, max_object_samples,
+                device=obj.device,
+            ).long()
+            obj = obj[:, sample]
+        max_palm_samples = 64
+        if patch.shape[1] > max_palm_samples:
+            sample = torch.linspace(
+                0, patch.shape[1] - 1, max_palm_samples,
+                device=patch.device,
+            ).long()
+            patch = patch[:, sample]
+        return torch.stack([
+            torch.cdist(patch[i], obj[i]).amin(dim=1) for i in range(end - start)
+        ])
+
+    def _palm_surface_loss(self, data, pred, cfg, weight):
+        start, end = self._hand_loss_window(data, cfg)
+        patch_indices = self.human_model.get_palm_patch_indices(data.contact_hand)
+        patch = pred.human.verts_seq[start:end, list(patch_indices)]
+        if patch.shape[1] > 64:
+            sample = torch.linspace(0, patch.shape[1] - 1, 64, device=patch.device).long()
+            patch = patch[:, sample]
+        distances = torch.stack([
+            hand_to_mesh_surface_distance(
+                patch[i], pred.obj.verts_seq[start + i].detach(), data.obj.faces,
+                top_k=64, candidate_faces=int(cfg.get("candidate_faces", 64)),
+            )
+            for i in range(end - start)
+        ])
+        target = float(cfg.get("target_distance", 0.005))
+        base_raw = huber_loss(distances - target, delta=cfg.get("delta", 0.005))
+        terminal_weight = float(cfg.get("terminal_weight", 0.0))
+        terminal_raw = distances.new_zeros(())
+        if terminal_weight > 0.0 and distances.numel():
+            terminal_index = self._terminal_window_index(data, cfg, start, end)
+            terminal_raw = huber_loss(
+                distances[terminal_index : terminal_index + 1] - target,
+                delta=cfg.get("delta", 0.005)
+            )
+        raw = base_raw + terminal_raw
+        weighted = float(weight) * base_raw + terminal_weight * terminal_raw
+        return raw, weighted
+
+    def _palm_normal_loss(self, data, pred, cfg, weight):
+        joints = pred.human.hand_joints_seq
+        actual = self.human_model.get_palm_normal_from_hand_joints(
+            joints, data.contact_hand
+        )
+        # A surface normal is not available from all object backends. When a
+        # target is absent, keep this diagnostic disabled rather than guessing
+        # a world-axis direction. A supplied target must be detached.
+        target = getattr(data, "palm_target_normal_world", None)
+        if target is None:
+            zero = actual.new_zeros(())
+            return zero, zero
+        start, end = self._hand_loss_window(data, cfg)
+        dot = (actual[start:end] * target[start:end].detach()).sum(dim=-1).abs()
+        raw = (1.0 - dot.clamp(0.0, 1.0)).mean()
+        return raw, float(weight) * raw
+
+    def _contact_coverage_loss(self, data, pred, cfg, weight):
+        start, end = self._hand_loss_window(data, cfg)
+        distances = self._palm_vertex_distances(data, pred, start, end)
+        threshold = float(cfg.get("threshold", 0.01))
+        finger_indices = self.human_model.get_finger_patch_indices(data.contact_hand)
+        finger = pred.human.verts_seq[start:end, list(finger_indices)]
+        obj = pred.obj.verts_seq[start:end].detach()
+        if obj.shape[1] > 512:
+            sample = torch.linspace(0, obj.shape[1] - 1, 512, device=obj.device).long()
+            obj = obj[:, sample]
+        if finger.shape[1] > 64:
+            sample = torch.linspace(0, finger.shape[1] - 1, 64, device=finger.device).long()
+            finger = finger[:, sample]
+        finger_distances = torch.stack([
+            torch.cdist(finger[i], obj[i]).amin(dim=1)
+            for i in range(end - start)
+        ])
+        target_fraction = float(cfg.get("target_fraction", 0.30))
+        if not 0.0 < target_fraction <= 1.0:
+            raise ValueError("contact coverage target_fraction must be in (0, 1]")
+        temperature = float(cfg.get("temperature", 0.002))
+        if temperature <= 0.0:
+            raise ValueError("contact coverage temperature must be positive")
+
+        def coverage_shortfall(vertex_distances):
+            required = max(1, int(math.ceil(target_fraction * vertex_distances.shape[1])))
+            closest = torch.topk(
+                vertex_distances, required, dim=1, largest=False
+            ).values
+            return (
+                torch.nn.functional.softplus((closest - threshold) / temperature)
+                * temperature
+            ).mean()
+
+        base_raw = coverage_shortfall(distances)
+        base_raw = base_raw + float(cfg.get("finger_weight", 0.25)) * coverage_shortfall(
+            finger_distances
+        )
+        terminal_weight = float(cfg.get("terminal_weight", 0.0))
+        terminal_raw = distances.new_zeros(())
+        if terminal_weight > 0.0 and distances.shape[0]:
+            terminal_index = self._terminal_window_index(data, cfg, start, end)
+            terminal_raw = (
+                coverage_shortfall(distances[terminal_index : terminal_index + 1])
+                + float(cfg.get("finger_weight", 0.25))
+                * coverage_shortfall(finger_distances[terminal_index : terminal_index + 1])
+            )
+        raw = base_raw + terminal_raw
+        weighted = float(weight) * base_raw + terminal_weight * terminal_raw
+        return raw, weighted
+
+    def _hand_object_penetration_loss(self, data, pred, cfg, weight):
+        # The formal object-depth parameter must not receive contact gradients;
+        # use a detached object mesh for the non-signed proximity guard. A
+        # signed SDF can be supplied by data.obj_sdf for stronger supervision.
+        start, end = self._hand_loss_window(data, cfg)
+        patch_idx = self.human_model.get_palm_patch_indices(data.contact_hand)
+        patch = pred.human.verts_seq[start:end, list(patch_idx)]
+        if data.obj_sdf is not None:
+            values = []
+            for i in range(start, end):
+                sdf = data.obj_sdf[i] if isinstance(data.obj_sdf, (list, tuple)) else data.obj_sdf
+                values.append(torch.relu(-sdf(patch[i - start])))
+            raw = torch.stack([v.mean() for v in values]).mean() if values else patch.new_zeros(())
+        else:
+            obj = pred.obj.verts_seq[start:end].detach()
+            if obj.shape[1] > 512:
+                sample = torch.linspace(0, obj.shape[1] - 1, 512, device=obj.device).long()
+                obj = obj[:, sample]
+            if patch.shape[1] > 64:
+                sample = torch.linspace(0, patch.shape[1] - 1, 64, device=patch.device).long()
+                patch = patch[:, sample]
+            # Unsigned fallback is deliberately conservative: it only keeps a
+            # small clearance around the surface and never fabricates a sign.
+            nearest = torch.stack([
+                torch.cdist(patch[i], obj[i]).amin(dim=1)
+                for i in range(end - start)
+            ])
+            raw = torch.relu(float(cfg.get("minimum_clearance", 0.001)) - nearest).mean()
+        return raw, float(weight) * raw
+
+    def _hand_roi_reprojection_loss(self, data, pred, cfg, weight):
+        if data.observed_palm_pixels is None:
+            raise ValueError("hand_roi_reprojection requires observed palm pixels")
+        actual = project_world_to_screen(
+            self._selected_palm_center(data, pred), self.cameras
+        )[:, :2]
+        start, end = self._hand_loss_window(data, cfg)
+        error = actual[start:end] - data.observed_palm_pixels[start:end].detach()
+        radius = float(cfg.get("roi_radius_px", 32.0))
+        raw = torch.relu(torch.linalg.norm(error, dim=-1) - radius).mean()
+        return raw, float(weight) * raw
 
     def _hand_path_loss(self, data, pred, cfg, weight):
         if data.hand_ray_target_world is None:
             raise ValueError("hand_path requires refreshed hand ray targets")
         start, end = self._hand_loss_window(data, cfg)
-        actual = self._selected_hand_center(data, pred)[start:end]
+        actual = self._selected_palm_center(data, pred)[start:end]
         target = data.hand_ray_target_world[start:end].detach()
         raw = torch.nn.functional.huber_loss(
             actual, target, delta=cfg.get("delta", 0.03), reduction="mean"
@@ -599,7 +871,7 @@ class LossComputer:
 
     def _hand_velocity_loss(self, data, pred, cfg, weight):
         start, end = self._hand_loss_window(data, cfg)
-        actual = self._selected_hand_center(data, pred)[start:end]
+        actual = self._selected_palm_center(data, pred)[start:end]
         target = data.hand_ray_target_world[start:end].detach()
         if actual.shape[0] < 2:
             zero = pred.human.verts_seq.new_zeros(())
@@ -612,7 +884,7 @@ class LossComputer:
 
     def _hand_acceleration_loss(self, data, pred, cfg, weight):
         start, end = self._hand_loss_window(data, cfg)
-        actual = self._selected_hand_center(data, pred)[start:end]
+        actual = self._selected_palm_center(data, pred)[start:end]
         target = data.hand_ray_target_world[start:end].detach()
         if actual.shape[0] < 3:
             zero = pred.human.verts_seq.new_zeros(())
@@ -626,7 +898,7 @@ class LossComputer:
 
     def _hand_jerk_loss(self, data, pred, cfg, weight):
         start, end = self._hand_loss_window(data, cfg)
-        actual = self._selected_hand_center(data, pred)[start:end]
+        actual = self._selected_palm_center(data, pred)[start:end]
         target = data.hand_ray_target_world[start:end].detach()
         if actual.shape[0] < 4:
             zero = pred.human.verts_seq.new_zeros(())
@@ -653,20 +925,23 @@ class LossComputer:
     def _boundary_position_loss(self, data, pred, cfg, weight):
         if data.boundary_hand_position_at_move is None:
             return pred.human.verts_seq.new_zeros(()), pred.human.verts_seq.new_zeros(())
-        actual = self._selected_hand_center(data, pred)[int(data.object_motion_state.move_start_frame)]
+        actual = self._selected_palm_center(data, pred)[int(data.object_motion_state.move_start_frame)]
         raw = torch.nn.functional.huber_loss(
             actual, data.boundary_hand_position_at_move.detach(), delta=cfg.get("delta", 0.01)
         )
         return raw, float(weight) * raw
 
     def _boundary_velocity_loss(self, data, pred, cfg, weight):
-        if data.boundary_hand_velocity_at_move is None:
+        target_velocity = data.boundary_hand_velocity_at_move
+        if cfg.get("target") == "ray":
+            target_velocity = data.approach_target_velocity_at_move
+        if target_velocity is None:
             return pred.human.verts_seq.new_zeros(()), pred.human.verts_seq.new_zeros(())
         t = int(data.object_motion_state.move_start_frame)
-        hand = self._selected_hand_center(data, pred)
+        hand = self._selected_palm_center(data, pred)
         actual = hand[t] - hand[t - 1]
         raw = torch.nn.functional.huber_loss(
-            actual, data.boundary_hand_velocity_at_move.detach(), delta=cfg.get("delta", 0.01)
+            actual, target_velocity.detach(), delta=cfg.get("delta", 0.01)
         )
         return raw, float(weight) * raw
 

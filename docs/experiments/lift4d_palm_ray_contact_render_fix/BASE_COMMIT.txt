@@ -1,0 +1,3 @@
+Baseline branch: codex/lift4d-smooth-hand-approach-fix
+Baseline commit: 166043ea78d425a78068c4e575e9e61f3da9155a
+Change branch: codex/lift4d-palm-ray-contact-render-fix

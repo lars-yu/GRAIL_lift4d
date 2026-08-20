@@ -12,6 +12,7 @@ from scripts.render_saved_hoi_top_view import (
     _build_render_setup_config,
     _validate_vggt_provenance,
 )
+from scripts.render_saved_hoi_views import _setup_cfg, _trajectory_variants
 from scripts.run_lift4d_vggt_optimization import (
     _build_parser,
     _build_stage_loss_configs,
@@ -103,6 +104,39 @@ class FormalRunnerArgumentTests(unittest.TestCase):
         self.assertFalse(cfg["use_lift4d_depth_prior"])
         self.assertFalse(cfg["object_motion_state"]["enabled"])
         self.assertTrue(cfg["skip_contact_label_loading"])
+
+    def test_multi_view_renderer_uses_anchor_relative_lift4d_depth(self):
+        with tempfile.TemporaryDirectory() as directory:
+            prior_path = Path(directory) / "prior.npz"
+            prior_path.write_bytes(b"real prior placeholder")
+            root_cfg = {"optimization": {}, "human_model": {}}
+            cfg = _setup_cfg(root_cfg, "/tmp/repo/configs/recon_4dhoi/pickup_smplx.yaml", "/tmp/results", str(prior_path))
+            self.assertTrue(cfg["use_lift4d_depth_prior"])
+            self.assertEqual(cfg["lift4d_motion_prior_path"], str(prior_path))
+
+        eye = torch.eye(4).repeat(2, 1, 1)
+        eye[:, 2, 3] = torch.tensor([3.0, 3.0])
+        data = SimpleNamespace(
+            obj=SimpleNamespace(
+                poses_cam=eye,
+                poses=eye,
+                fp_ray_cam=torch.tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]]),
+            ),
+            lift4d_depth=SimpleNamespace(z_target=torch.tensor([2.0, 2.25])),
+        )
+        data_obj = {
+            "obj_R": np.tile(np.eye(3, dtype=np.float32), (2, 1, 1)),
+            "obj_R_cam": np.tile(np.eye(3, dtype=np.float32), (2, 1, 1)),
+            "obj_t": np.zeros((2, 3), dtype=np.float32),
+            "obj_t_cam": np.zeros((2, 3), dtype=np.float32),
+            "obj_z_cam": np.zeros(2, dtype=np.float32),
+        }
+        optimizer = SimpleNamespace(
+            opencv_cam_R=torch.eye(3),
+            opencv_cam_t=torch.zeros(3),
+        )
+        variants = _trajectory_variants({"obj_data": data_obj}, data, optimizer)
+        np.testing.assert_allclose(variants["Lift4D depth-only"]["obj_z_cam"], [3.0, 3.25])
 
 
 class ObjectDepthStageConstraintTests(unittest.TestCase):
@@ -234,8 +268,9 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
             },
         )
         self.assertTrue(torch.all(pose.grad[:1] == 0))
-        self.assertTrue(torch.all(torch.linalg.norm(pose.grad[3:, 13], dim=-1) > 0))
-        self.assertTrue(torch.all(torch.linalg.norm(pose.grad[1:3, 13], dim=-1) > 0))
+        self.assertTrue(torch.all(torch.linalg.norm(pose.grad[4:, 13], dim=-1) > 0))
+        self.assertTrue(torch.all(pose.grad[3, 13] == 0))
+        self.assertTrue(torch.all(pose.grad[1:4, 13] == 0))
 
     def test_stage_losses_include_local_hand_trajectory_and_boundary_terms(self):
         _, stage_b, stage_c = _build_stage_loss_configs(True, False)
@@ -247,7 +282,7 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
         self.assertEqual(stage_c["contact_anchor"]["phase"], "joint")
         self.assertEqual(stage_c["contact_anchor"]["overlap_frames"], 5)
 
-    def test_stage_c_initializes_every_post_motion_frame_from_motion_anchor(self):
+    def test_stage_c_preserves_post_motion_hmr_residuals(self):
         optimizer = HOIOptimizer.__new__(HOIOptimizer)
         optimizer.num_body_joints = 22
         pose = torch.zeros(7, 22, 6, requires_grad=True)
@@ -261,7 +296,7 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
             object_motion_state=SimpleNamespace(move_start_frame=3),
         )
         optimizer.initialize_postcontact_pose_residuals(data, "upper_body_and_arms")
-        self.assertTrue(torch.all(pose[4:, 13] == 2.0))
+        self.assertTrue(torch.all(pose[4:, 13] == 0.0))
         self.assertTrue(torch.all(pose[4:, 1] == 0.0))
         self.assertTrue(torch.all(pose[:3] == 0.0))
 

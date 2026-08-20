@@ -20,6 +20,63 @@ class ContactHandSelection:
     used_fallback: bool
 
 
+def observed_palm_pixels_from_keypoints(
+    hand_keypoints_2d: np.ndarray,
+    contact_hand: str,
+    *,
+    fallback_pixels: np.ndarray | None = None,
+    confidence_threshold: float = 0.2,
+    smooth_window: int = 3,
+) -> tuple[np.ndarray, np.ndarray, tuple[int, ...]]:
+    """Build a wrist/MCP palm pixel track from video keypoint evidence.
+
+    The 32-point HMR hand layout is fixed as 16 left points followed by 16
+    right points. Palm points are wrist plus the four MCP points. Missing or
+    low-confidence frames use the explicitly supplied projected-model fallback
+    and are returned in the per-frame fallback mask.
+    """
+    points = _as_confident_points(hand_keypoints_2d)
+    if points.shape[1] != 32:
+        raise ValueError(f"Expected the verified 32-point hand layout, got {points.shape}")
+    hand = str(contact_hand).lower()
+    local = (0, 1, 4, 7, 10)
+    if hand == "left":
+        indices = tuple(local)
+    elif hand == "right":
+        indices = tuple(i + 16 for i in local)
+    elif hand == "both":
+        indices = tuple(local) + tuple(i + 16 for i in local)
+    else:
+        raise ValueError(f"Unsupported contact hand: {contact_hand!r}")
+    pixels = np.full((points.shape[0], 2), np.nan, dtype=np.float64)
+    fallback = np.zeros(points.shape[0], dtype=bool)
+    for frame in range(points.shape[0]):
+        selected = points[frame, list(indices)]
+        valid = np.isfinite(selected[:, :2]).all(axis=1) & (
+            selected[:, 2] >= float(confidence_threshold)
+        )
+        if valid.any():
+            weights = np.maximum(selected[valid, 2], 1e-6)
+            pixels[frame] = (selected[valid, :2] * weights[:, None]).sum(axis=0) / weights.sum()
+        elif fallback_pixels is not None:
+            pixels[frame] = np.asarray(fallback_pixels)[frame]
+            fallback[frame] = True
+        else:
+            raise ValueError(f"No observed palm keypoints and no fallback at frame {frame}")
+    if not np.isfinite(pixels).all():
+        raise ValueError("Observed palm pixels contain unresolved invalid frames")
+    window = max(1, int(smooth_window))
+    if window > 1:
+        smoothed = pixels.copy()
+        radius = window // 2
+        for frame in range(points.shape[0]):
+            start = max(0, frame - radius)
+            end = min(points.shape[0], frame + radius + 1)
+            smoothed[frame] = np.median(pixels[start:end], axis=0)
+        pixels = smoothed
+    return pixels, fallback, indices
+
+
 def _hand_distance_curve(points, masks, start, end, confidence_threshold):
     curve = np.full(masks.shape[0], np.nan, dtype=np.float32)
     reliable = 0
@@ -159,7 +216,9 @@ def camera_ray_hand_targets(
     t_move: int,
     window: int,
     *,
-    target_distance: float = 0.02,
+    target_distance: float = 0.005,
+    query_pixels: torch.Tensor | None = None,
+    camera_intrinsics: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Move depth along the initial OpenCV ray without changing image coordinates."""
     if initial_hand_cam.ndim != 2 or initial_hand_cam.shape[1] != 3:
@@ -169,7 +228,24 @@ def camera_ray_hand_targets(
     if torch.any(initial_hand_cam[:, 2] <= 0) or torch.any(detached_surface_depth <= 0):
         raise ValueError("Ray IK requires positive OpenCV camera depth")
     surface_depth = detached_surface_depth.detach()
-    ray = initial_hand_cam / initial_hand_cam[:, 2:3]
+    if query_pixels is not None:
+        if camera_intrinsics is None:
+            raise ValueError("camera_intrinsics is required with observed query_pixels")
+        K = camera_intrinsics
+        if K.shape == (3, 3):
+            K = K[None].expand(initial_hand_cam.shape[0], -1, -1)
+        if K.shape != (initial_hand_cam.shape[0], 3, 3):
+            raise ValueError("camera_intrinsics must be [3,3] or [T,3,3]")
+        ray = torch.stack(
+            [
+                (query_pixels[:, 0] - K[:, 0, 2]) / K[:, 0, 0],
+                (query_pixels[:, 1] - K[:, 1, 2]) / K[:, 1, 1],
+                torch.ones_like(query_pixels[:, 0]),
+            ],
+            dim=1,
+        )
+    else:
+        ray = initial_hand_cam / initial_hand_cam[:, 2:3]
     side = torch.where(
         initial_hand_cam[:, 2] - surface_depth >= 0.0,
         torch.ones_like(surface_depth),
@@ -202,7 +278,10 @@ def mesh_surface_depth_at_pixels(
     object_faces: torch.Tensor | None = None,
     current_hand_depth: torch.Tensor | None = None,
     top_k: int = 32,
-) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+    max_fallback_pixel_distance: float = 15.0,
+    return_normals: bool = False,
+    strict_frames: torch.Tensor | None = None,
+) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Return real ray/triangle surface depth with a nearest-surface fallback.
 
     The ray uses OpenCV coordinates with camera origin at zero and z-normalized
@@ -235,6 +314,7 @@ def mesh_surface_depth_at_pixels(
         faces = None
 
     surface_z = torch.empty(frame_num, device=vertices.device, dtype=vertices.dtype)
+    surface_normal = torch.empty((frame_num, 3), device=vertices.device, dtype=vertices.dtype)
     fallback = torch.zeros(frame_num, device=vertices.device, dtype=torch.bool)
     for frame in range(frame_num):
         K = camera_intrinsics[frame]
@@ -270,12 +350,18 @@ def mesh_surface_depth_at_pixels(
             )
             if bool(valid.any()):
                 hits = t[valid]
+                hit_faces = torch.nonzero(valid, as_tuple=False).squeeze(1)
         if hits is not None and hits.numel():
             hand_z = current_hand_depth[frame]
             if torch.isfinite(hand_z):
-                surface_z[frame] = hits[(hits - hand_z).abs().argmin()]
+                selected = (hits - hand_z).abs().argmin()
             else:
-                surface_z[frame] = hits.min()
+                selected = hits.argmin()
+            surface_z[frame] = hits[selected]
+            tri = triangles[hit_faces[selected]]
+            surface_normal[frame] = torch.nn.functional.normalize(
+                torch.cross(tri[1] - tri[0], tri[2] - tri[0], dim=0), dim=0, eps=1e-8
+            )
             continue
 
         fallback[frame] = True
@@ -288,6 +374,14 @@ def mesh_surface_depth_at_pixels(
             dim=1,
         )
         pixel_distance = torch.linalg.norm(projected - query_pixels[frame], dim=1)
+        nearest_pixel_distance = float(pixel_distance.min().detach())
+        strict = True if strict_frames is None else bool(strict_frames[frame])
+        if strict and nearest_pixel_distance > float(max_fallback_pixel_distance):
+            raise ValueError(
+                "Palm ray missed the object surface and nearest projected mesh "
+                f"point is {nearest_pixel_distance:.2f}px away, exceeding the "
+                f"{float(max_fallback_pixel_distance):.2f}px fallback limit at frame {frame}"
+            )
         count = min(max(1, int(top_k)), vertex_num)
         nearest = torch.topk(pixel_distance, count, largest=False).indices
         candidates = frame_vertices[nearest, 2]
@@ -296,9 +390,24 @@ def mesh_surface_depth_at_pixels(
             surface_z[frame] = candidates[(candidates - hand_z).abs().argmin()]
         else:
             surface_z[frame] = candidates[0]
+        if faces is None:
+            surface_normal[frame] = torch.tensor(
+                [0.0, 0.0, 1.0], device=vertices.device, dtype=vertices.dtype
+            )
+        else:
+            nearest_vertex = nearest[0]
+            incident = torch.nonzero((faces == nearest_vertex).any(dim=1), as_tuple=False).squeeze(1)
+            if incident.numel() == 0:
+                raise ValueError(f"No incident face for fallback vertex at frame {frame}")
+            tri = frame_vertices[faces[incident[0]]]
+            surface_normal[frame] = torch.nn.functional.normalize(
+                torch.cross(tri[1] - tri[0], tri[2] - tri[0], dim=0), dim=0, eps=1e-8
+            )
     if torch.any(surface_z <= 0) or not torch.isfinite(surface_z).all():
         raise ValueError("Mesh surface lookup produced invalid OpenCV camera depth")
     if object_faces is not None:
+        if return_normals:
+            return surface_z.detach(), fallback.detach(), surface_normal.detach()
         return surface_z.detach(), fallback.detach()
     return surface_z.detach()
 

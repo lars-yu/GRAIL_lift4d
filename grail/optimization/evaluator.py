@@ -171,6 +171,9 @@ def truncate_data(data, new_frame_num, logger=None):
     for name in (
         "hand_initial_cam", "hand_pixels", "hand_ray_surface_fallback",
         "hand_initial_cam_depth", "hand_target_cam_depth", "object_surface_depth",
+        "observed_palm_pixels", "palm_pixel_fallback", "palm_target_cam",
+        "palm_target_world", "palm_target_normal_world",
+        "grail_camera_intrinsics", "palm_surface_fallback",
     ):
         value = getattr(data, name, None)
         if isinstance(value, torch.Tensor):
