@@ -1749,12 +1749,7 @@ class HOIOptimizer:
                 start = max(0, motion_frame - int(data.approach_window) - overlap)
                 end = min(data.frame_num, motion_frame + 1)
             elif "stage_3c" in stage:
-                overlap = int(opt_config.get("overlap_frames", 5))
-                # Stage C owns the contact-hand refinement at the contact
-                # endpoint and after it. The object depth remains frozen, so
-                # allowing t_move here lets the strong palm anchor correct
-                # Stage B's arm-only endpoint without moving the object.
-                start = min(data.frame_num, motion_frame)
+                start = min(data.frame_num, motion_frame + 1)
                 end = data.frame_num
             else:
                 start = max(0, motion_frame - int(data.approach_window))
@@ -1763,6 +1758,24 @@ class HOIOptimizer:
         self.params.human_pose_res.grad.mul_(
             frame_mask[:, None, None] * joint_mask[None, :, None]
         )
+        # Translation may opt into an earlier loss-only window (for example,
+        # full-sequence palm reprojection) while pose and hand boundaries stay
+        # governed by the Stage B/C contract above.
+        trans_cfg = opt_config.get("opt_vars", {}).get("human_trans_res")
+        if trans_cfg is not None and self.params.human_trans_res.grad is not None:
+            trans_start = max(0, min(data.frame_num, int(trans_cfg.get("frame_start", start))))
+            trans_mask = torch.zeros_like(frame_mask)
+            ramp_end = trans_cfg.get("frame_ramp_end")
+            if ramp_end is None:
+                trans_mask[trans_start:end] = 1.0
+            else:
+                ramp_end = max(trans_start + 1, min(end, int(ramp_end)))
+                trans_mask[trans_start:ramp_end] = torch.linspace(
+                    0.0, 1.0, ramp_end - trans_start,
+                    dtype=trans_mask.dtype, device=trans_mask.device,
+                )
+                trans_mask[ramp_end:end] = 1.0
+            self.params.human_trans_res.grad.mul_(trans_mask[:, None])
         hand_cfg = opt_config.get("opt_vars", {}).get("hand_pose_res")
         if hand_cfg is None or self.params.hand_pose_res.grad is None:
             return
@@ -1780,9 +1793,8 @@ class HOIOptimizer:
             hand_mask[self.num_hand_joints // 2 :] = 1.0
         else:
             raise ValueError(f"Unsupported contact hand for hand_pose_res: {data.contact_hand!r}")
-        # Finger residuals are exclusively Stage C variables. Its window
-        # includes t_move so the strong contact anchor can refine the
-        # arm-only Stage B endpoint while object depth stays frozen.
+        # Finger residuals are exclusively Stage C variables and start after
+        # the frozen Stage-B motion endpoint.
         stage = str(opt_config.get("stage", ""))
         if "stage_3b" in stage:
             raise ValueError("Stage 3B must not configure hand_pose_res")

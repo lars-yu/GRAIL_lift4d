@@ -1,18 +1,26 @@
 # Lift4D Palm-Ray Contact And Rendering Fix
 
-- Replaces whole-hand means with semantic wrist/MCP palm centers.
-- Adds explicit SMPL-X/G1-SMPL-X palm and finger patch mappings; unsupported
-  backends fail fast.
-- Uses observed wrist/MCP pixels with recorded per-frame fallback.
-- Uses GRAIL renderer intrinsics for palm rays, SMPL-X/object projection, and
-  formal rendering; Lift4D intrinsics remain diagnostic-only.
-- Adds palm reprojection, depth, 3D target, surface, normal, coverage,
-  penetration, path, and temporal constraints.
-- Opens hand pose residuals only for the contact hand during Stage C and masks
-  gradients outside the post-contact window. Stage B explicitly rejects
-  `hand_pose_res`; its approach phase remains body/arm-only as required.
-- Adds palm contact/reprojection diagnostics and strict formal gates.
-- Preserves Stage A camera-Z-only Lift4D supervision, FoundationPose image-plane
-  position and rotation, static locking, and zero contact gradient to object depth.
-- Keeps the Stage C hand residual learning rate at `5e-5` and freezes the
-  Stage-B `t_move` endpoint by starting hand/body refinement at `t_move + 1`.
+- Adds semantic SMPL-X/G1-SMPL-X palm and finger patch mappings with fail-fast backend validation.
+- Uses observed wrist/MCP pixels and records per-frame fallback provenance.
+- Uses GRAIL camera intrinsics for palm rays, projections, and formal rendering.
+- Adds palm reprojection, depth, 3D target, surface, normal, coverage, penetration, path, and temporal losses.
+- Adds strict sequence-length validation for palm targets and observed palm pixels against HOIData.frame_num.
+- Fixes Stage B/Stage C gradient boundaries: Stage B includes t_move; Stage C freezes frames <= t_move and optimizes only frames >= t_move+1; overlap frames remain loss-only.
+- Keeps contact-hand finger residuals exclusive to Stage C and keeps non-contact hand gradients frozen.
+- Includes t_move in the Stage-B precontact contact-anchor loss window.
+- Preserves camera-Z-only Lift4D supervision, FoundationPose image-plane position and rotation, static locking, and zero contact gradient to object depth.
+- Full remote unittest suite passes: 83 tests.
+- Real rand00033 retries 9 and 10 completed optimization but failed the formal acceptance gates; their debug artifacts and tracebacks are retained and documented.
+- Retries 11--14 retained complete real-data logs and diagnostics while iteratively correcting post-contact translation, full-sequence palm reprojection, and continuity weighting; no synthetic fallback or acceptance-gate removal was used.
+- Retry15 retained complete real-data artifacts after stronger post-contact contact weighting; contact and reprojection gates passed, but continuity, human keypoint, t_move depth, penetration, and adjacent-palm gates failed.
+- Retry16 added approach-ramped precontact palm depth/3D/surface losses, increased penetration weighting, and reduced contact-hand pose learning rate. Targeted 36 and full 83 tests passed; the real run retained complete logs and diagnostics but still failed six formal gates (approach step, body/hand keypoint drift, t_move depth, penetration, and adjacent palm change).
+- Retry17 introduced signed penetration supervision and stronger endpoint constraints. Human keypoint and t_move depth gates passed, while approach, surface, coverage, penetration, and adjacent-palm gates remained unresolved.
+- Retry18 restored the Stage-B translation schedule and strengthened Stage-C clearance. The real run improved penetration and preserved keypoint/depth gates but still failed the same six contact-continuity gates.
+- Retry19 replaced the approximate signed proxy with candidate-triangle exact distances and added maximum-step velocity penalties. Unit tests passed, but the real run exposed an outward-normal mask broadcasting error during Stage 3B.
+- Retry20 fixed the mask shape with `outward[..., None]`. Targeted 36, full 83, and `py_compile` passed; the real 121-frame 400/600/600 run completed and passed 17/22 gates. It remains debug-only because approach step, body keypoint drift, palm patch coverage, penetration, and adjacent palm-object change failed their unchanged thresholds.
+- Retry21 used full batched KNN palm coverage, worst-fraction signed penetration, and a 1.2 cm maximum hand-step penalty. Tests passed, but the constraint prevented contact (0% surface/coverage and 0.131620 m contact distance); the output remains debug-only.
+- Retry22 relaxed the maximum hand step to 2.5 cm and reduced Stage-C coverage weight to 300. Tests and compilation passed; the real run completed without crashes and preserved zero object-depth contact gradient, but Stage-C converged away from contact (0.035389 m contact distance, 0% surface/coverage, 0.099191 m t_move depth error). All acceptance gates remained enabled and the output is debug-only.
+- Retry23 reduced the maximum-step penalty weight from 100 to 25 while retaining the 2.5 cm threshold, full KNN coverage, worst-fraction penetration, and every acceptance gate. Targeted 36, full 83, and `py_compile` passed. The real run improved moving contact to 81.25% and kept reprojection/penetration gates passing, but Stage B left the frozen t_move palm about 9.31 cm from its depth/3D target, so eight contact/surface/continuity gates failed and the output remains debug-only.
+- Retry24 increased Stage-B terminal palm depth/3D/surface weights to `20000/2000/100` after retry23 showed a frozen t_move palm depth/3D error of about 9.3 cm. Tests and compilation passed; contact distance improved to 7.26 mm, but palm-center target mismatch, penetration, surface, and boundary gates remained unresolved. Output is debug-only.
+- Retry25 raised Stage-B terminal palm depth/3D weights to `100000/10000` after retry24's endpoint remained about 5 cm away. Tests passed and t_move depth/3D improved to 1.01/1.17 cm with 1.96 mm contact distance, but the boundary hand step grew to 3.73 cm and contact continuity/penetration gates failed. Output remains debug-only.
+- Retry26 tested an 18 mm maximum hand-step threshold while preserving retry25's endpoint constraints. Tests passed and endpoint depth/contact remained good, but moving contact regressed to 71.875%, the boundary step remained 35.4 mm, and penetration rose to 14.7 mm. The experiment is documented as debug-only and the final runner restores the 25 mm threshold rather than publishing the regressed setting.

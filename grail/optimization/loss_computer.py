@@ -3,6 +3,7 @@
 import math
 
 import torch
+from pytorch3d.ops import knn_points
 from pytorch3d.structures import Meshes
 
 from grail.optimization.loss_terms import (
@@ -492,7 +493,8 @@ class LossComputer:
         move_start = int(data.object_motion_state.move_start_frame)
         phase = str(cfg.get("phase", "moving"))
         if phase == "precontact":
-            start, end = max(0, move_start - int(data.approach_window)), move_start
+            # Stage B owns the complete approach endpoint, including t_move.
+            start, end = max(0, move_start - int(data.approach_window)), move_start + 1
         elif phase == "joint":
             start = max(0, move_start - int(cfg.get("overlap_frames", 5)))
             end = data.frame_num - 1
@@ -599,17 +601,44 @@ class LossComputer:
         return raw, float(weight) * raw
 
     def _hand_loss_window(self, data, cfg):
+        expected_frames = int(data.frame_num)
+        for name in (
+            "palm_target_cam",
+            "palm_target_world",
+            "observed_palm_pixels",
+        ):
+            value = getattr(data, name, None)
+            if value is not None and int(value.shape[0]) != expected_frames:
+                raise ValueError(
+                    f"{name} length {int(value.shape[0])} does not match "
+                    f"data.frame_num={expected_frames}"
+                )
         move_start = int(
             data.object_motion_state.move_start_frame
             if data.object_motion_state is not None
             else data.contact_frame
         )
         phase = str(cfg.get("phase", "all"))
+        configured_start = cfg.get("window_start")
         if phase == "precontact":
             overlap = int(cfg.get("overlap_frames", 5))
-            return max(0, move_start - int(data.approach_window) - overlap), move_start + 1
+            start = max(0, move_start - int(data.approach_window) - overlap)
+            if configured_start is not None:
+                start = max(0, min(expected_frames, int(configured_start)))
+            return start, move_start + 1
         overlap = int(cfg.get("overlap_frames", 5))
-        return max(0, move_start - overlap), data.frame_num
+        start = max(0, move_start - overlap)
+        if configured_start is not None:
+            start = max(0, min(expected_frames, int(configured_start)))
+        return start, data.frame_num
+
+    def _hand_window_weights(self, data, cfg, start, end):
+        """Return optional approach-ramp weights for precontact palm losses."""
+        if not cfg.get("ramp_with_hand_ray", False):
+            return None
+        if str(cfg.get("phase", "all")) != "precontact" or data.hand_ray_ramp is None:
+            return None
+        return data.hand_ray_ramp[start:end].detach().clamp_min(1e-4)
 
     @staticmethod
     def _terminal_window_index(data, cfg, start, end):
@@ -658,7 +687,11 @@ class LossComputer:
             raise ValueError("palm_depth requires refreshed GRAIL-K targets")
         start, end = self._hand_loss_window(data, cfg)
         error = self._actual_palm_cam(data, pred)[start:end, 2] - data.palm_target_cam[start:end, 2].detach()
-        base_raw = huber_loss(error, delta=cfg.get("delta", 0.01))
+        terms = torch.nn.functional.huber_loss(
+            error, torch.zeros_like(error), delta=cfg.get("delta", 0.01), reduction="none"
+        )
+        weights = self._hand_window_weights(data, cfg, start, end)
+        base_raw = (weights * terms).sum() / weights.sum() if weights is not None else terms.mean()
         terminal_weight = float(cfg.get("terminal_weight", 0.0))
         terminal_raw = error.new_zeros(())
         if terminal_weight > 0.0 and error.numel():
@@ -678,9 +711,11 @@ class LossComputer:
             raise ValueError("palm_target_3d requires refreshed targets")
         start, end = self._hand_loss_window(data, cfg)
         error = self._selected_palm_center(data, pred)[start:end] - data.palm_target_world[start:end].detach()
-        base_raw = torch.nn.functional.huber_loss(
-            error, torch.zeros_like(error), delta=cfg.get("delta", 0.015), reduction="mean"
-        )
+        terms = torch.nn.functional.huber_loss(
+            error, torch.zeros_like(error), delta=cfg.get("delta", 0.015), reduction="none"
+        ).mean(dim=-1)
+        weights = self._hand_window_weights(data, cfg, start, end)
+        base_raw = (weights * terms).sum() / weights.sum() if weights is not None else terms.mean()
         terminal_weight = float(cfg.get("terminal_weight", 0.0))
         terminal_raw = error.new_zeros(())
         if terminal_weight > 0.0 and error.numel():
@@ -699,26 +734,11 @@ class LossComputer:
             self.human_model.get_palm_patch_indices(data.contact_hand)
         )]
         obj = pred.obj.verts_seq[start:end].detach()
-        # Contact losses run inside every optimizer iteration. Use a fixed,
-        # deterministic surface sample here to keep memory bounded; formal
-        # diagnostics use the full real mesh after optimization.
-        max_object_samples = 512
-        if obj.shape[1] > max_object_samples:
-            sample = torch.linspace(
-                0, obj.shape[1] - 1, max_object_samples,
-                device=obj.device,
-            ).long()
-            obj = obj[:, sample]
-        max_palm_samples = 64
-        if patch.shape[1] > max_palm_samples:
-            sample = torch.linspace(
-                0, patch.shape[1] - 1, max_palm_samples,
-                device=patch.device,
-            ).long()
-            patch = patch[:, sample]
-        return torch.stack([
-            torch.cdist(patch[i], obj[i]).amin(dim=1) for i in range(end - start)
-        ])
+        # Match the formal coverage metric exactly: nearest full-mesh vertex
+        # distance for every semantic palm-patch vertex. Batched KNN avoids the
+        # dense frame-by-frame cdist allocation while preserving palm gradients.
+        squared = knn_points(patch.float(), obj.float(), K=1).dists[..., 0]
+        return squared.clamp_min(0.0).sqrt().to(dtype=patch.dtype)
 
     def _palm_surface_loss(self, data, pred, cfg, weight):
         start, end = self._hand_loss_window(data, cfg)
@@ -735,7 +755,11 @@ class LossComputer:
             for i in range(end - start)
         ])
         target = float(cfg.get("target_distance", 0.005))
-        base_raw = huber_loss(distances - target, delta=cfg.get("delta", 0.005))
+        terms = torch.nn.functional.huber_loss(
+            distances - target, torch.zeros_like(distances), delta=cfg.get("delta", 0.005), reduction="none"
+        )
+        weights = self._hand_window_weights(data, cfg, start, end)
+        base_raw = (weights * terms).sum() / weights.sum() if weights is not None else terms.mean()
         terminal_weight = float(cfg.get("terminal_weight", 0.0))
         terminal_raw = distances.new_zeros(())
         if terminal_weight > 0.0 and distances.numel():
@@ -823,6 +847,87 @@ class LossComputer:
         start, end = self._hand_loss_window(data, cfg)
         patch_idx = self.human_model.get_palm_patch_indices(data.contact_hand)
         patch = pred.human.verts_seq[start:end, list(patch_idx)]
+        if cfg.get("signed_proxy", False) and data.obj.faces is not None:
+            # Match the exact candidate-triangle lookup used by the surface
+            # loss, then retain gradients through palm points only.
+            obj = pred.obj.verts_seq[start:end].detach()
+            faces = torch.as_tensor(data.obj.faces, device=obj.device, dtype=torch.long)
+            if patch.shape[1] > 64:
+                patch_sample = torch.linspace(
+                    0, patch.shape[1] - 1, 64, device=patch.device
+                ).long()
+                patch = patch[:, patch_sample]
+            candidate_count = min(int(cfg.get("candidate_faces", 64)), faces.shape[0])
+            terms = []
+            clearance = float(cfg.get("minimum_clearance", 0.001))
+            for frame_obj, frame_patch in zip(obj, patch):
+                triangles = frame_obj[faces]
+                centroids = triangles.mean(dim=1)
+                candidate_idx = knn_points(
+                    frame_patch[None].float(), centroids[None].float(), K=candidate_count
+                ).idx[0]
+                candidate = triangles[candidate_idx]
+                p = frame_patch[:, None, :]
+                a, b, c = candidate.unbind(dim=2)
+                ab = b - a
+                ac = c - a
+                normal = torch.cross(ab, ac, dim=-1)
+                normal_sq_raw = normal.square().sum(dim=-1)
+                normal_sq = normal_sq_raw.clamp_min(1e-12)
+                outward = (normal * (candidate.mean(dim=2) - frame_obj.mean(dim=0))).sum(dim=-1)
+                normal = torch.where(outward[..., None] < 0.0, -normal, normal)
+                signed_num = ((p - a) * normal).sum(dim=-1)
+                projected = p - (signed_num / normal_sq)[..., None] * normal
+                v0, v1, v2 = ab, ac, projected - a
+                d00 = (v0 * v0).sum(dim=-1)
+                d01 = (v0 * v1).sum(dim=-1)
+                d11 = (v1 * v1).sum(dim=-1)
+                d20 = (v2 * v0).sum(dim=-1)
+                d21 = (v2 * v1).sum(dim=-1)
+                denom_raw = d00 * d11 - d01.square()
+                denom = denom_raw.clamp_min(1e-12)
+                bary_v = (d11 * d20 - d01 * d21) / denom
+                bary_w = (d00 * d21 - d01 * d20) / denom
+                bary_u = 1.0 - bary_v - bary_w
+                inside = (
+                    (normal_sq_raw > 1e-12) & (denom_raw > 1e-12)
+                    & (bary_u >= 0.0) & (bary_v >= 0.0) & (bary_w >= 0.0)
+                )
+                plane_sq = signed_num.square() / normal_sq
+
+                def edge_sq(start_point, end_point):
+                    edge = end_point - start_point
+                    alpha = ((p - start_point) * edge).sum(dim=-1)
+                    alpha = alpha / edge.square().sum(dim=-1).clamp_min(1e-12)
+                    closest = start_point + alpha.clamp(0.0, 1.0)[..., None] * edge
+                    return (p - closest).square().sum(dim=-1)
+
+                edge_sq_min = torch.minimum(
+                    edge_sq(a, b), torch.minimum(edge_sq(b, c), edge_sq(c, a))
+                )
+                squared = torch.where(inside, plane_sq, edge_sq_min)
+                nearest = squared.argmin(dim=1)
+                signed = signed_num[torch.arange(frame_patch.shape[0], device=patch.device), nearest]
+                signed = signed / normal_sq[torch.arange(frame_patch.shape[0], device=patch.device), nearest].sqrt()
+                violation = torch.relu(clearance - signed).square()
+                worst_fraction = float(cfg.get("worst_fraction", 0.0))
+                if not 0.0 <= worst_fraction <= 1.0:
+                    raise ValueError(
+                        "hand_object_penetration worst_fraction must be in [0, 1]"
+                    )
+                worst = violation.new_zeros(())
+                if worst_fraction > 0.0 and violation.numel():
+                    worst_count = max(
+                        1, int(math.ceil(worst_fraction * violation.numel()))
+                    )
+                    worst = torch.topk(
+                        violation, worst_count, largest=True
+                    ).values.mean()
+                terms.append(
+                    violation.mean() + float(cfg.get("worst_weight", 0.0)) * worst
+                )
+            raw = torch.stack(terms).mean() if terms else patch.new_zeros(())
+            return raw, float(weight) * raw
         if data.obj_sdf is not None:
             values = []
             for i in range(start, end):
@@ -876,10 +981,25 @@ class LossComputer:
         if actual.shape[0] < 2:
             zero = pred.human.verts_seq.new_zeros(())
             return zero, zero
+        actual_step = actual[1:] - actual[:-1]
+        target_step = target[1:] - target[:-1]
         raw = torch.nn.functional.huber_loss(
-            actual[1:] - actual[:-1], target[1:] - target[:-1],
+            actual_step, target_step,
             delta=cfg.get("delta", 0.02), reduction="mean"
         )
+        max_step = cfg.get("max_step")
+        if max_step is not None:
+            excess = torch.relu(torch.linalg.norm(actual_step, dim=-1) - float(max_step))
+            reduction = cfg.get("max_step_reduction", "mean")
+            if reduction == "mean":
+                step_penalty = excess.square().mean()
+            elif reduction == "max":
+                step_penalty = excess.square().amax()
+            else:
+                raise ValueError(
+                    "hand_velocity max_step_reduction must be 'mean' or 'max'"
+                )
+            raw = raw + float(cfg.get("max_step_weight", 1.0)) * step_penalty
         return raw, float(weight) * raw
 
     def _hand_acceleration_loss(self, data, pred, cfg, weight):

@@ -170,6 +170,7 @@ class ContactLossTests(unittest.TestCase):
         actual_cam[3, 2] = 0.1
         computer._actual_palm_cam = lambda data, pred: actual_cam
         data = SimpleNamespace(
+            frame_num=4,
             palm_target_cam=torch.zeros(4, 3),
             object_motion_state=SimpleNamespace(move_start_frame=1),
             contact_frame=None,
@@ -227,9 +228,9 @@ class StageCGradientMaskTests(unittest.TestCase):
             },
         }
         optimizer._apply_stage_gradient_masks(data, cfg)
-        self.assertEqual(float(hand.grad[:3].abs().sum()), 0.0)
+        self.assertEqual(float(hand.grad[:5].abs().sum()), 0.0)
         self.assertEqual(float(hand.grad[:, :15].abs().sum()), 0.0)
-        self.assertGreater(float(hand.grad[3:, 15:].abs().sum()), 0.0)
+        self.assertGreater(float(hand.grad[5:, 15:].abs().sum()), 0.0)
 
     def test_stage_b_does_not_open_hand_pose_residuals(self):
         optimizer = object.__new__(HOIOptimizer)
