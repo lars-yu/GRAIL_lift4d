@@ -957,10 +957,10 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
         "hand_keypoint_reprojection": {"weight": 0.3},
         "human_silhouette": {"weight": 0.5, "output_size": (64, 64), "silhouette_num_samples": 512},
         "palm_reprojection": {"weight": 5.0, "delta": 5.0, "phase": "precontact", "window_start": 0},
-        # Spread endpoint supervision over the last approach frames.
-        "palm_depth": {"weight": 30.0, "delta": 0.01, "terminal_weight": 100000.0, "terminal_window": 8, "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
-        "palm_target_3d": {"weight": 5.0, "delta": 0.015, "terminal_weight": 10000.0, "terminal_window": 8, "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
-        "palm_surface": {"weight": 100.0, "target_distance": 0.005, "delta": 0.005, "terminal_weight": 100.0, "terminal_window": 8, "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
+        # Use a normalized smooth terminal ramp instead of a single-frame pull.
+        "palm_depth": {"weight": 30.0, "delta": 0.01, "terminal_weight": 2000.0, "terminal_window": 8, "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
+        "palm_target_3d": {"weight": 5.0, "delta": 0.015, "terminal_weight": 500.0, "terminal_window": 8, "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
+        "palm_surface": {"weight": 100.0, "target_distance": 0.005, "delta": 0.005, "terminal_weight": 10.0, "terminal_window": 8, "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
         "contact_coverage": {"weight": 50.0, "threshold": 0.01, "target_fraction": 0.30, "phase": "precontact"},
         "hand_object_penetration": {"weight": 50000.0, "minimum_clearance": 0.004, "signed_proxy": True, "worst_fraction": 0.10, "worst_weight": 5.0, "phase": "precontact"},
         "hand_roi_reprojection": {"weight": 1.0, "roi_radius_px": 32.0, "phase": "precontact"},

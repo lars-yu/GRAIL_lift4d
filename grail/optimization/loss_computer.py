@@ -663,6 +663,17 @@ class LossComputer:
         width = max(1, int(cfg.get("terminal_window", 1)))
         return max(0, index - width + 1), index + 1
 
+    @staticmethod
+    def _terminal_window_weights(error, terminal_start, terminal_end):
+        """Give the terminal slice a normalized, monotone smoothstep ramp."""
+        count = terminal_end - terminal_start
+        if count <= 1:
+            return error.new_ones(1)
+        u = torch.linspace(0.0, 1.0, count, device=error.device, dtype=error.dtype)
+        smooth = u * u * (3.0 - 2.0 * u)
+        weights = 0.25 + 0.75 * smooth
+        return weights / weights.mean()
+
     def _selected_palm_center(self, data, pred):
         return self.human_model.get_palm_center_from_hand_joints(
             pred.human.hand_joints_seq, data.contact_hand
@@ -704,9 +715,13 @@ class LossComputer:
         terminal_raw = error.new_zeros(())
         if terminal_weight > 0.0 and error.numel():
             terminal_start, terminal_end = self._terminal_window_slice(data, cfg, start, end)
-            terminal_raw = huber_loss(
-                error[terminal_start:terminal_end], delta=cfg.get("delta", 0.01)
+            terms = torch.nn.functional.huber_loss(
+                error[terminal_start:terminal_end],
+                torch.zeros_like(error[terminal_start:terminal_end]),
+                delta=cfg.get("delta", 0.01), reduction="none",
             )
+            weights = self._terminal_window_weights(error, terminal_start, terminal_end)
+            terminal_raw = (weights * terms).sum() / weights.sum()
         # terminal_weight is an independent coefficient. Multiplying it inside
         # raw and then multiplying raw by the component weight makes the final
         # frame coefficient weight * terminal_weight and can destabilize IK.
@@ -728,11 +743,13 @@ class LossComputer:
         terminal_raw = error.new_zeros(())
         if terminal_weight > 0.0 and error.numel():
             terminal_start, terminal_end = self._terminal_window_slice(data, cfg, start, end)
-            terminal_raw = torch.nn.functional.huber_loss(
+            terms = torch.nn.functional.huber_loss(
                 error[terminal_start:terminal_end],
                 torch.zeros_like(error[terminal_start:terminal_end]),
-                delta=cfg.get("delta", 0.015), reduction="mean"
+                delta=cfg.get("delta", 0.015), reduction="none"
             )
+            weights = self._terminal_window_weights(error, terminal_start, terminal_end)
+            terminal_raw = (weights[:, None] * terms).sum() / (weights.sum() * terms.shape[-1])
         raw = base_raw + terminal_raw
         weighted = float(weight) * base_raw + terminal_weight * terminal_raw
         return raw, weighted
@@ -772,10 +789,14 @@ class LossComputer:
         terminal_raw = distances.new_zeros(())
         if terminal_weight > 0.0 and distances.numel():
             terminal_start, terminal_end = self._terminal_window_slice(data, cfg, start, end)
-            terminal_raw = huber_loss(
+            terms = torch.nn.functional.huber_loss(
                 distances[terminal_start:terminal_end] - target,
-                delta=cfg.get("delta", 0.005)
+                torch.zeros_like(distances[terminal_start:terminal_end]),
+                delta=cfg.get("delta", 0.005), reduction="none",
             )
+            weights = self._terminal_window_weights(distances, terminal_start, terminal_end)
+            frame_terms = terms.reshape(terms.shape[0], -1).mean(dim=1)
+            terminal_raw = (weights * frame_terms).sum() / weights.sum()
         raw = base_raw + terminal_raw
         weighted = float(weight) * base_raw + terminal_weight * terminal_raw
         return raw, weighted

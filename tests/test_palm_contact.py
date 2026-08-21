@@ -227,6 +227,15 @@ class ContactLossTests(unittest.TestCase):
         )
         self.assertEqual((start, end), (1, 4))
 
+    def test_terminal_window_weights_are_monotone_and_normalized(self):
+        error = torch.zeros(4, 3)
+        weights = LossComputer._terminal_window_weights(error, 0, 4)
+        self.assertEqual(tuple(weights.shape), (4,))
+        self.assertTrue(torch.all(weights[1:] >= weights[:-1]))
+        self.assertAlmostEqual(float(weights.mean()), 1.0)
+        self.assertLess(float(weights[0]), 1.0)
+        self.assertGreater(float(weights[-1]), 1.0)
+
 
 class StageCGradientMaskTests(unittest.TestCase):
     def test_approach_distance_initializes_from_target_projection(self):
