@@ -715,11 +715,16 @@ class LossComputer:
         terminal_raw = error.new_zeros(())
         if terminal_weight > 0.0 and error.numel():
             terminal_start, terminal_end = self._terminal_window_slice(data, cfg, start, end)
-            terms = torch.nn.functional.huber_loss(
-                error[terminal_start:terminal_end],
-                torch.zeros_like(error[terminal_start:terminal_end]),
-                delta=cfg.get("delta", 0.01), reduction="none",
-            )
+            if cfg.get("terminal_loss", "huber") == "squared":
+                # Preserve gradient for large real endpoint errors without
+                # raising the terminal coefficient to an unstable range.
+                terms = torch.square(error[terminal_start:terminal_end])
+            else:
+                terms = torch.nn.functional.huber_loss(
+                    error[terminal_start:terminal_end],
+                    torch.zeros_like(error[terminal_start:terminal_end]),
+                    delta=cfg.get("delta", 0.01), reduction="none",
+                )
             weights = self._terminal_window_weights(error, terminal_start, terminal_end)
             terminal_raw = (weights * terms).sum() / weights.sum()
         # terminal_weight is an independent coefficient. Multiplying it inside

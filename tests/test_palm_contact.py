@@ -236,6 +236,23 @@ class ContactLossTests(unittest.TestCase):
         self.assertLess(float(weights[0]), 1.0)
         self.assertGreater(float(weights[-1]), 1.0)
 
+    def test_squared_terminal_depth_preserves_large_error_gradient(self):
+        computer = self._computer()
+        actual_cam = torch.tensor(
+            [[0.0, 0.0, 1.0], [0.0, 0.0, 2.0]], requires_grad=True
+        )
+        computer._actual_palm_cam = lambda data, pred: actual_cam
+        data = SimpleNamespace(
+            frame_num=2, contact_frame=1, approach_window=1,
+            object_motion_state=SimpleNamespace(move_start_frame=1),
+            palm_target_cam=torch.zeros(2, 3),
+        )
+        _, weighted = computer._palm_depth_loss(
+            data, None, {"terminal_weight": 5.0, "terminal_loss": "squared"}, 0.0
+        )
+        weighted.backward()
+        self.assertGreater(float(actual_cam.grad[-1, 2]), 1.0)
+
 
 class StageCGradientMaskTests(unittest.TestCase):
     def test_approach_distance_initializes_from_target_projection(self):
