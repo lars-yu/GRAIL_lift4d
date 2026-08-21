@@ -1745,8 +1745,7 @@ class HOIOptimizer:
             motion_frame = int(data.object_motion_state.move_start_frame)
             stage = str(opt_config.get("stage", ""))
             if "stage_3b" in stage:
-                overlap = int(opt_config.get("overlap_frames", 5))
-                start = max(0, motion_frame - int(data.approach_window) - overlap)
+                start = max(0, motion_frame - int(data.approach_window))
                 end = min(data.frame_num, motion_frame + 1)
             elif "stage_3c" in stage:
                 start = min(data.frame_num, motion_frame + 1)

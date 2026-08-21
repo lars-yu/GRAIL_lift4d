@@ -10,6 +10,7 @@ from grail.optimization.hand_object_ray_ik import (
     mesh_surface_depth_at_pixels,
     select_contact_hand_from_masks,
     smoothstep_ramp,
+    smoothstep_progress,
 )
 from grail.optimization.loss_terms import human_silhouette_loss
 
@@ -41,6 +42,14 @@ class HandObjectRayIKTests(unittest.TestCase):
         np.testing.assert_array_equal(ramp[:10], 0.0)
         self.assertTrue(np.all(np.diff(ramp) >= -1e-7))
         np.testing.assert_array_equal(ramp[25:], 1.0)
+
+    def test_smoothstep_progress_has_zero_endpoint_velocity(self):
+        progress = smoothstep_progress(8, 2, 5)
+        self.assertEqual(float(progress[2]), 0.0)
+        self.assertEqual(float(progress[5]), 1.0)
+        self.assertEqual(float(progress[6]), 1.0)
+        self.assertAlmostEqual(float(progress[3] - progress[2]), 0.25925926, places=5)
+        self.assertAlmostEqual(float(progress[5] - progress[4]), 0.25925926, places=5)
 
     def test_continuous_grasp_has_no_object_gradient(self):
         hand = torch.randn(12, 3, requires_grad=True)

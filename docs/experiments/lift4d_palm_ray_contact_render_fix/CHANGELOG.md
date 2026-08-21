@@ -1,5 +1,7 @@
 # Lift4D Palm-Ray Contact And Rendering Fix
 
+- 2026-08-22 follow-up: added cubic smoothstep approach scheduling, strict Stage-B endpoint/window handling, detached post-contact relative anchoring, and regression coverage. Targeted tests passed 48/48 and the full suite passed 85/85. No new real-data run or media artifact was created; retry20 remains the latest documented real result.
+
 - Adds semantic SMPL-X/G1-SMPL-X palm and finger patch mappings with fail-fast backend validation.
 - Uses observed wrist/MCP pixels and records per-frame fallback provenance.
 - Uses GRAIL camera intrinsics for palm rays, projections, and formal rendering.

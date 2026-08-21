@@ -133,6 +133,33 @@ class ContactLossTests(unittest.TestCase):
         raw.backward()
         self.assertTrue(depth.grad is None or float(depth.grad) == 0.0)
 
+    def test_postcontact_relative_uses_frozen_contact_offset_and_object_velocity(self):
+        computer = self._computer()
+        hand = torch.tensor(
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.2, 0.0, 0.0], [1.5, 0.1, 0.0]],
+            requires_grad=True,
+        )
+        obj = torch.tensor(
+            [[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.7, 0.0, 0.0], [0.9, 0.0, 0.0]],
+            requires_grad=True,
+        )
+        computer._selected_palm_center = lambda data, pred: hand
+        data = SimpleNamespace(
+            frame_num=4,
+            contact_frame=None,
+            object_motion_state=SimpleNamespace(move_start_frame=1),
+        )
+        pred = SimpleNamespace(obj=SimpleNamespace(trans=obj))
+        raw, weighted = computer._postcontact_relative_loss(
+            data, pred, {"delta": 0.01, "velocity_weight": 1.0}, 2.0
+        )
+        self.assertGreater(float(raw), 0.0)
+        torch.testing.assert_close(weighted, 2.0 * raw)
+        weighted.backward()
+        self.assertIsNone(obj.grad)
+        self.assertEqual(float(hand.grad[1].abs().sum()), 0.0)
+        self.assertGreater(float(hand.grad[2:].abs().sum()), 0.0)
+
     def test_terminal_palm_depth_weight_is_not_multiplied_twice(self):
         computer = self._computer()
         actual_cam = torch.tensor(

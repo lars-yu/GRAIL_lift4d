@@ -557,23 +557,24 @@ class LossComputer:
             )
             return raw, float(weight) * raw
         start = int(data.object_motion_state.move_start_frame)
-        relative = hand_center[start:] - pred.obj.trans[start:].detach()
-        anchor = (
-            data.boundary_relative_anchor.detach()
-            if data.boundary_relative_anchor is not None
-            else relative[0].detach()
+        if start + 1 >= hand_center.shape[0]:
+            zero = hand_center.new_zeros(())
+            return zero, zero
+        contact_offset = hand_center[start].detach() - pred.obj.trans[start].detach()
+        target_after_contact = pred.obj.trans[start + 1 :].detach() + contact_offset[None]
+        postcontact_error = hand_center[start + 1 :] - target_after_contact
+        beta = float(cfg.get("delta", 0.01))
+        raw = torch.nn.functional.smooth_l1_loss(
+            postcontact_error, torch.zeros_like(postcontact_error), beta=beta
         )
-        relative_error = torch.linalg.norm(relative - anchor[None], dim=-1)
-        hand_velocity = hand_center[start:]
-        object_velocity = pred.obj.trans[start:].detach()
-        velocity_error = torch.linalg.norm(
-            (hand_velocity[1:] - hand_velocity[:-1])
-            - (object_velocity[1:] - object_velocity[:-1]), dim=-1
+        palm_velocity = hand_center[start + 2 :] - hand_center[start + 1 : -1]
+        object_velocity = (
+            pred.obj.trans[start + 2 :].detach()
+            - pred.obj.trans[start + 1 : -1].detach()
         )
-        raw = huber_loss(relative_error, delta=cfg.get("delta", 0.01))
-        if velocity_error.numel():
-            raw = raw + float(cfg.get("velocity_weight", 1.0)) * huber_loss(
-                velocity_error, delta=cfg.get("delta", 0.01)
+        if palm_velocity.numel():
+            raw = raw + float(cfg.get("velocity_weight", 1.0)) * torch.nn.functional.smooth_l1_loss(
+                palm_velocity, object_velocity, beta=beta
             )
         return raw, float(weight) * raw
 

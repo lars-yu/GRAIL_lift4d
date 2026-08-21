@@ -1,5 +1,14 @@
 # Test Results
 
+## Follow-up code change (2026-08-22)
+
+- Branch: `codex/lift4d-smooth-contact-retry20-fix`, based on `b0d7afd4de227f5c2c395f5037d7e2fb6068530e`.
+- Single algorithm change: smooth cubic approach scheduling, a strict Stage-B window ending at `t_move`, no Stage-B human translation residual or terminal palm pull, and a detached post-contact hand/object anchor with object-depth gradients blocked.
+- Modified files: `grail/optimization/hand_object_ray_ik.py`, `grail/optimization/hoi_optimizer.py`, `grail/optimization/loss_computer.py`, `scripts/run_lift4d_vggt_optimization.py`, `tests/test_hand_object_ray_ik.py`, `tests/test_lift4d_formal_runner.py`, `tests/test_palm_contact.py`.
+- Targeted verification: `tests.test_hand_object_ray_ik`, `tests.test_palm_contact`, and `tests.test_lift4d_formal_runner` passed (`48/48`). Full suite passed (`85/85`). All four edited runtime modules compiled with `py_compile`.
+- Real run status: no new 121-frame optimization was executed in this follow-up because the remote run command/input recovery was not completed. Existing retry20 remains the latest real result and is not promoted or relabeled. No new metrics, videos, NPZ, PKL, MP4, or training data were added.
+- Existing retry20 artifacts remain at `/home/jiaoyufei_insta360.com/PRE/GRAIL_4d_stage3_depth_approach_backup/pickup_table/generation/lift4d_palm_ray_contact_render_fix/rand00033_palm_ray_contact_20260821_retry20` and retain its documented 17/22 formal-gate result.
+
 ## Code and unit tests
 
 - Updated tests/test_palm_contact.py: terminal palm fixture now declares frame_num=4; Stage C assertions freeze frames 0:5 and allow contact-hand gradients only after frame 4.

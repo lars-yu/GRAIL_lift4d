@@ -201,13 +201,33 @@ def approach_window_from_fps(
     return int(np.clip(max(frames, int(min_approach_frames)), 1, int(max_approach_frames)))
 
 
+def smoothstep_progress(frame_num: int, start: int, end: int, *, device=None, dtype=None):
+    """Return a cubic smoothstep progress curve over inclusive frame bounds."""
+    frame_num = int(frame_num)
+    start = max(0, min(frame_num, int(start)))
+    end = max(0, min(frame_num - 1, int(end)))
+    progress = torch.zeros(frame_num, device=device, dtype=dtype or torch.float32)
+    if end <= start:
+        progress[end:] = 1.0
+        return progress
+    u = torch.linspace(0.0, 1.0, end - start + 1, device=device, dtype=progress.dtype)
+    u = u * u * (3.0 - 2.0 * u)
+    progress[start : end + 1] = u
+    progress[end + 1 :] = 1.0
+    return progress
+
+
 def smoothstep_ramp(frame_num: int, t_move: int, window: int, *, device=None, dtype=None):
     if not 1 <= int(t_move) < int(frame_num):
         raise ValueError("t_move must lie inside the sequence")
     window = int(np.clip(window, 1, t_move))
-    frames = torch.arange(frame_num, device=device, dtype=dtype or torch.float32)
-    u = ((frames - (t_move - window)) / float(window)).clamp(0.0, 1.0)
-    return 10.0 * u.pow(3) - 15.0 * u.pow(4) + 6.0 * u.pow(5)
+    return smoothstep_progress(
+        frame_num,
+        int(t_move) - window,
+        int(t_move),
+        device=device,
+        dtype=dtype,
+    )
 
 
 def camera_ray_hand_targets(

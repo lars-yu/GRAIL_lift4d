@@ -300,7 +300,7 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
         self.assertTrue(torch.all(pose[4:, 1] == 0.0))
         self.assertTrue(torch.all(pose[:3] == 0.0))
 
-    def test_stage_b_overlap_makes_approach_entry_trainable(self):
+    def test_stage_b_window_starts_at_approach_boundary(self):
         optimizer = HOIOptimizer.__new__(HOIOptimizer)
         optimizer.num_body_joints = 22
         pose = torch.zeros(10, 22, 6, requires_grad=True)
@@ -320,8 +320,8 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
                 "opt_vars": {"human_pose_res": {"joint_scope": "arms"}},
             },
         )
-        self.assertTrue(torch.all(pose.grad[:3] == 0))
-        self.assertTrue(torch.all(torch.linalg.norm(pose.grad[3:8, 13], dim=-1) > 0))
+        self.assertTrue(torch.all(pose.grad[:5] == 0))
+        self.assertTrue(torch.all(torch.linalg.norm(pose.grad[5:8, 13], dim=-1) > 0))
         self.assertTrue(torch.all(pose.grad[8:] == 0))
 
     def test_joint_stage_is_bounded_to_reference(self):
