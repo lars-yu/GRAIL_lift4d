@@ -656,6 +656,13 @@ class LossComputer:
             return frame - start
         return end - start - 1
 
+    @staticmethod
+    def _terminal_window_slice(data, cfg, start, end):
+        """Return a contiguous terminal slice for smooth endpoint supervision."""
+        index = LossComputer._terminal_window_index(data, cfg, start, end)
+        width = max(1, int(cfg.get("terminal_window", 1)))
+        return max(0, index - width + 1), index + 1
+
     def _selected_palm_center(self, data, pred):
         return self.human_model.get_palm_center_from_hand_joints(
             pred.human.hand_joints_seq, data.contact_hand
@@ -696,9 +703,9 @@ class LossComputer:
         terminal_weight = float(cfg.get("terminal_weight", 0.0))
         terminal_raw = error.new_zeros(())
         if terminal_weight > 0.0 and error.numel():
-            terminal_index = self._terminal_window_index(data, cfg, start, end)
+            terminal_start, terminal_end = self._terminal_window_slice(data, cfg, start, end)
             terminal_raw = huber_loss(
-                error[terminal_index : terminal_index + 1], delta=cfg.get("delta", 0.01)
+                error[terminal_start:terminal_end], delta=cfg.get("delta", 0.01)
             )
         # terminal_weight is an independent coefficient. Multiplying it inside
         # raw and then multiplying raw by the component weight makes the final
@@ -720,10 +727,10 @@ class LossComputer:
         terminal_weight = float(cfg.get("terminal_weight", 0.0))
         terminal_raw = error.new_zeros(())
         if terminal_weight > 0.0 and error.numel():
-            terminal_index = self._terminal_window_index(data, cfg, start, end)
+            terminal_start, terminal_end = self._terminal_window_slice(data, cfg, start, end)
             terminal_raw = torch.nn.functional.huber_loss(
-                error[terminal_index : terminal_index + 1],
-                torch.zeros_like(error[terminal_index : terminal_index + 1]),
+                error[terminal_start:terminal_end],
+                torch.zeros_like(error[terminal_start:terminal_end]),
                 delta=cfg.get("delta", 0.015), reduction="mean"
             )
         raw = base_raw + terminal_raw
@@ -764,9 +771,9 @@ class LossComputer:
         terminal_weight = float(cfg.get("terminal_weight", 0.0))
         terminal_raw = distances.new_zeros(())
         if terminal_weight > 0.0 and distances.numel():
-            terminal_index = self._terminal_window_index(data, cfg, start, end)
+            terminal_start, terminal_end = self._terminal_window_slice(data, cfg, start, end)
             terminal_raw = huber_loss(
-                distances[terminal_index : terminal_index + 1] - target,
+                distances[terminal_start:terminal_end] - target,
                 delta=cfg.get("delta", 0.005)
             )
         raw = base_raw + terminal_raw

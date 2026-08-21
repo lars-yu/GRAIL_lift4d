@@ -215,6 +215,18 @@ class ContactLossTests(unittest.TestCase):
         torch.testing.assert_close(weighted, 3.0 * base + 5.0 * contact)
         self.assertFalse(torch.allclose(weighted, 3.0 * base + 5.0 * last))
 
+    def test_terminal_palm_loss_supports_smooth_window(self):
+        computer = self._computer()
+        data = SimpleNamespace(
+            frame_num=6,
+            contact_frame=3,
+            object_motion_state=SimpleNamespace(move_start_frame=3),
+        )
+        start, end = computer._terminal_window_slice(
+            data, {"terminal_frame": "contact", "terminal_window": 3}, 0, 6
+        )
+        self.assertEqual((start, end), (1, 4))
+
 
 class StageCGradientMaskTests(unittest.TestCase):
     def test_approach_distance_initializes_from_target_projection(self):
