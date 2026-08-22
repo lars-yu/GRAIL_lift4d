@@ -748,11 +748,17 @@ class LossComputer:
         terminal_raw = error.new_zeros(())
         if terminal_weight > 0.0 and error.numel():
             terminal_start, terminal_end = self._terminal_window_slice(data, cfg, start, end)
-            terms = torch.nn.functional.huber_loss(
-                error[terminal_start:terminal_end],
-                torch.zeros_like(error[terminal_start:terminal_end]),
-                delta=cfg.get("delta", 0.015), reduction="none"
-            )
+            terminal_error = error[terminal_start:terminal_end]
+            if cfg.get("terminal_loss", "huber") == "squared":
+                # Preserve gradient for large 3D endpoint errors without
+                # changing the detached target or object-depth gradient path.
+                terms = torch.square(terminal_error)
+            else:
+                terms = torch.nn.functional.huber_loss(
+                    terminal_error,
+                    torch.zeros_like(terminal_error),
+                    delta=cfg.get("delta", 0.015), reduction="none"
+                )
             weights = self._terminal_window_weights(error, terminal_start, terminal_end)
             terminal_raw = (weights[:, None] * terms).sum() / (weights.sum() * terms.shape[-1])
         raw = base_raw + terminal_raw
