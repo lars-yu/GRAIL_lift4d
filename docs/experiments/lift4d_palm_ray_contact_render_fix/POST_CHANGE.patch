@@ -66,3 +66,9 @@ index a63a754..36e45cc 100644
 
  class StageCGradientMaskTests(unittest.TestCase):
      def test_approach_distance_initializes_from_target_projection(self):
+diff --git a/scripts/run_lift4d_vggt_optimization.py b/scripts/run_lift4d_vggt_optimization.py
+--- a/scripts/run_lift4d_vggt_optimization.py
++++ b/scripts/run_lift4d_vggt_optimization.py
+@@
+-        "palm_target_3d": {"weight": 5.0, "delta": 0.015, "terminal_weight": 500.0, "terminal_window": 8, "terminal_loss": "squared", "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
++        "palm_target_3d": {"weight": 5.0, "delta": 0.015, "terminal_weight": 100.0, "terminal_window": 8, "terminal_loss": "squared", "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
