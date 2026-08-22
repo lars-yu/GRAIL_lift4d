@@ -72,3 +72,27 @@ diff --git a/scripts/run_lift4d_vggt_optimization.py b/scripts/run_lift4d_vggt_o
 @@
 -        "palm_target_3d": {"weight": 5.0, "delta": 0.015, "terminal_weight": 500.0, "terminal_window": 8, "terminal_loss": "squared", "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
 +        "palm_target_3d": {"weight": 5.0, "delta": 0.015, "terminal_weight": 100.0, "terminal_window": 8, "terminal_loss": "squared", "terminal_frame": "contact", "phase": "precontact", "ramp_with_hand_ray": True},
+
+diff --git a/grail/optimization/hand_object_ray_ik.py b/grail/optimization/hand_object_ray_ik.py
+@@
++def camera_ray_world_directions(pixels, camera_intrinsics, camera_to_world_R):
++    ray_cam = torch.stack([(pixels[..., 0] - camera_intrinsics[..., 0, 2]) / camera_intrinsics[..., 0, 0],
++                           (pixels[..., 1] - camera_intrinsics[..., 1, 2]) / camera_intrinsics[..., 1, 1],
++                           torch.ones_like(pixels[..., 0])], dim=-1)
++    ray_cam = ray_cam / torch.linalg.norm(ray_cam, dim=-1, keepdim=True)
++    return torch.matmul(camera_to_world_R, ray_cam[..., None]).squeeze(-1)
+
+diff --git a/grail/optimization/loss_computer.py b/grail/optimization/loss_computer.py
+@@
+-        contact_offset = actual_palm[start].detach() - pred.obj.trans[start].detach()
++        if not hasattr(data, "palm_target_world"):
++            raise ValueError("postcontact_relative requires a physical palm target")
++        contact_offset = data.palm_target_world[start].detach() - pred.obj.trans[start].detach()
+
+diff --git a/scripts/analyze_tmove_palm_reachability.py b/scripts/analyze_tmove_palm_reachability.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/analyze_tmove_palm_reachability.py
+@@
++# Real-data frame-89 reachability diagnostic; no full 121-frame optimization.
++# Reports world delta, camera-ray/ground decomposition, and three IK modes.

@@ -148,6 +148,9 @@ class ContactLossTests(unittest.TestCase):
             frame_num=4,
             contact_frame=None,
             object_motion_state=SimpleNamespace(move_start_frame=1),
+            palm_target_world=torch.tensor(
+                [[0.0, 0.0, 0.0], [0.8, 0.0, 0.0], [0.8, 0.0, 0.0], [0.8, 0.0, 0.0]]
+            ),
         )
         pred = SimpleNamespace(obj=SimpleNamespace(trans=obj))
         raw, weighted = computer._postcontact_relative_loss(

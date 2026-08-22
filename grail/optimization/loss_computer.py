@@ -560,7 +560,12 @@ class LossComputer:
         if start + 1 >= hand_center.shape[0]:
             zero = hand_center.new_zeros(())
             return zero, zero
-        contact_offset = hand_center[start].detach() - pred.obj.trans[start].detach()
+        if data.palm_target_world is None:
+            raise ValueError("postcontact_relative requires a physical palm target")
+        contact_offset = (
+            data.palm_target_world[start].detach()
+            - pred.obj.trans[start].detach()
+        )
         target_after_contact = pred.obj.trans[start + 1 :].detach() + contact_offset[None]
         postcontact_error = hand_center[start + 1 :] - target_after_contact
         beta = float(cfg.get("delta", 0.01))

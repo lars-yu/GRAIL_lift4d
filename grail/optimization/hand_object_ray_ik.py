@@ -264,8 +264,10 @@ def camera_ray_hand_targets(
             ],
             dim=1,
         )
+        ray = torch.nn.functional.normalize(ray, dim=1, eps=1e-8)
     else:
         ray = initial_hand_cam / initial_hand_cam[:, 2:3]
+        ray = torch.nn.functional.normalize(ray, dim=1, eps=1e-8)
     side = torch.where(
         initial_hand_cam[:, 2] - surface_depth >= 0.0,
         torch.ones_like(surface_depth),
@@ -287,7 +289,38 @@ def camera_ray_hand_targets(
     z = initial_hand_cam[:, 2] + ramp * (contact_target_z - initial_hand_cam[:, 2])
     frames = torch.arange(initial_hand_cam.shape[0], device=z.device)
     z = torch.where(frames > int(t_move), target_z, z)
-    return ray * z[:, None], ramp
+    # Keep z as the OpenCV camera-depth coordinate while using a unit ray.
+    return ray * (z / ray[:, 2].clamp_min(1e-8))[:, None], ramp
+
+
+def camera_ray_world_directions(
+    pixels: torch.Tensor,
+    camera_intrinsics: torch.Tensor,
+    camera_to_world_R: torch.Tensor,
+) -> torch.Tensor:
+    """Return unit world-space rays for observed pixels and GRAIL intrinsics."""
+    if pixels.ndim < 2 or pixels.shape[-1] != 2:
+        raise ValueError("pixels must have shape [...,2]")
+    K = camera_intrinsics
+    if K.ndim == 2:
+        K = K.expand(*pixels.shape[:-1], 3, 3)
+    if K.shape != (*pixels.shape[:-1], 3, 3):
+        raise ValueError("camera_intrinsics must be [3,3] or [...,3,3]")
+    ray_cam = torch.stack(
+        [
+            (pixels[..., 0] - K[..., 0, 2]) / K[..., 0, 0],
+            (pixels[..., 1] - K[..., 1, 2]) / K[..., 1, 1],
+            torch.ones_like(pixels[..., 0]),
+        ],
+        dim=-1,
+    )
+    ray_cam = torch.nn.functional.normalize(ray_cam, dim=-1, eps=1e-8)
+    R = camera_to_world_R
+    if R.ndim == 2:
+        R = R.expand(*pixels.shape[:-1], 3, 3)
+    if R.shape != (*pixels.shape[:-1], 3, 3):
+        raise ValueError("camera_to_world_R must be [3,3] or [...,3,3]")
+    return torch.matmul(R, ray_cam[..., None]).squeeze(-1)
 
 
 def mesh_surface_depth_at_pixels(

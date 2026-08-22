@@ -259,3 +259,13 @@ All retries used the real 121-frame RGB video, HMR NPZ, object mesh, FoundationP
 - Verification before the real run: targeted tests `41/41`, full suite `89/89`, and `git diff --check` passed.
 - Result: automatic `t_move=89`, right contact hand, contact distance `0.094964 m`; moving frames under 5 cm `71.875%`; approach step `0.028226 m`; body/hand RMSE increases `6.0323/5.4268 px`; palm reprojection p95 `27.3403 px`; t_move depth/3D errors `0.082583/0.147659 m`; moving surface median `0.028603 m`; surface under 1.5 cm `0%`; patch coverage `1.6703%`; maximum adjacent palm-object change `0.042122 m`.
 - Formal status: failed and worse than retry34 on contact, 3D endpoint, drift, reprojection, and continuity. The final source therefore restores the retry34 value `2000`; complete retry35 artifacts remain debug-only in `rand00033_palm_ray_contact_20260822_retry35`.
+
+### t_move=89 single-frame reachability pause (2026-08-22)
+- Ran the real `pickup_table/dl300_delta/kid_001_indoor2-pickup-table_rand00033` input with automatic `t_move=89` and the detected right contact hand. The diagnostic initialized the real object mesh, masks, cached depth, FoundationPose poses, and Lift4D prior, then optimized only frame 89 for 80 iterations per mode. It did not run Stage A/B/C, formal gates, retry36, or a complete 121-frame optimization.
+- Baseline actual palm world: `[5.287203, 14.166409, 0.745542] m`; physical target palm world: `[5.509652, 13.827654, 0.986320] m`; delta: `[0.222449, -0.338756, 0.240778] m`, norm `0.471395 m`. Baseline palm reprojection was `1.2939 px`.
+- Delta decomposition used the normalized camera ray and ground direction: camera-ray unit `[-0.394055, 0.775901, -0.492645]`, projection `-0.469116 m`, component `[0.184857, -0.363987, 0.231107] m`; ground unit `[-0.218848, -0.975759, 0]`, projection `0.281861 m`, component `[-0.061685, -0.275029, 0] m`.
+- `arm_only` (joints `13,14,16,17,18,19,20,21`): palm distance `0.205630 m`, reprojection `7.0427 px`; failed both thresholds.
+- `arm_shoulder` (upper-body/shoulder plus arm joints): palm distance `0.018505 m`, reprojection `0.9111 px`; reprojection passed, but 5 mm distance did not.
+- `arm_root_residual` (arm joints plus camera-ray root residual clamped to `0.05 m`): palm distance `0.144706 m`, reprojection `4.5175 px`; reprojection passed, but 5 mm distance did not.
+- None of the three modes reached both `palm distance <= 5 mm` and `reprojection < 5 px`. The correct next step is to pause and investigate single-frame IK reachability before any full 121-frame run.
+- Verification after this follow-up: remote full unittest discovery `90/90`, required `py_compile`, and `git diff --check` all passed.

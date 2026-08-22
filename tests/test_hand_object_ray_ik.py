@@ -6,6 +6,7 @@ import torch
 from grail.optimization.hand_object_ray_ik import (
     approach_window_from_fps,
     camera_ray_hand_targets,
+    camera_ray_world_directions,
     continuous_grasp_losses,
     mesh_surface_depth_at_pixels,
     select_contact_hand_from_masks,
@@ -16,6 +17,15 @@ from grail.optimization.loss_terms import human_silhouette_loss
 
 
 class HandObjectRayIKTests(unittest.TestCase):
+    def test_camera_ray_world_directions_are_unit_and_use_grail_intrinsics(self):
+        pixels = torch.tensor([[150.0, 100.0]])
+        K = torch.tensor([[100.0, 0.0, 100.0], [0.0, 100.0, 100.0], [0.0, 0.0, 1.0]])
+        R = torch.eye(3)
+        ray = camera_ray_world_directions(pixels, K, R)
+        torch.testing.assert_close(torch.linalg.norm(ray, dim=-1), torch.ones(1))
+        expected = torch.tensor([0.5, 0.0, 1.0])
+        expected = expected / torch.linalg.norm(expected)
+        torch.testing.assert_close(ray[0], expected)
     def test_automatic_hand_selection_ignores_labels(self):
         masks = np.zeros((20, 40, 60), dtype=bool)
         masks[:, 15:25, 28:38] = True
