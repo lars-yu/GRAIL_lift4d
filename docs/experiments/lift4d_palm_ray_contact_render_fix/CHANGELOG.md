@@ -41,3 +41,32 @@
 - Added `scripts/analyze_tmove_palm_reachability.py` for the real single-frame `t_move=89` diagnostic. The measured baseline delta was `0.471395 m`; arm-only, arm-plus-shoulder, and arm-plus-5-cm-root modes reached respectively `0.205630 m / 7.0427 px`, `0.018505 m / 0.9111 px`, and `0.144706 m / 4.5175 px`. No mode met both the 5 mm and 5 px requirements.
 - This follow-up intentionally stops after the single-frame diagnostic. Retry36 and any subsequent complete 121-frame run were not started.
 - Final verification for this follow-up: full remote unittest discovery passed `90/90`; `py_compile` and `git diff --check` passed.
+
+- Retry37 (final real run): changed only Stage-C post-contact continuity to use
+  the detached semantic contact-patch center when `contact_patch_indices` are
+  available, instead of the uncontacted bone palm center. The real `rand00033`
+  sequence used 121 frames, automatic `t_move=89`, selected contact frame 89,
+  mode `B_arms_shoulders`, and `400/600/600` Stage A/B/C iterations. The run
+  preserved camera-Z-only Lift4D, FoundationPose XY/rotation, detached object
+  geometry, and zero contact gradient to `obj_depth_res`.
+- Retry37 completed but remained `formal_result=false`. Key results: selected
+  patch median `0.0376705 m`, selected coverage under 1 cm `10.9195%`, finger
+  coverage `15.5425%`, penetration `0.0019914 m`, selected reprojection
+  `3.4853 px`, moving contact under 5 cm `3.125%`, moving patch median
+  `0.311706 m`, approach max step `0.0300537 m`, boundary step `0.0204685 m`,
+  adjacent hand/object change `0.248074 m`, and p95 palm reprojection
+  `25.4786 px`. Body/hand RMSE changes were `-0.292/-4.270 px`, and contact
+  gradient to object depth remained exactly `0`.
+- The failed gates identify a remaining post-contact trajectory/semantic
+  contact mismatch, not an object-depth gradient leak. Full logs, metrics,
+  diagnostics, and the formal traceback are retained under
+  `rand00033_palm_ray_contact_20260822_retry37`.
+- The first debug-render launch failed at setup because the renderer required
+  `freeze_foundationpose_image_plane_translation=true`; the renderer was
+  corrected and rerun with an explicit `--allow-debug` flag. All four saved
+  videos are 121-frame debug outputs stamped `DEBUG - formal_result=false`.
+  No formal video was published.
+- Retry37 is the final experiment for this task. No retry38 or retry39 was
+  started. The next engineering step is a single-frame reachability study,
+  followed by a new full sequence only if that study satisfies the physical
+  5 mm and reprojection gates.

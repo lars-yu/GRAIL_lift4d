@@ -59,6 +59,7 @@ def _setup_cfg(root_cfg, config_file, results_dir, lift4d_prior_path):
         "lift4d_savgol_polyorder": 2,
         "lift4d_depth_scale": 1.0,
         "learn_lift4d_depth_scale": False,
+        "freeze_foundationpose_image_plane_translation": True,
         "object_motion_state": {"enabled": False},
         "skip_contact_label_loading": True,
         "vis_cfg": {"enable": False},
@@ -151,6 +152,36 @@ def _copy_checked(src, dst):
     if not src.is_file() or src.stat().st_size == 0:
         raise RuntimeError(f"Renderer did not produce a real output: {src}")
     shutil.copyfile(src, dst)
+
+
+def _stamp_debug_label(path, label="DEBUG - formal_result=false"):
+    """Annotate a debug render without changing its frame count or geometry."""
+    path = Path(path)
+    info = _video_info(path)
+    cap = cv2.VideoCapture(str(path))
+    tmp = path.with_suffix(".debug_tmp.mp4")
+    writer = cv2.VideoWriter(
+        str(tmp), cv2.VideoWriter_fourcc(*"mp4v"), info["fps"],
+        (info["width"], info["height"]),
+    )
+    if not writer.isOpened():
+        cap.release()
+        raise RuntimeError(f"Cannot create debug annotation: {tmp}")
+    for frame_idx in range(info["frames"]):
+        ok, image = cap.read()
+        if not ok:
+            cap.release()
+            writer.release()
+            raise RuntimeError(f"Debug annotation frame mismatch at {frame_idx}")
+        text = f"{label} | frame={frame_idx}"
+        cv2.putText(image, text, (12, info["height"] - 18), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.55, (0, 0, 0), 4, cv2.LINE_AA)
+        cv2.putText(image, text, (12, info["height"] - 18), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.55, (0, 0, 255), 1, cv2.LINE_AA)
+        writer.write(image)
+    cap.release()
+    writer.release()
+    tmp.replace(path)
 
 
 def _as_mask(mask, shape):
@@ -376,6 +407,10 @@ def main():
     for name in ("config-file", "video-id", "video-file", "hmr-file", "mesh-file", "foundationpose-poses", "render-config", "cache-dir", "results-dir", "optimized-hoi", "diagnostics-csv", "output-dir"):
         parser.add_argument(f"--{name}", required=True)
     parser.add_argument("--device", default="cuda")
+    parser.add_argument(
+        "--allow-debug", action="store_true",
+        help="Render a real result with formal_result=false and stamp DEBUG labels.",
+    )
     args = parser.parse_args()
     config_file = _real_file(args.config_file, "GRAIL config")
     video_file = _real_file(args.video_file, "RGB video")
@@ -393,7 +428,8 @@ def main():
     certification = meta.get("formal_joint_optimization", {})
     if certification.get("synthetic_data_used") is not False:
         raise ValueError("Formal renderer requires synthetic_data_used=false")
-    if certification.get("formal_result") is not True:
+    debug_result = certification.get("formal_result") is not True
+    if debug_result and not args.allow_debug:
         failed = certification.get("failed_gates", [])
         raise ValueError(
             "Saved result is debug-only because formal acceptance gates did not pass: "
@@ -491,11 +527,16 @@ def main():
         top_src,
     ]
     _combine_top_videos(comparison_sources, output_dir / "foundationpose_vs_lift4d_vs_optimized_top.mp4")
-    for path in (output_dir / "optimized_front_overlay.mp4", output_dir / "optimized_top_view.mp4", output_dir / "optimized_contact_closeup.mp4", output_dir / "foundationpose_vs_lift4d_vs_optimized_top.mp4"):
+    output_paths = (output_dir / "optimized_front_overlay.mp4", output_dir / "optimized_top_view.mp4", output_dir / "optimized_contact_closeup.mp4", output_dir / "foundationpose_vs_lift4d_vs_optimized_top.mp4")
+    for path in output_paths:
         info = _video_info(path)
         if info["frames"] != data.frame_num:
             raise ValueError(f"Formal output frame mismatch for {path}: {info['frames']} != {data.frame_num}")
+    if debug_result:
+        for path in output_paths:
+            _stamp_debug_label(path)
     print(f"formal_output_dir={output_dir}")
+    print(f"formal_result={not debug_result}")
     print(f"frames={data.frame_num}")
     print("synthetic_data_used=false")
 

@@ -96,6 +96,10 @@ class HOIData:
     contact_window_start: int | None = None
     contact_window_end: int | None = None
     selected_contact_frame: int | None = None
+    selected_contact_mode: str | None = None
+    local_contact_feasible: bool | None = None
+    contact_patch_anchor_world: Optional[torch.Tensor] = None
+    contact_patch_indices: Optional[list[int]] = None
     contact_soft_weight: torch.Tensor | None = None
     contact_hand: str = "right"
     approach_window: int = 30

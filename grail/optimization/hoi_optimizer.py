@@ -358,6 +358,19 @@ class HOIOptimizer:
             window_start = contact_hint
             window_end = contact_hint
 
+        configured_contact_frame = contact_cfg.get("frame")
+        if configured_contact_frame is None:
+            selected_contact_frame = int(contact_hint)
+        else:
+            selected_contact_frame = int(configured_contact_frame)
+            if not 0 <= selected_contact_frame < frame_num:
+                raise ValueError(
+                    f"contact.frame must be in [0,{frame_num - 1}], got {selected_contact_frame}"
+                )
+        if motion_state is not None:
+            window_start = max(0, selected_contact_frame - approach_window)
+            window_end = frame_num - 1
+
         # ── Assemble HOIData ─────────────────────────────────────────────────
         return HOIData(
             frame_num=frame_num,
@@ -396,6 +409,7 @@ class HOIOptimizer:
             contact_hint_source=contact_hint_source,
             contact_window_start=window_start,
             contact_window_end=window_end,
+            selected_contact_frame=selected_contact_frame,
             contact_hand=contact_hand,
             approach_window=approach_window,
             hand_selection_left_distance_px=(
@@ -1093,10 +1107,14 @@ class HOIOptimizer:
 
         # Apply translation residuals
         trans = motion_data["trans"].reshape(frame_num, 3)
-        approach_end = (
-            int(data.object_motion_state.move_start_frame)
-            if data.object_motion_state is not None
-            else int(data.contact_frame)
+        approach_end = int(
+            getattr(data, "selected_contact_frame", None)
+            if getattr(data, "selected_contact_frame", None) is not None
+            else (
+                data.object_motion_state.move_start_frame
+                if data.object_motion_state is not None
+                else data.contact_frame
+            )
         )
         approach_ramp = smoothstep_approach_ramp(
             frame_num,
@@ -1232,7 +1250,12 @@ class HOIOptimizer:
         # object while the hand is still approaching.  Enforce the <=15 px
         # nearest-surface gate only once contact/motion begins; earlier misses
         # remain explicit fallback diagnostics and are never treated as hits.
-        strict_start = max(0, int(data.object_motion_state.move_start_frame))
+        contact_frame = int(
+            getattr(data, "selected_contact_frame", None)
+            if getattr(data, "selected_contact_frame", None) is not None
+            else data.object_motion_state.move_start_frame
+        )
+        strict_start = max(0, contact_frame)
         strict_frames = torch.zeros(
             data.frame_num, dtype=torch.bool, device=intrinsics.device
         )
@@ -1253,7 +1276,7 @@ class HOIOptimizer:
         target_cam, ramp = camera_ray_hand_targets(
             data.hand_initial_cam.detach(),
             surface_depth.detach(),
-            int(data.object_motion_state.move_start_frame),
+            contact_frame,
             int(data.approach_window),
             target_distance=float(
                 (self.cfg.get("contact", {}) or {}).get("palm_target_distance", 0.005)
@@ -1275,14 +1298,14 @@ class HOIOptimizer:
         data.object_surface_depth = surface_depth.detach()
         data.hand_ray_surface_fallback = fallback.detach()
         data.palm_surface_fallback = fallback.detach()
-        start = max(0, int(data.object_motion_state.move_start_frame) - int(data.approach_window))
+        start = max(0, contact_frame - int(data.approach_window))
         data.hand_approach_initial_distance = float(
             torch.abs(data.hand_initial_cam[start, 2] - surface_depth[start]).detach()
         )
         self.logger.info(
             "Refreshed Stage-A hand ray targets | surface_z[move]=%.6f | "
             "fallback_frames=%d | initial_distance=%.6f",
-            float(surface_depth[int(data.object_motion_state.move_start_frame)]),
+            float(surface_depth[contact_frame]),
             int(fallback.sum()),
             float(data.hand_approach_initial_distance),
         )
@@ -1354,15 +1377,20 @@ class HOIOptimizer:
     def initialize_human_approach_direction(self, data, gravity_axis="z"):
         """Freeze a ground direction from the optimized static object position."""
         pred = self.forward(data, self.params)
+        target_frame = int(
+            getattr(data, "selected_contact_frame", None)
+            if getattr(data, "selected_contact_frame", None) is not None
+            else (data.object_motion_state.move_start_frame if data.object_motion_state is not None else data.contact_frame)
+        )
         if data.object_motion_state is None:
             frame = int(data.contact_frame)
             object_center = pred.obj.trans[frame]
             human_root = pred.human.trans[frame]
         else:
-            frame = int(data.object_motion_state.move_start_frame)
+            frame = target_frame
             if frame < 1:
                 raise ValueError("t_move must be >= 1 for pre-motion human approach")
-            object_center = pred.obj.trans[:frame].median(dim=0).values
+            object_center = pred.obj.trans[: max(frame, 1)].median(dim=0).values
             human_root = pred.human.trans[frame - 1]
         direction = ground_approach_direction(
             object_center,
@@ -1400,9 +1428,9 @@ class HOIOptimizer:
         if direction is None:
             raise ValueError("Initialize the human approach direction before its distance")
         frame = int(
-            data.object_motion_state.move_start_frame
-            if data.object_motion_state is not None
-            else data.contact_frame
+            getattr(data, "selected_contact_frame", None)
+            if getattr(data, "selected_contact_frame", None) is not None
+            else (data.object_motion_state.move_start_frame if data.object_motion_state is not None else data.contact_frame)
         )
         pred = self.forward(data, self.params)
         actual = self.human_model.get_palm_center_from_hand_joints(
@@ -1437,6 +1465,8 @@ class HOIOptimizer:
 
     @staticmethod
     def _human_pose_joint_indices(scope, num_body_joints):
+        if isinstance(scope, (list, tuple, set)):
+            return sorted({int(index) for index in scope if 0 <= int(index) < num_body_joints})
         groups = {
             "lower_body": {1, 2, 4, 5, 7, 8, 10, 11},
             "arms": {13, 14, 16, 17, 18, 19, 20, 21},
@@ -1743,9 +1773,20 @@ class HOIOptimizer:
             end = min(data.frame_num, motion_frame + int(pose_cfg.get("frame_radius", 2)) + 1)
         else:
             motion_frame = int(data.object_motion_state.move_start_frame)
+            contact_frame = int(
+                getattr(data, "selected_contact_frame", None)
+                if getattr(data, "selected_contact_frame", None) is not None
+                else motion_frame
+            )
             stage = str(opt_config.get("stage", ""))
-            if "stage_3b" in stage:
-                start = max(0, motion_frame - int(data.approach_window))
+            if "stage_3b1" in stage:
+                start = max(0, contact_frame - int(data.approach_window))
+                end = min(data.frame_num, contact_frame + 1)
+            elif "stage_3b2" in stage:
+                start = min(data.frame_num, contact_frame + 1)
+                end = min(data.frame_num, motion_frame + 1)
+            elif "stage_3b" in stage:
+                start = max(0, contact_frame - int(data.approach_window))
                 end = min(data.frame_num, motion_frame + 1)
             elif "stage_3c" in stage:
                 start = min(data.frame_num, motion_frame + 1)
@@ -2019,7 +2060,7 @@ class HOIOptimizer:
                 "contact_hint_source": data.contact_hint_source,
                 "contact_window_start": data.contact_window_start,
                 "contact_window_end": data.contact_window_end,
-                "selected_contact_frame": data.selected_contact_frame,
+                "selected_contact_frame": getattr(data, "selected_contact_frame", None),
                 "contact_hand": data.contact_hand,
                 "approach_window": data.approach_window,
                 "human_approach_distance": float(pred.human.approach_distance.detach()),

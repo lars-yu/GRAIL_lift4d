@@ -491,10 +491,12 @@ class LossComputer:
             )
             return raw, float(weight) * raw
         move_start = int(data.object_motion_state.move_start_frame)
+        contact_frame = int(getattr(data, "selected_contact_frame", None) or move_start)
         phase = str(cfg.get("phase", "moving"))
         if phase == "precontact":
-            # Stage B owns the complete approach endpoint, including t_move.
-            start, end = max(0, move_start - int(data.approach_window)), move_start + 1
+            start, end = max(0, contact_frame - int(data.approach_window)), contact_frame + 1
+        elif phase == "hold":
+            start, end = contact_frame, move_start
         elif phase == "joint":
             start = max(0, move_start - int(cfg.get("overlap_frames", 5)))
             end = data.frame_num - 1
@@ -505,7 +507,10 @@ class LossComputer:
             data, pred, frame_indices, cfg, detach_object=True
         )
         target_distance = float(cfg.get("target_distance", 0.005))
-        if phase in {"precontact", "joint"}:
+        if phase == "hold":
+            targets = torch.full_like(distances, target_distance)
+            raw = huber_loss(distances - targets, delta=cfg.get("delta", 0.02))
+        elif phase in {"precontact", "joint"}:
             ramp = pred.human.approach_ramp[start : end + 1].detach()
             initial_distance = data.hand_approach_initial_distance
             if initial_distance is None:
@@ -539,8 +544,9 @@ class LossComputer:
             if data.object_motion_state is not None
             else int(data.contact_frame)
         )
-        start = max(0, move_start - int(data.approach_window))
-        end = move_start + 1
+        contact_frame = int(getattr(data, "selected_contact_frame", None) or move_start)
+        start = max(0, contact_frame - int(data.approach_window))
+        end = contact_frame + 1
         distances = self._hand_surface_distances(
             data, pred, range(start, end), cfg, detach_object=True
         )
@@ -548,7 +554,11 @@ class LossComputer:
         return raw, float(weight) * raw
 
     def _postcontact_relative_loss(self, data, pred, cfg, weight):
-        hand_center = self._selected_palm_center(data, pred)
+        patch_indices = getattr(data, "contact_patch_indices", None)
+        if patch_indices:
+            hand_center = pred.human.verts_seq[:, list(patch_indices)].mean(dim=1)
+        else:
+            hand_center = self._selected_palm_center(data, pred)
         if data.object_motion_state is None:
             start = int(data.contact_frame)
             relative = hand_center[start:] - pred.obj.trans[start:].detach()
@@ -556,16 +566,18 @@ class LossComputer:
                 relative, delta=cfg.get("delta", 0.01)
             )
             return raw, float(weight) * raw
-        start = int(data.object_motion_state.move_start_frame)
+        move_start = int(data.object_motion_state.move_start_frame)
+        contact_frame = int(getattr(data, "selected_contact_frame", None) or move_start)
+        start = move_start
         if start + 1 >= hand_center.shape[0]:
             zero = hand_center.new_zeros(())
             return zero, zero
         if data.palm_target_world is None:
             raise ValueError("postcontact_relative requires a physical palm target")
-        contact_offset = (
-            data.palm_target_world[start].detach()
-            - pred.obj.trans[start].detach()
-        )
+        anchor = getattr(data, "contact_patch_anchor_world", None)
+        if anchor is None:
+            anchor = data.palm_target_world[contact_frame].detach()
+        contact_offset = anchor.detach() - pred.obj.trans[contact_frame].detach()
         target_after_contact = pred.obj.trans[start + 1 :].detach() + contact_offset[None]
         postcontact_error = hand_center[start + 1 :] - target_after_contact
         beta = float(cfg.get("delta", 0.01))
@@ -628,10 +640,16 @@ class LossComputer:
         configured_start = cfg.get("window_start")
         if phase == "precontact":
             overlap = int(cfg.get("overlap_frames", 5))
-            start = max(0, move_start - int(data.approach_window) - overlap)
+            contact_frame = int(getattr(data, "selected_contact_frame", None) or move_start)
+            start = max(0, contact_frame - int(data.approach_window) - overlap)
             if configured_start is not None:
                 start = max(0, min(expected_frames, int(configured_start)))
-            return start, move_start + 1
+            return start, contact_frame + 1
+        if phase == "hold":
+            contact_frame = int(getattr(data, "selected_contact_frame", None) or move_start)
+            start = contact_frame
+            end = min(expected_frames, move_start + 1)
+            return start, end
         overlap = int(cfg.get("overlap_frames", 5))
         start = max(0, move_start - overlap)
         if configured_start is not None:
@@ -653,7 +671,7 @@ class LossComputer:
             if data.object_motion_state is None:
                 frame = int(data.contact_frame)
             else:
-                frame = int(data.object_motion_state.move_start_frame)
+                frame = int(getattr(data, "selected_contact_frame", None) or data.object_motion_state.move_start_frame)
             if not start <= frame < end:
                 raise ValueError(
                     f"contact terminal frame {frame} is outside loss window [{start}, {end})"

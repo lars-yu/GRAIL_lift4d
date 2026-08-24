@@ -269,3 +269,34 @@ All retries used the real 121-frame RGB video, HMR NPZ, object mesh, FoundationP
 - `arm_root_residual` (arm joints plus camera-ray root residual clamped to `0.05 m`): palm distance `0.144706 m`, reprojection `4.5175 px`; reprojection passed, but 5 mm distance did not.
 - None of the three modes reached both `palm distance <= 5 mm` and `reprojection < 5 px`. The correct next step is to pause and investigate single-frame IK reachability before any full 121-frame run.
 - Verification after this follow-up: remote full unittest discovery `90/90`, required `py_compile`, and `git diff --check` all passed.
+
+### retry37 final 121-frame run
+
+- Pre-run verification: targeted contact/formal tests `41/41` passed; the
+  already validated remote suite was `90/90`, and required modules compiled.
+- Configuration: real `rand00033`, 121 frames, automatic `t_move=89`, right
+  hand, selected contact frame 89, mode `B_arms_shoulders`, and Stage A/B/C
+  iterations `400/600/600`. The only algorithmic change from retry36 was to
+  use the detached semantic contact-patch center for Stage-C post-contact
+  continuity when patch indices are available.
+- Result: `formal_result=false`. Selected patch median `0.0376705 m`, coverage
+  under 1 cm `10.9195%`, finger coverage `15.5425%`, penetration `0.0019914 m`,
+  selected reprojection `3.4853 px`, moving contact under 5 cm `3.125%`, moving
+  patch median `0.311706 m`, approach max step `0.0300537 m`, boundary step
+  `0.0204685 m`, boundary velocity change `0.493360`, adjacent hand/object
+  change `0.248074 m`, and p95 palm reprojection `25.4786 px`. t_move palm
+  depth/3D errors were `0.063737/0.064036 m`; object-depth contact gradient was
+  exactly `0`.
+- Passed gates include static optimized depth, positive camera-Z, all-frame
+  Lift4D supervision, mask IoU, body/hand drift, median reprojection,
+  penetration, selected-contact reprojection, and zero object-depth gradient.
+  Failed gates include physical patch median/coverage, moving-contact and
+  moving-surface metrics, approach/adjacent continuity, p95 reprojection, and
+  maximum adjacent palm change.
+- Rendering: the first launch stopped at setup because
+  `freeze_foundationpose_image_plane_translation=true` was required. After that
+  renderer fix, the debug render completed with `--allow-debug`; each video is
+  121 frames and carries `DEBUG - formal_result=false`. These are diagnostic
+  outputs only. No retry38 or retry39 was started.
+- Final artifact directory:
+  `/home/jiaoyufei_insta360.com/PRE/GRAIL_4d_stage3_depth_approach_backup/pickup_table/generation/lift4d_palm_ray_contact_render_fix/rand00033_palm_ray_contact_20260822_retry37/debug_render`

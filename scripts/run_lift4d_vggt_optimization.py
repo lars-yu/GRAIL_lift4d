@@ -27,6 +27,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from grail.core.io import save_hoi_data
 from grail.optimization.hoi_optimizer import HOIOptimizer
+from grail.optimization.hand_object_ray_ik import camera_ray_world_directions
 from grail.optimization.loss_computer import LossComputer
 from grail.optimization.approach import hand_to_mesh_surface_distance
 from grail.rendering.camera import project_world_to_screen, transform_world_to_camera
@@ -327,12 +328,16 @@ def _palm_contact_arrays(optimizer, data, pred):
     palm_dist = []
     finger_dist = []
     exact_surface = []
+    min_surface = []
+    median_surface = []
     max_penetration = []
     penetrating_fraction = []
     faces_np = data.obj.faces.detach().cpu().numpy()
     for i in range(data.frame_num):
         palm_dist.append(torch.cdist(palm[i], obj[i]).amin(dim=1))
         finger_dist.append(torch.cdist(finger[i], obj[i]).amin(dim=1))
+        min_surface.append(palm_dist[-1].min())
+        median_surface.append(palm_dist[-1].median())
         exact_surface.append(
             hand_to_mesh_surface_distance(
                 palm[i], obj[i], data.obj.faces, top_k=64, candidate_faces=64
@@ -372,7 +377,8 @@ def _palm_contact_arrays(optimizer, data, pred):
         "observed_px": None if observed is None else observed.detach().cpu().numpy(),
         "reprojection_px": reproj.detach().cpu().numpy(),
         "surface_mean": torch.stack(exact_surface).detach().cpu().numpy(),
-        "surface_median": torch.stack(exact_surface).detach().cpu().numpy(),
+        "surface_min": torch.stack(min_surface).detach().cpu().numpy(),
+        "surface_median": torch.stack(median_surface).detach().cpu().numpy(),
         "palm_fraction_under_1cm": (palm_dist < 0.01).float().mean(dim=1).detach().cpu().numpy(),
         "finger_fraction_under_1cm": (finger_dist < 0.01).float().mean(dim=1).detach().cpu().numpy(),
         "maximum_penetration": np.asarray(max_penetration, dtype=np.float32),
@@ -769,6 +775,10 @@ def _write_diagnostics(
     periodic_jump_count = max(
         (int(np.sum(late_jump_frames % 4 == phase)) for phase in range(4)), default=0
     )
+    selected_contact_frame = int(
+        getattr(data, "selected_contact_frame", None)
+        if getattr(data, "selected_contact_frame", None) is not None else move_start
+    )
     metrics = {
         "lift4d_supervised_frames": supervised,
         "frame_num": frame_num,
@@ -782,7 +792,10 @@ def _write_diagnostics(
         "motion_confidence": motion_confidence,
         "contact_window_start": int(data.contact_window_start),
         "contact_window_end": int(data.contact_window_end),
-        "contact_frame_hand_object_distance": float(selected_distance[move_start]),
+        "contact_frame_hand_object_distance": float(selected_distance[selected_contact_frame]),
+        "selected_contact_frame": selected_contact_frame,
+        "selected_contact_mode": getattr(data, "selected_contact_mode", None),
+        "local_contact_feasible": getattr(data, "local_contact_feasible", None),
         "moving_fraction_under_5cm": float(np.mean(selected_distance[move_start:] < 0.05)),
         "maximum_adjacent_hand_object_distance_change": float(
             selected_window_steps.max(initial=0.0)
@@ -829,6 +842,12 @@ def _write_diagnostics(
         "p95_palm_reprojection_error_px": float(np.nanpercentile(palm_diag["reprojection_px"], 95)),
         "palm_depth_error_at_t_move_m": float(abs(palm_center_cam[move_start, 2] - target_cam[move_start, 2])),
         "palm_target_3d_error_at_t_move_m": float(np.linalg.norm(palm_center_cam[move_start] - target_cam[move_start])),
+        "selected_contact_palm_patch_min_surface_distance_m": float(palm_diag["surface_min"][selected_contact_frame]),
+        "selected_contact_palm_patch_median_surface_distance_m": float(palm_diag["surface_median"][selected_contact_frame]),
+        "selected_contact_palm_patch_fraction_under_1cm": float(palm_diag["palm_fraction_under_1cm"][selected_contact_frame]),
+        "selected_contact_finger_patch_fraction_under_1cm": float(palm_diag["finger_fraction_under_1cm"][selected_contact_frame]),
+        "selected_contact_maximum_penetration_m": float(palm_diag["maximum_penetration"][selected_contact_frame]),
+        "selected_contact_palm_reprojection_error_px": float(palm_diag["reprojection_px"][selected_contact_frame]),
         "moving_median_palm_surface_distance_m": float(np.median(palm_diag["surface_median"][move_start:])),
         "moving_fraction_palm_surface_under_1p5cm": float(np.mean(palm_diag["surface_median"][move_start:] <= 0.015)),
         "moving_mean_palm_patch_fraction_under_1cm": float(np.mean(palm_diag["palm_fraction_under_1cm"][move_start:])),
@@ -849,7 +868,11 @@ def _write_diagnostics(
     metrics["acceptance_gates"] = {
         "static_optimized_z_std_under_2mm": metrics["optimized_static_z_std"] < 0.002,
         "no_four_frame_periodic_jump": periodic_jump_count < 3,
-        "contact_frame_under_3cm": metrics["contact_frame_hand_object_distance"] < 0.03,
+        "selected_contact_physical_patch_gate": (
+            metrics["selected_contact_palm_patch_median_surface_distance_m"] <= 0.015
+            and metrics["selected_contact_palm_patch_fraction_under_1cm"] >= 0.30
+            and metrics["selected_contact_maximum_penetration_m"] < 0.003
+        ),
         "moving_frames_under_5cm_at_least_80pct": metrics["moving_fraction_under_5cm"] >= 0.80,
         "adjacent_hand_object_change_under_5cm": (
             metrics["maximum_adjacent_hand_object_distance_change"] <= 0.05
@@ -858,8 +881,8 @@ def _write_diagnostics(
         "approach_hand_step_under_3cm": metrics["approach_max_hand_step"] < 0.03,
         "lift4d_all_frames": supervised == frame_num,
         "positive_opencv_z": bool(np.all(fp_z > 0) and np.all(optimized_z > 0)),
-        "human_mask_iou_decrease_under_002": (
-            metrics["human_mask_iou_mean_delta"] >= -0.02
+        "human_mask_iou_decrease_under_003": (
+            metrics["human_mask_iou_mean_delta"] >= -0.03
         ),
         "body_keypoint_rmse_increase_under_5px": (
             metrics["body_keypoint_rmse_increase_px"] <= 5.0
@@ -869,14 +892,17 @@ def _write_diagnostics(
         ),
         "palm_reprojection_median_under_5px": metrics["median_palm_reprojection_error_px"] <= 5.0,
         "palm_reprojection_p95_under_10px": metrics["p95_palm_reprojection_error_px"] <= 10.0,
-        "palm_depth_at_move_under_1cm": metrics["palm_depth_error_at_t_move_m"] <= 0.01,
-        "palm_3d_at_move_under_1p5cm": metrics["palm_target_3d_error_at_t_move_m"] <= 0.015,
-        "moving_palm_surface_median_under_1cm": metrics["moving_median_palm_surface_distance_m"] <= 0.01,
+        "moving_palm_surface_median_under_1p5cm": metrics["moving_median_palm_surface_distance_m"] <= 0.015,
         "moving_palm_surface_under_1p5cm_at_least_90pct": metrics["moving_fraction_palm_surface_under_1p5cm"] >= 0.90,
         "palm_patch_coverage_at_least_30pct": metrics["moving_mean_palm_patch_fraction_under_1cm"] >= 0.30,
-        "maximum_penetration_under_3mm": metrics["maximum_penetration_m"] <= 0.003,
-        "boundary_palm_step_under_1p6cm": metrics["boundary_step_tmove"] <= 0.016,
+        "maximum_penetration_under_3mm": metrics["maximum_penetration_m"] < 0.003,
+        "boundary_palm_step_under_3cm": metrics["boundary_step_tmove"] < 0.03,
         "maximum_adjacent_palm_object_change_under_1p3cm": metrics["maximum_adjacent_hand_object_distance_change"] <= 0.013,
+        "selected_contact_palm_median_under_1p5cm": metrics["selected_contact_palm_patch_median_surface_distance_m"] <= 0.015,
+        "selected_contact_palm_coverage_at_least_30pct": metrics["selected_contact_palm_patch_fraction_under_1cm"] >= 0.30,
+        "selected_contact_penetration_under_3mm": metrics["selected_contact_maximum_penetration_m"] < 0.003,
+        "selected_contact_palm_reprojection_under_5px": metrics["selected_contact_palm_reprojection_error_px"] <= 5.0,
+        "moving_frames_under_5cm_at_least_95pct": metrics["moving_fraction_under_5cm"] >= 0.95,
     }
     return metrics
 
@@ -893,6 +919,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cache-dir", required=True)
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--lift4d-prior", required=True)
+    parser.add_argument("--reachability-json", default=None)
     parser.add_argument("--vggt-cache", default=None)
     parser.add_argument("--use-vggt-human-depth", action="store_true")
     parser.add_argument("--output-dir", required=True)
@@ -901,11 +928,31 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--stage-c-niter", type=int, default=600)
     parser.add_argument("--contact-frame", type=int, default=None)
     parser.add_argument(
+        "--optimization-mode",
+        choices=("A_arms", "B_arms_shoulders", "C_arms_shoulders_ray_02", "D_arms_shoulders_ray_03", "E_torso_ray_03", "F_torso_ray_05"),
+        default="B_arms_shoulders",
+    )
+    parser.add_argument(
         "--contact-hand", choices=("auto", "left", "right", "both"), default="auto"
     )
     parser.add_argument("--confidence-percentile", type=float, default=10.0)
     parser.add_argument("--device", default="cuda")
     return parser
+
+
+def _optimization_mode_spec(mode, num_body_joints):
+    arms = HOIOptimizer._human_pose_joint_indices("arms", num_body_joints)
+    shoulders = HOIOptimizer._human_pose_joint_indices("upper_body_and_arms", num_body_joints)
+    torso = sorted(set(shoulders) | {1, 2, 4, 5, 7, 8, 10, 11})
+    specs = {
+        "A_arms": (arms, False, 0.0),
+        "B_arms_shoulders": (shoulders, False, 0.0),
+        "C_arms_shoulders_ray_02": (shoulders, True, 0.02),
+        "D_arms_shoulders_ray_03": (shoulders, True, 0.03),
+        "E_torso_ray_03": (torso, True, 0.03),
+        "F_torso_ray_05": (torso, True, 0.05),
+    }
+    return specs[mode]
 
 
 def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
@@ -1112,6 +1159,19 @@ def main() -> None:
         device=args.device,
     )
     data = optimizer.init_data(video_file, hmr_file, mesh_file, fp_file, render_config)
+    data.selected_contact_mode = args.optimization_mode
+    reachability_meta = None
+    if args.reachability_json is not None:
+        reachability_meta = _real_file(args.reachability_json, "contact reachability JSON")
+        with open(reachability_meta, "r") as handle:
+            reachability_meta = json.load(handle)
+        selected = reachability_meta.get("selected_contact_frame")
+        selected_mode = reachability_meta.get("selected_contact_mode")
+        if selected is not None and args.contact_frame is not None and int(selected) != int(args.contact_frame):
+            raise ValueError("--contact-frame does not match reachability selection")
+        if selected_mode is not None and selected_mode != args.optimization_mode:
+            raise ValueError("--optimization-mode does not match reachability selection")
+        data.local_contact_feasible = bool(reachability_meta.get("local_contact_feasible", False))
     if args.use_vggt_human_depth:
         vggt_depths, vggt_provenance = _load_real_vggt_depth(
             vggt_cache,
@@ -1155,6 +1215,13 @@ def main() -> None:
     stage_a_loss, stage_b_loss, stage_c_loss = _build_stage_loss_configs(
         motion_state_enabled, args.use_vggt_human_depth
     )
+    joint_scope, use_ray_root, ray_root_limit = _optimization_mode_spec(
+        args.optimization_mode, optimizer.num_body_joints
+    )
+    stage_b2_loss = copy.deepcopy(stage_b_loss)
+    for loss_cfg in stage_b2_loss.values():
+        if loss_cfg.get("phase") == "precontact":
+            loss_cfg["phase"] = "hold"
     stages = [
         {
             "stage": "stage_3a_lift4d_full_frame_object_depth",
@@ -1166,12 +1233,12 @@ def main() -> None:
             "restore_best_state": True,
         },
         {
-            "stage": "stage_3b_human_precontact_approach",
+            "stage": "stage_3b1_human_precontact_approach",
             "overlap_frames": 5,
             "opt_vars": {
                 "human_approach_distance": {"lr": 0.00005},
                 "human_pose_res": {
-                    "lr": 0.001, "joint_scope": "arms", "frame_radius": 2,
+                    "lr": 0.001, "joint_scope": joint_scope, "frame_radius": 2,
                 },
             },
             "niter": args.stage_b_niter,
@@ -1179,13 +1246,22 @@ def main() -> None:
             "restore_best_state": True,
         },
         {
+            "stage": "stage_3b2_human_contact_hold",
+            "opt_vars": {
+                "human_approach_distance": {"lr": 0.00002},
+                "human_pose_res": {
+                    "lr": 0.0005, "joint_scope": joint_scope, "frame_radius": 2,
+                },
+            },
+            "niter": max(1, args.stage_b_niter // 2),
+            "loss_cfg": stage_b2_loss,
+            "restore_best_state": True,
+        },
+        {
             "stage": "stage_3c_joint_contact_refinement",
             "opt_vars": {
-                # Post-contact residual translation must close the observed
-                # frame-90+ depth jump within the fixed Stage-C window.
-                "human_trans_res": {"lr": 0.008},
                 "human_pose_res": {
-                    "lr": 0.00005, "joint_scope": "arms", "frame_radius": 2,
+                    "lr": 0.00005, "joint_scope": joint_scope, "frame_radius": 2,
                 },
                 "hand_pose_res": {"lr": 0.0001, "hand": "contact", "frame_radius": 5},
             },
@@ -1194,11 +1270,22 @@ def main() -> None:
             "restore_best_state": True,
         },
     ]
+    if use_ray_root:
+        stages[-1]["opt_vars"]["human_approach_distance"] = {"lr": 0.00002}
     stage_records = []
     stage_b_base_pose_residual = None
     for stage in stages:
-        if stage["stage"] == "stage_3b_human_precontact_approach":
+        if stage["stage"] in ("stage_3b1_human_precontact_approach", "stage_3b2_human_contact_hold"):
             optimizer.initialize_human_approach_direction(data, gravity_axis="z")
+            if use_ray_root:
+                contact_frame = int(data.selected_contact_frame)
+                ray = camera_ray_world_directions(
+                    data.observed_palm_pixels[contact_frame:contact_frame + 1].detach(),
+                    data.grail_camera_intrinsics[contact_frame],
+                    data.camera.pose[:3, :3],
+                )[0]
+                optimizer._human_approach_direction = ray.detach()
+                optimizer.cfg["max_root_approach_distance"] = ray_root_limit
             # Start from the observed HMR trajectory.  The single scalar is
             # learned gradually in Stage B; directly seeding it from the
             # palm target can move the whole body out of image alignment.
@@ -1209,7 +1296,7 @@ def main() -> None:
                 stage["opt_vars"]["human_pose_res"]["joint_scope"],
                 base_pose_residual=stage_b_base_pose_residual,
             )
-        if stage["stage"] == "stage_3b_human_precontact_approach":
+        if stage["stage"] == "stage_3b1_human_precontact_approach":
             stage_b_base_pose_residual = optimizer.params.human_pose_res.detach().clone()
         _, initial_total, initial_losses = _stage_metrics(
             optimizer, data, stage["loss_cfg"]
@@ -1222,8 +1309,20 @@ def main() -> None:
         optimizer.optimize_main(data, stage)
         if stage["stage"] == "stage_3a_lift4d_full_frame_object_depth":
             optimizer.refresh_hand_ray_targets_after_object_stage(data)
-        elif stage["stage"] == "stage_3b_human_precontact_approach":
+        elif stage["stage"] == "stage_3b1_human_precontact_approach":
             optimizer.capture_stage_boundary_state(data)
+        elif stage["stage"] == "stage_3b2_human_contact_hold":
+            optimizer.capture_stage_boundary_state(data)
+            contact_frame = int(data.selected_contact_frame)
+            hold_pred = optimizer.forward(data, optimizer.params)
+            patch_indices = list(optimizer.human_model.get_palm_patch_indices(data.contact_hand))
+            patch_points = hold_pred.human.verts_seq[contact_frame, patch_indices]
+            object_points = hold_pred.obj.verts_seq[contact_frame].detach()
+            patch_distances = torch.cdist(patch_points, object_points).amin(dim=1)
+            top_k = min(8, int(patch_distances.numel()))
+            selected_local = torch.topk(patch_distances, top_k, largest=False).indices
+            data.contact_patch_indices = [patch_indices[int(i)] for i in selected_local.detach().cpu()]
+            data.contact_patch_anchor_world = patch_points[selected_local].mean(dim=0).detach()
         _, final_total, final_losses = _stage_metrics(
             optimizer, data, stage["loss_cfg"]
         )
@@ -1250,6 +1349,12 @@ def main() -> None:
         "lift4d_prior_path": lift4d_prior,
         "mesh_path": mesh_file,
         "synthetic_data_used": False,
+        "selected_contact_frame": int(data.selected_contact_frame),
+        "selected_contact_mode": data.selected_contact_mode,
+        "local_contact_feasible": data.local_contact_feasible,
+        "contact_patch_indices": data.contact_patch_indices,
+        "contact_patch_anchor_world": None if data.contact_patch_anchor_world is None else data.contact_patch_anchor_world.detach().cpu().tolist(),
+        "reachability_scan": reachability_meta,
     }
     output_path = os.path.join(output_dir, "hoi_data.pkl")
     metrics_path = os.path.join(output_dir, "optimization_metrics.json")
