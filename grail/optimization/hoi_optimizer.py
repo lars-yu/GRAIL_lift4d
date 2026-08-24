@@ -54,6 +54,10 @@ from grail.optimization.approach import (
     ground_approach_direction,
     smoothstep_approach_ramp,
 )
+from grail.optimization.fixed_object_grasp import (
+    build_fixed_object_grasp_targets,
+    ground_alignment_delta,
+)
 from grail.pose_est.utils import smooth_axis_angle_sequence, smooth_pose_sequence
 from grail.preprocessing.preprocess import load_depth_from_cache, load_masks_from_cache
 from grail.rendering.camera import (
@@ -1268,6 +1272,24 @@ class HOIOptimizer:
         data.palm_target_normal_world = torch.nn.functional.normalize(
             surface_normal_cam.detach() @ self.opencv_cam_R.T, dim=-1, eps=1e-8
         )
+        move_start = int(data.object_motion_state.move_start_frame)
+        if self.cfg.get("fixed_object_human_ik", False):
+            grasp_targets = build_fixed_object_grasp_targets(
+                data.palm_target_world[move_start],
+                pred.obj.R.detach(),
+                pred.obj.trans.detach(),
+                move_start,
+                contact_normal_world=data.palm_target_normal_world[move_start],
+            )
+            data.grasp_anchor_obj_local = grasp_targets.anchor_object
+            data.grasp_normal_obj_local = grasp_targets.normal_object
+            data.grasp_target_world = grasp_targets.position_world
+            data.grasp_target_normal_world = grasp_targets.normal_world
+        else:
+            data.grasp_anchor_obj_local = None
+            data.grasp_normal_obj_local = None
+            data.grasp_target_world = None
+            data.grasp_target_normal_world = None
         data.hand_ray_target_world = data.palm_target_world
         data.hand_ray_ramp = ramp.detach()
         data.hand_initial_cam_depth = data.hand_initial_cam[:, 2].detach()
@@ -1377,6 +1399,42 @@ class HOIOptimizer:
         )
         return self._human_approach_direction
 
+    @torch.no_grad()
+    def initialize_human_global_alignment(self, data, gravity_axis=2):
+        """Apply one constant ground-plane correction to the complete human track.
+
+        The correction fixes a global monocular world-position error without
+        creating time-varying root motion, so it cannot introduce new foot
+        velocity.  Local upper-body IK remains responsible for the residual.
+        """
+        if data.palm_target_world is None:
+            raise ValueError("Global human alignment requires refreshed palm targets")
+        frame = int(
+            data.object_motion_state.move_start_frame
+            if data.object_motion_state is not None
+            else data.contact_frame
+        )
+        pred = self.forward(data, self.params)
+        actual = self.human_model.get_palm_center_from_hand_joints(
+            pred.human.hand_joints_seq, data.contact_hand
+        )[frame]
+        target = data.palm_target_world[frame].detach()
+        max_distance = float(self.cfg.get("max_human_global_alignment_distance", 0.35))
+        delta = ground_alignment_delta(
+            actual.detach(), target, gravity_axis=int(gravity_axis),
+            max_distance=max_distance,
+        )
+        self.params.human_trans_global.copy_(delta)
+        remaining = target - (actual + delta)
+        self.logger.info(
+            "Initialized constant human global alignment at frame %d: "
+            "[%.6f, %.6f, %.6f] m | remaining palm residual=%.6f m",
+            frame,
+            *delta.tolist(),
+            float(torch.linalg.norm(remaining)),
+        )
+        return delta
+
     @staticmethod
     def _projected_approach_distance(actual_palm, target_palm, direction, max_distance):
         """Project the contact-frame palm correction onto the allowed root direction."""
@@ -1441,6 +1499,9 @@ class HOIOptimizer:
             "lower_body": {1, 2, 4, 5, 7, 8, 10, 11},
             "arms": {13, 14, 16, 17, 18, 19, 20, 21},
             "upper_body_and_arms": {0, 3, 6, 9, 12, 13, 14, 16, 17, 18, 19, 20, 21},
+            # Fixed-object IK must not rotate the pelvis/root because that
+            # would move both planted feet even when leg joints are frozen.
+            "torso_shoulders_and_arms": {3, 6, 9, 12, 13, 14, 16, 17, 18, 19, 20, 21},
         }
         if scope == "full_body":
             allowed = set(range(num_body_joints))
@@ -1451,7 +1512,8 @@ class HOIOptimizer:
         else:
             raise ValueError(
                 f"Invalid human_pose_res joint_scope={scope!r}; expected arms, lower_body, "
-                "lower_body_and_arms, upper_body_and_arms, or full_body"
+                "lower_body_and_arms, upper_body_and_arms, "
+                "torso_shoulders_and_arms, or full_body"
             )
         return sorted(index for index in allowed if index < num_body_joints)
 
@@ -1628,6 +1690,7 @@ class HOIOptimizer:
             self._project_obj_depth_stage_constraints(
                 opt_config, obj_depth_reference
             )
+            self._project_human_global_stage_constraints(opt_config)
             if self.params.human_approach_distance is not None:
                 with torch.no_grad():
                     self.params.human_approach_distance.clamp_(
@@ -1684,6 +1747,33 @@ class HOIOptimizer:
         ):
             raise ValueError(f"obj_depth_res.max_delta must be positive, got {max_delta}")
         return self.params.obj_depth_res.detach().clone()
+
+    @torch.no_grad()
+    def _project_human_global_stage_constraints(self, opt_config):
+        cfg = opt_config.get("opt_vars", {}).get("human_trans_global")
+        if cfg is None:
+            return
+        value = self.params.human_trans_global
+        gravity_axis = int(cfg.get("gravity_axis", 2))
+        if gravity_axis not in (0, 1, 2):
+            raise ValueError("human_trans_global.gravity_axis must be 0, 1, or 2")
+        if cfg.get("xy_only", False) or cfg.get("ground_only", False):
+            value[gravity_axis] = 0.0
+        max_norm = cfg.get("max_norm")
+        if max_norm is None:
+            return
+        max_norm = float(max_norm)
+        if not np.isfinite(max_norm) or max_norm <= 0.0:
+            raise ValueError("human_trans_global.max_norm must be finite and positive")
+        ground = value.clone()
+        ground[gravity_axis] = 0.0
+        norm = torch.linalg.norm(ground)
+        if float(norm) > max_norm:
+            ground.mul_(max_norm / norm)
+            vertical = value[gravity_axis].clone()
+            value.copy_(ground)
+            if not (cfg.get("xy_only", False) or cfg.get("ground_only", False)):
+                value[gravity_axis] = vertical
 
     def _apply_obj_depth_gradient_constraints(self, opt_config, data=None):
         depth_cfg = opt_config.get("opt_vars", {}).get("obj_depth_res")
@@ -1774,6 +1864,17 @@ class HOIOptimizer:
                     dtype=trans_mask.dtype, device=trans_mask.device,
                 )
                 trans_mask[ramp_end:end] = 1.0
+            if trans_cfg.get("lock_support_feet", False):
+                probs = data.human.foot_contact_probs
+                if probs is not None:
+                    if probs.ndim != 2 or probs.shape != (data.frame_num, 4):
+                        raise ValueError(
+                            "foot_contact_probs must have shape [frame_num,4]"
+                        )
+                    probs = probs.to(device=trans_mask.device)
+                    threshold = float(trans_cfg.get("contact_threshold", 0.5))
+                    support = probs.max(dim=1).values > threshold
+                    trans_mask[support] = 0.0
             self.params.human_trans_res.grad.mul_(trans_mask[:, None])
         hand_cfg = opt_config.get("opt_vars", {}).get("hand_pose_res")
         if hand_cfg is None or self.params.hand_pose_res.grad is None:
@@ -2064,6 +2165,26 @@ class HOIOptimizer:
                         tensor_to_numpy(data.palm_target_normal_world)
                         if to_numpy and data.palm_target_normal_world is not None
                         else data.palm_target_normal_world
+                    ),
+                    "grasp_anchor_object": (
+                        tensor_to_numpy(data.grasp_anchor_obj_local)
+                        if to_numpy and data.grasp_anchor_obj_local is not None
+                        else data.grasp_anchor_obj_local
+                    ),
+                    "grasp_normal_object": (
+                        tensor_to_numpy(data.grasp_normal_obj_local)
+                        if to_numpy and data.grasp_normal_obj_local is not None
+                        else data.grasp_normal_obj_local
+                    ),
+                    "grasp_target_world": (
+                        tensor_to_numpy(data.grasp_target_world)
+                        if to_numpy and data.grasp_target_world is not None
+                        else data.grasp_target_world
+                    ),
+                    "grasp_target_normal_world": (
+                        tensor_to_numpy(data.grasp_target_normal_world)
+                        if to_numpy and data.grasp_target_normal_world is not None
+                        else data.grasp_target_normal_world
                     ),
                 },
             },

@@ -41,6 +41,9 @@ class FormalRunnerArgumentTests(unittest.TestCase):
         self.assertFalse(args.use_vggt_human_depth)
         self.assertIsNone(args.contact_frame)
         self.assertEqual(args.contact_hand, "auto")
+        self.assertFalse(args.fixed_object_human_ik)
+        self.assertEqual(args.max_human_global_alignment, 0.35)
+        self.assertEqual(args.fixed_grasp_threshold, 0.005)
 
     def test_human_vggt_mode_is_explicit(self):
         args = _build_parser().parse_args(
@@ -281,6 +284,93 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
             self.assertIn(name, stage_c)
         self.assertEqual(stage_c["contact_anchor"]["phase"], "joint")
         self.assertEqual(stage_c["contact_anchor"]["overlap_frames"], 5)
+
+    def test_fixed_object_mode_prioritizes_physical_grasp_over_image_fit(self):
+        _, stage_b, stage_c = _build_stage_loss_configs(True, False, True)
+        self.assertEqual(stage_b["contact_anchor"]["weight"], 20000.0)
+        self.assertEqual(stage_c["postcontact_relative"]["weight"], 10000.0)
+        self.assertEqual(stage_c["palm_target_3d"]["weight"], 5000.0)
+        self.assertEqual(stage_c["palm_normal"]["weight"], 100.0)
+        self.assertLess(stage_b["body_keypoint_reprojection"]["weight"], 1.0)
+        self.assertLess(stage_c["palm_reprojection"]["weight"], 1.0)
+
+    def test_human_global_alignment_projection_is_ground_only_and_bounded(self):
+        optimizer = HOIOptimizer.__new__(HOIOptimizer)
+        optimizer.params = SimpleNamespace(
+            human_trans_global=torch.tensor([0.6, 0.8, 0.4])
+        )
+        optimizer._project_human_global_stage_constraints(
+            {
+                "opt_vars": {
+                    "human_trans_global": {
+                        "xy_only": True,
+                        "gravity_axis": 2,
+                        "max_norm": 0.35,
+                    }
+                }
+            }
+        )
+        torch.testing.assert_close(
+            optimizer.params.human_trans_global,
+            torch.tensor([0.21, 0.28, 0.0]),
+        )
+
+    def test_fixed_object_pose_scope_excludes_pelvis_and_legs(self):
+        joints = HOIOptimizer._human_pose_joint_indices(
+            "torso_shoulders_and_arms", 22
+        )
+        self.assertNotIn(0, joints)
+        self.assertTrue(set(joints).isdisjoint({1, 2, 4, 5, 7, 8, 10, 11}))
+        self.assertTrue({13, 14, 16, 17, 18, 19, 20, 21}.issubset(joints))
+
+    def test_support_frames_lock_per_frame_root_translation(self):
+        optimizer = HOIOptimizer.__new__(HOIOptimizer)
+        optimizer.num_body_joints = 22
+        pose = torch.zeros(5, 22, 6, requires_grad=True)
+        trans = torch.zeros(5, 3, requires_grad=True)
+        pose.grad = torch.ones_like(pose)
+        trans.grad = torch.ones_like(trans)
+        optimizer.params = SimpleNamespace(
+            human_pose_res=pose,
+            human_trans_res=trans,
+            hand_pose_res=torch.zeros(5, 30, 6, requires_grad=True),
+        )
+        data = SimpleNamespace(
+            frame_num=5,
+            approach_window=1,
+            contact_frame=None,
+            contact_hand="right",
+            object_motion_state=SimpleNamespace(move_start_frame=1),
+            human=SimpleNamespace(
+                foot_contact_probs=torch.tensor(
+                    [
+                        [0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0],
+                        [0.9, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.8, 0.0],
+                    ]
+                )
+            ),
+        )
+        optimizer._apply_stage_gradient_masks(
+            data,
+            {
+                "stage": "stage_3c_joint_contact_refinement",
+                "opt_vars": {
+                    "human_pose_res": {
+                        "joint_scope": "torso_shoulders_and_arms"
+                    },
+                    "human_trans_res": {
+                        "lock_support_feet": True,
+                        "contact_threshold": 0.5,
+                    },
+                },
+            },
+        )
+        self.assertEqual(float(trans.grad[2].abs().sum()), 0.0)
+        self.assertGreater(float(trans.grad[3].abs().sum()), 0.0)
+        self.assertEqual(float(trans.grad[4].abs().sum()), 0.0)
 
     def test_stage_c_preserves_post_motion_hmr_residuals(self):
         optimizer = HOIOptimizer.__new__(HOIOptimizer)

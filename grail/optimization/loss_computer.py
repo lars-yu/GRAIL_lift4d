@@ -560,23 +560,29 @@ class LossComputer:
         if start + 1 >= hand_center.shape[0]:
             zero = hand_center.new_zeros(())
             return zero, zero
-        if data.palm_target_world is None:
-            raise ValueError("postcontact_relative requires a physical palm target")
-        contact_offset = (
-            data.palm_target_world[start].detach()
-            - pred.obj.trans[start].detach()
-        )
-        target_after_contact = pred.obj.trans[start + 1 :].detach() + contact_offset[None]
+        target_world = getattr(data, "grasp_target_world", None)
+        if target_world is None:
+            # Legacy mode retains the prior world-offset target.  Formal
+            # fixed-object IK always supplies grasp_target_world.
+            if data.palm_target_world is None:
+                raise ValueError("postcontact_relative requires a physical palm target")
+            contact_offset = (
+                data.palm_target_world[start].detach()
+                - pred.obj.trans[start].detach()
+            )
+            target_world = pred.obj.trans.detach() + contact_offset[None]
+        if target_world.shape != hand_center.shape:
+            raise ValueError("grasp_target_world must match the palm trajectory shape")
+        target_after_contact = target_world[start + 1 :].detach()
         postcontact_error = hand_center[start + 1 :] - target_after_contact
         beta = float(cfg.get("delta", 0.01))
         raw = torch.nn.functional.smooth_l1_loss(
             postcontact_error, torch.zeros_like(postcontact_error), beta=beta
         )
         palm_velocity = hand_center[start + 2 :] - hand_center[start + 1 : -1]
-        object_velocity = (
-            pred.obj.trans[start + 2 :].detach()
-            - pred.obj.trans[start + 1 : -1].detach()
-        )
+        object_velocity = target_world[start + 2 :].detach() - target_world[
+            start + 1 : -1
+        ].detach()
         if palm_velocity.numel():
             raw = raw + float(cfg.get("velocity_weight", 1.0)) * torch.nn.functional.smooth_l1_loss(
                 palm_velocity, object_velocity, beta=beta
@@ -584,7 +590,7 @@ class LossComputer:
         return raw, float(weight) * raw
 
     def _hand_ray_ik_loss(self, data, pred, cfg, weight):
-        target = data.hand_ray_target_world
+        target = self._hand_target_world(data, cfg)
         if target is None:
             raise ValueError("hand_ray_ik requires a real camera-ray target")
         predicted = self._selected_palm_center(data, pred)
@@ -605,6 +611,26 @@ class LossComputer:
         else:
             raw = raw_terms.mean()
         return raw, float(weight) * raw
+
+    @staticmethod
+    def _hand_target_world(data, cfg):
+        """Use ray targets before contact and object-local targets after it."""
+        phase = str(cfg.get("phase", "all"))
+        ray = getattr(data, "hand_ray_target_world", None)
+        if ray is None:
+            ray = getattr(data, "palm_target_world", None)
+        if phase != "precontact":
+            grasp = getattr(data, "grasp_target_world", None)
+            if grasp is not None:
+                target = grasp.clone() if ray is None else ray.clone()
+                move_start = int(
+                    data.object_motion_state.move_start_frame
+                    if data.object_motion_state is not None
+                    else data.contact_frame
+                )
+                target[move_start:] = grasp[move_start:]
+                return target
+        return ray
 
     def _hand_loss_window(self, data, cfg):
         expected_frames = int(data.frame_num)
@@ -710,7 +736,20 @@ class LossComputer:
         if data.palm_target_cam is None:
             raise ValueError("palm_depth requires refreshed GRAIL-K targets")
         start, end = self._hand_loss_window(data, cfg)
-        error = self._actual_palm_cam(data, pred)[start:end, 2] - data.palm_target_cam[start:end, 2].detach()
+        target_cam = data.palm_target_cam
+        if (
+            str(cfg.get("phase", "all")) != "precontact"
+            and getattr(data, "grasp_target_world", None) is not None
+        ):
+            target_cam = transform_world_to_camera(
+                self._hand_target_world(data, cfg).detach(),
+                data.camera.opencv_R,
+                data.camera.opencv_t,
+            )
+        error = (
+            self._actual_palm_cam(data, pred)[start:end, 2]
+            - target_cam[start:end, 2].detach()
+        )
         terms = torch.nn.functional.huber_loss(
             error, torch.zeros_like(error), delta=cfg.get("delta", 0.01), reduction="none"
         )
@@ -740,10 +779,14 @@ class LossComputer:
         return raw, weighted
 
     def _palm_target_3d_loss(self, data, pred, cfg, weight):
-        if data.palm_target_world is None:
+        target = self._hand_target_world(data, cfg)
+        if target is None:
             raise ValueError("palm_target_3d requires refreshed targets")
         start, end = self._hand_loss_window(data, cfg)
-        error = self._selected_palm_center(data, pred)[start:end] - data.palm_target_world[start:end].detach()
+        error = (
+            self._selected_palm_center(data, pred)[start:end]
+            - target[start:end].detach()
+        )
         terms = torch.nn.functional.huber_loss(
             error, torch.zeros_like(error), delta=cfg.get("delta", 0.015), reduction="none"
         ).mean(dim=-1)
@@ -825,7 +868,23 @@ class LossComputer:
         # A surface normal is not available from all object backends. When a
         # target is absent, keep this diagnostic disabled rather than guessing
         # a world-axis direction. A supplied target must be detached.
-        target = getattr(data, "palm_target_normal_world", None)
+        target = (
+            getattr(data, "grasp_target_normal_world", None)
+            if str(cfg.get("phase", "all")) != "precontact"
+            else None
+        )
+        ray_target = getattr(data, "palm_target_normal_world", None)
+        if target is not None and ray_target is not None:
+            target = ray_target.clone()
+            move_start = int(
+                data.object_motion_state.move_start_frame
+                if data.object_motion_state is not None
+                else data.contact_frame
+            )
+            grasp_target = data.grasp_target_normal_world
+            target[move_start:] = grasp_target[move_start:]
+        elif target is None:
+            target = ray_target
         if target is None:
             zero = actual.new_zeros(())
             return zero, zero
@@ -1009,11 +1068,12 @@ class LossComputer:
         return raw, float(weight) * raw
 
     def _hand_path_loss(self, data, pred, cfg, weight):
-        if data.hand_ray_target_world is None:
-            raise ValueError("hand_path requires refreshed hand ray targets")
+        target_all = self._hand_target_world(data, cfg)
+        if target_all is None:
+            raise ValueError("hand_path requires refreshed physical hand targets")
         start, end = self._hand_loss_window(data, cfg)
         actual = self._selected_palm_center(data, pred)[start:end]
-        target = data.hand_ray_target_world[start:end].detach()
+        target = target_all[start:end].detach()
         raw = torch.nn.functional.huber_loss(
             actual, target, delta=cfg.get("delta", 0.03), reduction="mean"
         )
@@ -1022,7 +1082,7 @@ class LossComputer:
     def _hand_velocity_loss(self, data, pred, cfg, weight):
         start, end = self._hand_loss_window(data, cfg)
         actual = self._selected_palm_center(data, pred)[start:end]
-        target = data.hand_ray_target_world[start:end].detach()
+        target = self._hand_target_world(data, cfg)[start:end].detach()
         if actual.shape[0] < 2:
             zero = pred.human.verts_seq.new_zeros(())
             return zero, zero
@@ -1050,7 +1110,7 @@ class LossComputer:
     def _hand_acceleration_loss(self, data, pred, cfg, weight):
         start, end = self._hand_loss_window(data, cfg)
         actual = self._selected_palm_center(data, pred)[start:end]
-        target = data.hand_ray_target_world[start:end].detach()
+        target = self._hand_target_world(data, cfg)[start:end].detach()
         if actual.shape[0] < 3:
             zero = pred.human.verts_seq.new_zeros(())
             return zero, zero
@@ -1064,7 +1124,7 @@ class LossComputer:
     def _hand_jerk_loss(self, data, pred, cfg, weight):
         start, end = self._hand_loss_window(data, cfg)
         actual = self._selected_palm_center(data, pred)[start:end]
-        target = data.hand_ray_target_world[start:end].detach()
+        target = self._hand_target_world(data, cfg)[start:end].detach()
         if actual.shape[0] < 4:
             zero = pred.human.verts_seq.new_zeros(())
             return zero, zero

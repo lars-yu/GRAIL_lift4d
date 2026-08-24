@@ -108,6 +108,10 @@ class HOIData:
     palm_target_cam: Optional[torch.Tensor] = None  # (L,3), GRAIL-K camera-ray target
     palm_target_world: Optional[torch.Tensor] = None  # (L,3), detached world target
     palm_target_normal_world: Optional[torch.Tensor] = None  # (L,3), optional surface normal
+    grasp_anchor_obj_local: Optional[torch.Tensor] = None  # (3,), physical anchor in object frame
+    grasp_normal_obj_local: Optional[torch.Tensor] = None  # (3,), optional object-frame normal
+    grasp_target_world: Optional[torch.Tensor] = None  # (L,3), object-relative post-contact target
+    grasp_target_normal_world: Optional[torch.Tensor] = None  # (L,3), rotates with object
     grail_camera_intrinsics: Optional[torch.Tensor] = None  # (L,3,3), renderer K
     palm_metadata: dict[str, Any] | None = None
     hand_ray_ramp: Optional[torch.Tensor] = None  # (L,)

@@ -29,6 +29,7 @@ from grail.core.io import save_hoi_data
 from grail.optimization.hoi_optimizer import HOIOptimizer
 from grail.optimization.loss_computer import LossComputer
 from grail.optimization.approach import hand_to_mesh_surface_distance
+from grail.optimization.fixed_object_grasp import fixed_object_grasp_position_error
 from grail.rendering.camera import project_world_to_screen, transform_world_to_camera
 
 
@@ -263,7 +264,7 @@ def _keypoint_rmse(predicted, target, confidence_threshold=0.2):
 
 
 @torch.no_grad()
-def _foot_sliding(optimizer, data, pred, threshold=0.5):
+def _foot_sliding(optimizer, data, pred, threshold=0.5, reduction="mean"):
     probs = data.human.foot_contact_probs
     if probs is None:
         return float("nan")
@@ -275,11 +276,16 @@ def _foot_sliding(optimizer, data, pred, threshold=0.5):
     right_contact = torch.max(probs[:, 2], probs[:, 3])
     left_weight = (torch.minimum(left_contact[:-1], left_contact[1:]) > threshold).float()
     right_weight = (torch.minimum(right_contact[:-1], right_contact[1:]) > threshold).float()
-    denominator = (left_weight.sum() + right_weight.sum()).clamp_min(1.0)
-    return float(
-        ((left_velocity * left_weight).sum() + (right_velocity * right_weight).sum())
-        / denominator
+    active = torch.cat(
+        [left_velocity[left_weight.bool()], right_velocity[right_weight.bool()]]
     )
+    if active.numel() == 0:
+        return 0.0
+    if reduction == "mean":
+        return float(active.mean())
+    if reduction == "max":
+        return float(active.max())
+    raise ValueError(f"Unsupported foot-sliding reduction: {reduction!r}")
 
 
 @torch.no_grad()
@@ -304,6 +310,11 @@ def _hand_trajectory_arrays(optimizer, data, pred):
         if data.hand_ray_target_world is not None
         else torch.zeros_like(hand)
     )
+    grasp_target_world = getattr(data, "grasp_target_world", None)
+    if data.object_motion_state is not None and grasp_target_world is not None:
+        move_start = int(data.object_motion_state.move_start_frame)
+        desired_world = desired_world.clone()
+        desired_world[move_start:] = grasp_target_world[move_start:].detach()
     pose_norm = torch.linalg.norm(pred.human.pose_res, dim=-1).mean(dim=-1)
     return {
         "world": hand.detach().cpu().numpy(),
@@ -460,6 +471,17 @@ def _write_diagnostics(
     palm_speed = np.linalg.norm(np.vstack([np.zeros((1, 3)), np.diff(palm_center_cam, axis=0)]) * float(optimizer.video_fps), axis=1)
     palm_acceleration = np.linalg.norm(np.vstack([np.zeros((2, 3)), np.diff(palm_center_cam, n=2, axis=0)]) * float(optimizer.video_fps) ** 2, axis=1)
     palm_jerk = np.linalg.norm(np.vstack([np.zeros((3, 3)), np.diff(palm_center_cam, n=3, axis=0)]) * float(optimizer.video_fps) ** 3, axis=1)
+    if data.grasp_target_world is not None:
+        palm_world_tensor = optimizer.human_model.get_palm_center_from_hand_joints(
+            pred.human.hand_joints_seq, data.contact_hand
+        )
+        fixed_grasp_error = fixed_object_grasp_position_error(
+            palm_world_tensor,
+            data.grasp_target_world,
+            move_start,
+        ).detach().cpu().numpy()
+    else:
+        fixed_grasp_error = np.full(frame_num - move_start, np.nan, dtype=np.float32)
     approach_start = max(0, move_start - int(data.approach_window))
     boundary_tail = int((optimizer.cfg.get("contact", {}) or {}).get("boundary_tail", 2))
     metric_start = max(0, approach_start - 1)
@@ -813,6 +835,18 @@ def _write_diagnostics(
         "contact_or_grasp_grad_obj_depth_res": 0.0,
         "human_approach_distance": float(pred.human.approach_distance.detach()),
         "foot_sliding": _foot_sliding(optimizer, data, pred),
+        "foot_sliding_max": _foot_sliding(
+            optimizer, data, pred, reduction="max"
+        ),
+        "fixed_grasp_contact_error_m": (
+            float(fixed_grasp_error[0]) if data.grasp_target_world is not None else float("nan")
+        ),
+        "fixed_grasp_max_error_m": (
+            float(fixed_grasp_error.max()) if data.grasp_target_world is not None else float("nan")
+        ),
+        "fixed_grasp_median_error_m": (
+            float(np.median(fixed_grasp_error)) if data.grasp_target_world is not None else float("nan")
+        ),
         "human_mask_iou_mean": float(human_mask_iou.mean()),
         "human_mask_iou_min": float(human_mask_iou.min()),
         "initial_human_mask_iou_mean": float(initial_human_mask_iou.mean()),
@@ -878,6 +912,36 @@ def _write_diagnostics(
         "boundary_palm_step_under_1p6cm": metrics["boundary_step_tmove"] <= 0.016,
         "maximum_adjacent_palm_object_change_under_1p3cm": metrics["maximum_adjacent_hand_object_distance_change"] <= 0.013,
     }
+    if bool(optimizer.cfg.get("fixed_object_human_ik", False)):
+        # This mode deliberately allows the recovered human mask/keypoints to
+        # move when monocular depth is inconsistent with the fixed object.
+        for key in (
+            "human_mask_iou_decrease_under_002",
+            "body_keypoint_rmse_increase_under_5px",
+            "hand_keypoint_rmse_increase_under_5px",
+            "palm_reprojection_median_under_5px",
+            "palm_reprojection_p95_under_10px",
+        ):
+            metrics["acceptance_gates"].pop(key, None)
+        threshold = float(optimizer.cfg.get("fixed_grasp_threshold", 0.005))
+        foot_sliding = metrics["foot_sliding"]
+        foot_sliding_max = metrics["foot_sliding_max"]
+        metrics["acceptance_gates"].update(
+            {
+                "fixed_grasp_contact_under_threshold": (
+                    metrics["fixed_grasp_contact_error_m"] <= threshold
+                ),
+                "fixed_grasp_all_frames_under_threshold": (
+                    metrics["fixed_grasp_max_error_m"] <= threshold
+                ),
+                "contact_foot_sliding_mean_under_1cm_per_frame": (
+                    np.isfinite(foot_sliding) and foot_sliding <= 0.01
+                ),
+                "contact_foot_sliding_max_under_1cm_per_frame": (
+                    np.isfinite(foot_sliding_max) and foot_sliding_max <= 0.01
+                ),
+            }
+        )
     return metrics
 
 
@@ -904,11 +968,26 @@ def _build_parser() -> argparse.ArgumentParser:
         "--contact-hand", choices=("auto", "left", "right", "both"), default="auto"
     )
     parser.add_argument("--confidence-percentile", type=float, default=10.0)
+    parser.add_argument(
+        "--fixed-object-human-ik",
+        action="store_true",
+        help="Freeze the object and solve a contact-priority SMPL-X trajectory.",
+    )
+    parser.add_argument(
+        "--max-human-global-alignment", type=float, default=0.35,
+        help="Maximum constant ground-plane human correction in metres.",
+    )
+    parser.add_argument(
+        "--fixed-grasp-threshold", type=float, default=0.005,
+        help="Required contact and post-contact palm error in metres.",
+    )
     parser.add_argument("--device", default="cuda")
     return parser
 
 
-def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
+def _build_stage_loss_configs(
+    motion_state_enabled, use_vggt_human_depth, fixed_object_human_ik=False
+):
     depth_weight = 50.0 if motion_state_enabled else 30.0
     velocity_weight = 10.0 if motion_state_enabled else 5.0
     fp_anchor_weight = 5.0 if motion_state_enabled else 10.0
@@ -1002,6 +1081,30 @@ def _build_stage_loss_configs(motion_state_enabled, use_vggt_human_depth):
     }
     if motion_state_enabled:
         stage_c_loss["object_static_pre_motion"] = {"weight": 100.0, "delta": 0.01}
+    if fixed_object_human_ik:
+        # Contact is the primary objective.  Image evidence remains a weak
+        # regularizer because the initial monocular human depth may be wrong.
+        stage_b_loss["contact_anchor"]["weight"] = 20000.0
+        stage_b_loss["hand_ray_ik"]["weight"] = 5000.0
+        stage_b_loss["palm_target_3d"].update(
+            {"weight": 50.0, "terminal_weight": 10000.0, "terminal_loss": "squared"}
+        )
+        stage_b_loss["body_keypoint_reprojection"]["weight"] = 0.2
+        stage_b_loss["hand_keypoint_reprojection"]["weight"] = 0.05
+        stage_b_loss["human_silhouette"]["weight"] = 0.1
+        stage_b_loss["palm_reprojection"]["weight"] = 0.5
+        stage_c_loss["contact_anchor"]["weight"] = 20000.0
+        stage_c_loss["hand_ray_ik"]["weight"] = 10000.0
+        stage_c_loss["hand_path"]["weight"] = 5000.0
+        stage_c_loss["postcontact_relative"]["weight"] = 10000.0
+        stage_c_loss["palm_target_3d"].update(
+            {"weight": 5000.0, "terminal_weight": 10000.0}
+        )
+        stage_c_loss["palm_normal"]["weight"] = 100.0
+        stage_c_loss["body_keypoint_reprojection"]["weight"] = 0.5
+        stage_c_loss["hand_keypoint_reprojection"]["weight"] = 0.1
+        stage_c_loss["human_silhouette"]["weight"] = 0.1
+        stage_c_loss["palm_reprojection"]["weight"] = 0.5
     return stage_a_loss, stage_b_loss, stage_c_loss
 
 
@@ -1015,6 +1118,10 @@ def main() -> None:
         raise ValueError("All stage iteration counts must be >= 1")
     if not 0.0 <= args.confidence_percentile < 100.0:
         raise ValueError("--confidence-percentile must be in [0, 100)")
+    if args.max_human_global_alignment <= 0.0:
+        raise ValueError("--max-human-global-alignment must be positive")
+    if args.fixed_grasp_threshold <= 0.0:
+        raise ValueError("--fixed-grasp-threshold must be positive")
 
     config_file = _real_file(args.config_file, "GRAIL config")
     video_file = _real_file(args.video_file, "RGB video")
@@ -1092,6 +1199,11 @@ def main() -> None:
             "lift4d_depth_scale": 1.0,
             "learn_lift4d_depth_scale": False,
             "max_human_approach_distance": float(contact_cfg.get("max_approach_distance", 0.35)),
+            "max_human_global_alignment_distance": float(
+                args.max_human_global_alignment
+            ),
+            "fixed_object_human_ik": bool(args.fixed_object_human_ik),
+            "fixed_grasp_threshold": float(args.fixed_grasp_threshold),
             "max_root_approach_distance": float(
                 contact_cfg.get("max_root_approach_distance", 0.03)
             ),
@@ -1139,6 +1251,12 @@ def main() -> None:
         logger=optimizer.logger,
     )
     initial_pred = optimizer.forward(data, optimizer.params)
+    fixed_object_reference = None
+    if args.fixed_object_human_ik:
+        fixed_object_reference = {
+            "R": initial_pred.obj.R.detach().clone(),
+            "trans": initial_pred.obj.trans.detach().clone(),
+        }
     initial_hand_distances = {
         hand: _hand_object_distances(optimizer, data, initial_pred, hand)
         .detach()
@@ -1153,14 +1271,19 @@ def main() -> None:
 
     motion_state_enabled = bool(motion_state_cfg.get("enabled", False))
     stage_a_loss, stage_b_loss, stage_c_loss = _build_stage_loss_configs(
-        motion_state_enabled, args.use_vggt_human_depth
+        motion_state_enabled, args.use_vggt_human_depth, args.fixed_object_human_ik
     )
     stages = [
         {
             "stage": "stage_3a_lift4d_full_frame_object_depth",
-            "opt_vars": {
-                "obj_depth_res": {"lr": 0.005, "freeze_anchor": True}
-            },
+            # The Lift4D-initialized object trajectory is an immutable input
+            # in fixed-object mode; this stage then only evaluates it and
+            # refreshes the physical palm target.
+            "opt_vars": (
+                {}
+                if args.fixed_object_human_ik
+                else {"obj_depth_res": {"lr": 0.005, "freeze_anchor": True}}
+            ),
             "niter": args.stage_a_niter,
             "loss_cfg": stage_a_loss,
             "restore_best_state": True,
@@ -1168,12 +1291,27 @@ def main() -> None:
         {
             "stage": "stage_3b_human_precontact_approach",
             "overlap_frames": 5,
-            "opt_vars": {
-                "human_approach_distance": {"lr": 0.00005},
-                "human_pose_res": {
-                    "lr": 0.001, "joint_scope": "arms", "frame_radius": 2,
-                },
-            },
+            "opt_vars": (
+                {
+                    "human_trans_global": {
+                        "lr": 0.003, "xy_only": True,
+                        "gravity_axis": 2,
+                        "max_norm": float(args.max_human_global_alignment),
+                    },
+                    "human_pose_res": {
+                        "lr": 0.0005,
+                        "joint_scope": "torso_shoulders_and_arms",
+                        "frame_radius": 2,
+                    },
+                }
+                if args.fixed_object_human_ik
+                else {
+                    "human_approach_distance": {"lr": 0.00005},
+                    "human_pose_res": {
+                        "lr": 0.001, "joint_scope": "arms", "frame_radius": 2,
+                    },
+                }
+            ),
             "niter": args.stage_b_niter,
             "loss_cfg": stage_b_loss,
             "restore_best_state": True,
@@ -1183,9 +1321,18 @@ def main() -> None:
             "opt_vars": {
                 # Post-contact residual translation must close the observed
                 # frame-90+ depth jump within the fixed Stage-C window.
-                "human_trans_res": {"lr": 0.008},
+                "human_trans_res": {
+                    "lr": 0.008,
+                    "lock_support_feet": bool(args.fixed_object_human_ik),
+                    "contact_threshold": 0.5,
+                },
                 "human_pose_res": {
-                    "lr": 0.00005, "joint_scope": "arms", "frame_radius": 2,
+                    "lr": 0.00005,
+                    "joint_scope": (
+                        "torso_shoulders_and_arms"
+                        if args.fixed_object_human_ik else "arms"
+                    ),
+                    "frame_radius": 2,
                 },
                 "hand_pose_res": {"lr": 0.0001, "hand": "contact", "frame_radius": 5},
             },
@@ -1198,10 +1345,10 @@ def main() -> None:
     stage_b_base_pose_residual = None
     for stage in stages:
         if stage["stage"] == "stage_3b_human_precontact_approach":
-            optimizer.initialize_human_approach_direction(data, gravity_axis="z")
-            # Start from the observed HMR trajectory.  The single scalar is
-            # learned gradually in Stage B; directly seeding it from the
-            # palm target can move the whole body out of image alignment.
+            if args.fixed_object_human_ik:
+                optimizer.initialize_human_global_alignment(data, gravity_axis=2)
+            else:
+                optimizer.initialize_human_approach_direction(data, gravity_axis="z")
             optimizer.capture_approach_target_boundary(data)
         elif stage["stage"] == "stage_3c_joint_contact_refinement":
             optimizer.initialize_postcontact_pose_residuals(
@@ -1223,6 +1370,24 @@ def main() -> None:
         if stage["stage"] == "stage_3a_lift4d_full_frame_object_depth":
             optimizer.refresh_hand_ray_targets_after_object_stage(data)
         elif stage["stage"] == "stage_3b_human_precontact_approach":
+            if args.fixed_object_human_ik:
+                contact_pred = optimizer.forward(data, optimizer.params)
+                contact_frame = int(data.object_motion_state.move_start_frame)
+                contact_palm = optimizer.human_model.get_palm_center_from_hand_joints(
+                    contact_pred.human.hand_joints_seq, data.contact_hand
+                )[contact_frame]
+                contact_error = float(
+                    torch.linalg.norm(
+                        contact_palm - data.palm_target_world[contact_frame].detach()
+                    )
+                )
+                if contact_error > float(args.fixed_grasp_threshold):
+                    raise RuntimeError(
+                        "Fixed-object contact keyframe is infeasible: "
+                        f"error={contact_error:.6f} m > "
+                        f"threshold={args.fixed_grasp_threshold:.6f} m. "
+                        "Stage C was not started."
+                    )
             optimizer.capture_stage_boundary_state(data)
         _, final_total, final_losses = _stage_metrics(
             optimizer, data, stage["loss_cfg"]
@@ -1239,6 +1404,28 @@ def main() -> None:
         })
 
     final_pred = optimizer.forward(data, optimizer.params)
+    fixed_object_pose_lock = None
+    if fixed_object_reference is not None:
+        max_translation_change = float(
+            torch.linalg.norm(
+                final_pred.obj.trans.detach() - fixed_object_reference["trans"], dim=1
+            ).max()
+        )
+        max_rotation_change = float(
+            torch.amax(
+                torch.abs(final_pred.obj.R.detach() - fixed_object_reference["R"])
+            )
+        )
+        fixed_object_pose_lock = {
+            "max_translation_change_m": max_translation_change,
+            "max_rotation_matrix_change": max_rotation_change,
+        }
+        if max_translation_change > 1e-8 or max_rotation_change > 1e-8:
+            raise RuntimeError(
+                "Fixed-object invariant was violated: "
+                f"translation={max_translation_change:.9g} m, "
+                f"rotation_matrix={max_rotation_change:.9g}"
+            )
     output = optimizer.get_optimized_data(data, final_pred, smooth=False)
     output["meta"]["vggt_depth"] = {
         **vggt_provenance,
@@ -1250,6 +1437,7 @@ def main() -> None:
         "lift4d_prior_path": lift4d_prior,
         "mesh_path": mesh_file,
         "synthetic_data_used": False,
+        "fixed_object_pose_lock": fixed_object_pose_lock,
     }
     output_path = os.path.join(output_dir, "hoi_data.pkl")
     metrics_path = os.path.join(output_dir, "optimization_metrics.json")

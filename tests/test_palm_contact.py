@@ -163,6 +163,44 @@ class ContactLossTests(unittest.TestCase):
         self.assertEqual(float(hand.grad[1].abs().sum()), 0.0)
         self.assertGreater(float(hand.grad[2:].abs().sum()), 0.0)
 
+    def test_postcontact_relative_uses_object_local_rotating_target(self):
+        computer = self._computer()
+        hand = torch.tensor(
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.1, 0.8, 0.0]],
+            requires_grad=True,
+        )
+        target = torch.tensor(
+            [[1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+        )
+        object_translation = torch.zeros(3, 3, requires_grad=True)
+        computer._selected_palm_center = lambda data, pred: hand
+        data = SimpleNamespace(
+            frame_num=3,
+            contact_frame=None,
+            object_motion_state=SimpleNamespace(move_start_frame=1),
+            palm_target_world=target,
+            grasp_target_world=target,
+        )
+        pred = SimpleNamespace(obj=SimpleNamespace(trans=object_translation))
+        raw, _ = computer._postcontact_relative_loss(
+            data, pred, {"delta": 0.01, "velocity_weight": 1.0}, 1.0
+        )
+        self.assertGreater(float(raw), 0.0)
+        raw.backward()
+        self.assertIsNone(object_translation.grad)
+        self.assertGreater(float(hand.grad[-1].abs().sum()), 0.0)
+
+    def test_joint_target_keeps_ray_before_contact_and_grasp_after(self):
+        data = SimpleNamespace(
+            contact_frame=None,
+            object_motion_state=SimpleNamespace(move_start_frame=2),
+            hand_ray_target_world=torch.zeros(4, 3),
+            grasp_target_world=torch.ones(4, 3),
+        )
+        target = LossComputer._hand_target_world(data, {"phase": "joint"})
+        torch.testing.assert_close(target[:2], torch.zeros(2, 3))
+        torch.testing.assert_close(target[2:], torch.ones(2, 3))
+
     def test_terminal_palm_depth_weight_is_not_multiplied_twice(self):
         computer = self._computer()
         actual_cam = torch.tensor(
@@ -387,6 +425,8 @@ class PalmDataTruncationTests(unittest.TestCase):
             "palm_target_cam": (frames, 3),
             "palm_target_world": (frames, 3),
             "palm_target_normal_world": (frames, 3),
+            "grasp_target_world": (frames, 3),
+            "grasp_target_normal_world": (frames, 3),
             "grail_camera_intrinsics": (frames, 3, 3),
             "palm_surface_fallback": (frames,),
         }
