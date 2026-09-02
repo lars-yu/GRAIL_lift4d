@@ -31,6 +31,12 @@ from grail.optimization.loss_terms import (
     relative_translation_consistency_loss,
 )
 from grail.optimization.approach import hand_to_mesh_surface_distance
+from grail.optimization.whole_body_ik import (
+    SupportFootAnchors,
+    contact_elbow_angles_degrees,
+    footstep_target_error,
+    support_foot_anchor_error,
+)
 from grail.rendering.camera import (
     project_world_to_screen,
     transform_world_to_camera,
@@ -72,6 +78,12 @@ class LossComputer:
         "human_traj_reg": "_human_traj_reg_loss",
         "human_pose_reg": "_human_pose_reg_loss",
         "human_foot_contact": "_human_foot_contact_loss",
+        "human_foot_anchor": "_human_foot_anchor_loss",
+        "human_swing_foot": "_human_swing_foot_loss",
+        "human_root_reg": "_human_root_reg_loss",
+        "human_root_path": "_human_root_path_loss",
+        "human_root_smoothness": "_human_root_smoothness_loss",
+        "arm_anatomy": "_arm_anatomy_loss",
         "verts_tracking": "_verts_tracking_loss",
         "obj_smoothness": "_obj_smoothness_loss",
         "obj_traj_reg": "_obj_traj_reg_loss",
@@ -96,6 +108,7 @@ class LossComputer:
         "palm_target_3d": "_palm_target_3d_loss",
         "palm_surface": "_palm_surface_loss",
         "palm_normal": "_palm_normal_loss",
+        "palm_axis": "_palm_axis_loss",
         "contact_coverage": "_contact_coverage_loss",
         "hand_object_penetration": "_hand_object_penetration_loss",
         "hand_pose_reg": "_hand_pose_reg_loss",
@@ -360,11 +373,6 @@ class LossComputer:
     def _human_foot_contact_loss(self, data, pred, cfg, weight):
         body_joints_seq = pred.human.body_joints_seq
         foot_contact_probs = data.human.foot_contact_probs
-
-        if foot_contact_probs is None:
-            return body_joints_seq.new_zeros(())
-
-        contact_threshold = cfg.get("threshold", 0.5)
         left_idx, right_idx = self.human_model.get_foot_joint_indices()
         left_pos = body_joints_seq[:, left_idx, :]
         right_pos = body_joints_seq[:, right_idx, :]
@@ -372,16 +380,152 @@ class LossComputer:
         left_vel = left_pos[1:] - left_pos[:-1]
         right_vel = right_pos[1:] - right_pos[:-1]
 
-        left_contact = torch.max(foot_contact_probs[:, 0], foot_contact_probs[:, 1])
-        right_contact = torch.max(foot_contact_probs[:, 2], foot_contact_probs[:, 3])
-
-        left_w = (torch.min(left_contact[:-1], left_contact[1:]) > contact_threshold).float()
-        right_w = (torch.min(right_contact[:-1], right_contact[1:]) > contact_threshold).float()
+        plan = getattr(data, "footstep_plan", None)
+        if plan is not None:
+            # The synthesized stance/swing schedule replaces unreliable HMR
+            # contacts.  Only adjacent stance frames are required to be still;
+            # the active swing foot is explicitly free to move.
+            stance = plan.stance_mask.to(device=body_joints_seq.device)
+            left_w = (stance[:-1, 0] & stance[1:, 0]).float()
+            right_w = (stance[:-1, 1] & stance[1:, 1]).float()
+        else:
+            if foot_contact_probs is None:
+                return body_joints_seq.new_zeros(())
+            contact_threshold = cfg.get("threshold", 0.5)
+            left_contact = torch.max(foot_contact_probs[:, 0], foot_contact_probs[:, 1])
+            right_contact = torch.max(foot_contact_probs[:, 2], foot_contact_probs[:, 3])
+            left_w = (
+                torch.min(left_contact[:-1], left_contact[1:]) > contact_threshold
+            ).float()
+            right_w = (
+                torch.min(right_contact[:-1], right_contact[1:]) > contact_threshold
+            ).float()
 
         left_loss = (left_vel.norm(dim=-1) * left_w).sum()
         right_loss = (right_vel.norm(dim=-1) * right_w).sum()
         num_contact = left_w.sum() + right_w.sum() + 1e-6
         return weight * (left_loss + right_loss) / num_contact
+
+    def _human_foot_anchor_loss(self, data, pred, cfg, weight):
+        reference = getattr(data, "support_foot_reference_world", None)
+        mask = getattr(data, "support_foot_mask", None)
+        if reference is None or mask is None:
+            raise ValueError("human_foot_anchor requires initialized support-foot anchors")
+        active = mask.detach().clone()
+        move_start = int(
+            data.object_motion_state.move_start_frame
+            if data.object_motion_state is not None
+            else data.contact_frame
+        )
+        phase = str(cfg.get("phase", "all"))
+        if phase == "precontact":
+            active[move_start + 1 :] = False
+        elif phase == "postcontact":
+            active[: move_start + 1] = False
+        anchors = SupportFootAnchors(reference.detach(), active)
+        errors = support_foot_anchor_error(
+            pred.human.body_joints_seq,
+            self.human_model.get_foot_joint_indices(),
+            anchors,
+        )
+        if errors.numel() == 0:
+            zero = pred.human.verts_seq.new_zeros(())
+            return zero, zero
+        delta = float(cfg.get("delta", 0.01))
+        raw = torch.nn.functional.huber_loss(
+            errors, torch.zeros_like(errors), delta=delta, reduction="mean"
+        )
+        return raw, float(weight) * raw
+
+    def _human_swing_foot_loss(self, data, pred, cfg, weight):
+        plan = getattr(data, "footstep_plan", None)
+        if plan is None:
+            raise ValueError("human_swing_foot requires an active footstep plan")
+        indices = self.human_model.get_foot_joint_indices()
+        swing_error = footstep_target_error(
+            pred.human.body_joints_seq, indices, plan, phase="swing"
+        )
+        touchdown_error = footstep_target_error(
+            pred.human.body_joints_seq, indices, plan, phase="touchdown"
+        )
+        if swing_error.numel() == 0:
+            zero = pred.human.verts_seq.new_zeros(())
+            return zero, zero
+        delta = float(cfg.get("delta", 0.01))
+        swing_raw = torch.nn.functional.huber_loss(
+            swing_error, torch.zeros_like(swing_error), delta=delta, reduction="mean"
+        )
+        touchdown_raw = torch.nn.functional.huber_loss(
+            touchdown_error,
+            torch.zeros_like(touchdown_error),
+            delta=delta,
+            reduction="mean",
+        )
+        raw = swing_raw + float(cfg.get("touchdown_weight", 2.0)) * touchdown_raw
+        return raw, float(weight) * raw
+
+    def _human_root_reg_loss(self, data, pred, cfg, weight):
+        identity = pred.human.pose_res.new_tensor(
+            [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+        )
+        root_rotation = pred.human.pose_res[:, 0]
+        rotation_raw = torch.square(root_rotation - identity).mean()
+        translation_scale = float(cfg.get("translation_scale", 0.10))
+        if translation_scale <= 0.0:
+            raise ValueError("human_root_reg.translation_scale must be positive")
+        root_translation = pred.human.trans_res.reshape(-1, 3)
+        translation_raw = torch.square(root_translation / translation_scale).mean()
+        raw = rotation_raw + float(cfg.get("translation_weight", 0.05)) * translation_raw
+        return raw, float(weight) * raw
+
+    def _human_root_path_loss(self, data, pred, cfg, weight):
+        plan = getattr(data, "footstep_plan", None)
+        if plan is None:
+            raise ValueError("human_root_path requires an active footstep plan")
+        root_translation = pred.human.trans_res.reshape(-1, 3)
+        target = plan.root_translation_residual.to(
+            device=root_translation.device, dtype=root_translation.dtype
+        )
+        if target.shape != root_translation.shape:
+            raise ValueError("Footstep root path shape does not match human translation")
+        error = torch.linalg.norm(root_translation - target, dim=-1)
+        delta = float(cfg.get("delta", 0.01))
+        raw = torch.nn.functional.huber_loss(
+            error, torch.zeros_like(error), delta=delta, reduction="mean"
+        )
+        return raw, float(weight) * raw
+
+    def _human_root_smoothness_loss(self, data, pred, cfg, weight):
+        root_translation = pred.human.trans_res.reshape(-1, 3)
+        root_rotation = pred.human.pose_res[:, 0]
+        if root_translation.shape[0] < 2:
+            zero = root_translation.new_zeros(())
+            return zero, zero
+        velocity = root_translation[1:] - root_translation[:-1]
+        rotation_velocity = root_rotation[1:] - root_rotation[:-1]
+        raw = velocity.square().mean() + float(
+            cfg.get("rotation_weight", 0.1)
+        ) * rotation_velocity.square().mean()
+        if root_translation.shape[0] >= 3:
+            acceleration = (
+                root_translation[2:] - 2.0 * root_translation[1:-1] + root_translation[:-2]
+            )
+            raw = raw + float(cfg.get("acceleration_weight", 2.0)) * acceleration.square().mean()
+        return raw, float(weight) * raw
+
+    def _arm_anatomy_loss(self, data, pred, cfg, weight):
+        angles = contact_elbow_angles_degrees(
+            pred.human.body_joints_seq, data.contact_hand
+        )
+        start, end = self._hand_loss_window(data, cfg)
+        selected = angles[start:end]
+        minimum = float(cfg.get("minimum_degrees", 5.0))
+        maximum = float(cfg.get("maximum_degrees", 165.0))
+        if not 0.0 <= minimum < maximum <= 180.0:
+            raise ValueError("arm_anatomy bounds must satisfy 0 <= min < max <= 180")
+        violation = torch.relu(minimum - selected) + torch.relu(selected - maximum)
+        raw = torch.square(violation / 10.0).mean()
+        return raw, float(weight) * raw
 
     def _verts_tracking_loss(self, data, pred, cfg, weight):
         pred_verts = pred.obj.verts_seq
@@ -831,10 +975,14 @@ class LossComputer:
         if patch.shape[1] > 64:
             sample = torch.linspace(0, patch.shape[1] - 1, 64, device=patch.device).long()
             patch = patch[:, sample]
+        target_fraction = float(cfg.get("target_fraction", 0.15))
+        if not 0.0 < target_fraction <= 1.0:
+            raise ValueError("palm_surface target_fraction must be in (0,1]")
+        closest_count = max(1, int(math.ceil(target_fraction * patch.shape[1])))
         distances = torch.stack([
             hand_to_mesh_surface_distance(
                 patch[i], pred.obj.verts_seq[start + i].detach(), data.obj.faces,
-                top_k=64, candidate_faces=int(cfg.get("candidate_faces", 64)),
+                top_k=closest_count, candidate_faces=int(cfg.get("candidate_faces", 64)),
             )
             for i in range(end - start)
         ])
@@ -889,8 +1037,21 @@ class LossComputer:
             zero = actual.new_zeros(())
             return zero, zero
         start, end = self._hand_loss_window(data, cfg)
-        dot = (actual[start:end] * target[start:end].detach()).sum(dim=-1).abs()
-        raw = (1.0 - dot.clamp(0.0, 1.0)).mean()
+        dot = (actual[start:end] * target[start:end].detach()).sum(dim=-1)
+        raw = (1.0 - dot.clamp(-1.0, 1.0)).mean()
+        return raw, float(weight) * raw
+
+    def _palm_axis_loss(self, data, pred, cfg, weight):
+        target = getattr(data, "grasp_target_tangent_world", None)
+        if target is None:
+            zero = pred.human.verts_seq.new_zeros(())
+            return zero, zero
+        actual = self.human_model.get_palm_axis_from_hand_joints(
+            pred.human.hand_joints_seq, data.contact_hand
+        )
+        start, end = self._hand_loss_window(data, cfg)
+        dot = (actual[start:end] * target[start:end].detach()).sum(dim=-1)
+        raw = (1.0 - dot.clamp(-1.0, 1.0)).mean()
         return raw, float(weight) * raw
 
     def _contact_coverage_loss(self, data, pred, cfg, weight):

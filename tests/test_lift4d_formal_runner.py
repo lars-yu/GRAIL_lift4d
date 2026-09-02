@@ -44,6 +44,15 @@ class FormalRunnerArgumentTests(unittest.TestCase):
         self.assertFalse(args.fixed_object_human_ik)
         self.assertEqual(args.max_human_global_alignment, 0.35)
         self.assertEqual(args.fixed_grasp_threshold, 0.005)
+        self.assertFalse(args.refine_contact_fingers)
+        self.assertEqual(args.fixed_object_ik_mode, "adaptive")
+        self.assertEqual(args.ik_probe_niter, 250)
+        self.assertEqual(args.ik_stance_niter, 350)
+        self.assertEqual(args.stance_root_max, 0.08)
+        self.assertEqual(args.max_step_length, 0.22)
+        self.assertEqual(args.swing_foot_clearance, 0.05)
+        self.assertEqual(args.max_approach_steps, 4)
+        self.assertEqual(args.first_step, "auto")
 
     def test_human_vggt_mode_is_explicit(self):
         args = _build_parser().parse_args(
@@ -291,6 +300,11 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
         self.assertEqual(stage_c["postcontact_relative"]["weight"], 10000.0)
         self.assertEqual(stage_c["palm_target_3d"]["weight"], 5000.0)
         self.assertEqual(stage_c["palm_normal"]["weight"], 100.0)
+        self.assertIn("human_foot_anchor", stage_b)
+        self.assertIn("human_foot_anchor", stage_c)
+        self.assertIn("arm_anatomy", stage_c)
+        self.assertIn("palm_axis", stage_c)
+        self.assertEqual(stage_c["contact_coverage"]["target_fraction"], 0.15)
         self.assertLess(stage_b["body_keypoint_reprojection"]["weight"], 1.0)
         self.assertLess(stage_c["palm_reprojection"]["weight"], 1.0)
 
@@ -315,15 +329,57 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
             torch.tensor([0.21, 0.28, 0.0]),
         )
 
-    def test_fixed_object_pose_scope_excludes_pelvis_and_legs(self):
-        joints = HOIOptimizer._human_pose_joint_indices(
-            "torso_shoulders_and_arms", 22
+    def test_step_root_projection_stays_near_plan_and_inside_global_bound(self):
+        optimizer = HOIOptimizer.__new__(HOIOptimizer)
+        optimizer.params = SimpleNamespace(
+            human_trans_res=torch.tensor(
+                [[0.0, 0.0, 0.0], [0.60, 0.0, 0.10]]
+            )
         )
-        self.assertNotIn(0, joints)
-        self.assertTrue(set(joints).isdisjoint({1, 2, 4, 5, 7, 8, 10, 11}))
+        data = SimpleNamespace(
+            footstep_plan=SimpleNamespace(
+                root_translation_residual=torch.tensor(
+                    [[0.0, 0.0, 0.0], [0.30, 0.0, 0.0]]
+                )
+            )
+        )
+        optimizer._project_human_translation_stage_constraints(
+            {
+                "opt_vars": {
+                    "human_trans_res": {
+                        "gravity_axis": 2,
+                        "max_norm": 0.35,
+                        "max_vertical": 0.05,
+                        "plan_reference": True,
+                        "max_plan_deviation": 0.04,
+                    }
+                }
+            },
+            data=data,
+        )
+        self.assertLessEqual(
+            float(torch.linalg.norm(optimizer.params.human_trans_res[1])), 0.35001
+        )
+        self.assertLessEqual(
+            float(
+                torch.linalg.norm(
+                    optimizer.params.human_trans_res[1]
+                    - data.footstep_plan.root_translation_residual[1]
+                )
+            ),
+            0.057,
+        )
+
+    def test_fixed_object_pose_scope_includes_root_and_legs_but_not_head(self):
+        joints = HOIOptimizer._human_pose_joint_indices(
+            "whole_body_contact", 22
+        )
+        self.assertIn(0, joints)
+        self.assertTrue({1, 2, 4, 5, 7, 8, 10, 11}.issubset(joints))
+        self.assertNotIn(15, joints)
         self.assertTrue({13, 14, 16, 17, 18, 19, 20, 21}.issubset(joints))
 
-    def test_support_frames_lock_per_frame_root_translation(self):
+    def test_support_frames_keep_root_translation_open_for_leg_compensation(self):
         optimizer = HOIOptimizer.__new__(HOIOptimizer)
         optimizer.num_body_joints = 22
         pose = torch.zeros(5, 22, 6, requires_grad=True)
@@ -359,18 +415,20 @@ class ObjectDepthStageConstraintTests(unittest.TestCase):
                 "stage": "stage_3c_joint_contact_refinement",
                 "opt_vars": {
                     "human_pose_res": {
-                        "joint_scope": "torso_shoulders_and_arms"
+                        "joint_scope": "whole_body_contact",
+                        "contact_arm_only": True,
                     },
-                    "human_trans_res": {
-                        "lock_support_feet": True,
-                        "contact_threshold": 0.5,
-                    },
+                    "human_trans_res": {},
                 },
             },
         )
-        self.assertEqual(float(trans.grad[2].abs().sum()), 0.0)
+        self.assertGreater(float(trans.grad[2].abs().sum()), 0.0)
         self.assertGreater(float(trans.grad[3].abs().sum()), 0.0)
-        self.assertEqual(float(trans.grad[4].abs().sum()), 0.0)
+        self.assertGreater(float(trans.grad[4].abs().sum()), 0.0)
+        self.assertGreater(float(pose.grad[2:, 0].abs().sum()), 0.0)
+        self.assertGreater(float(pose.grad[2:, 1].abs().sum()), 0.0)
+        self.assertEqual(float(pose.grad[2:, 13].abs().sum()), 0.0)
+        self.assertGreater(float(pose.grad[2:, 14].abs().sum()), 0.0)
 
     def test_stage_c_preserves_post_motion_hmr_residuals(self):
         optimizer = HOIOptimizer.__new__(HOIOptimizer)

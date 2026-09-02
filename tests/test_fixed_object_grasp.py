@@ -4,6 +4,7 @@ import unittest
 import torch
 
 from grail.optimization.fixed_object_grasp import (
+    build_palm_center_contact_target,
     build_fixed_object_grasp_targets,
     fixed_object_grasp_position_error,
     ground_alignment_delta,
@@ -52,6 +53,42 @@ class FixedObjectGraspTargetTests(unittest.TestCase):
         torch.testing.assert_close(
             targets.normal_world,
             torch.tensor([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]),
+        )
+
+    def test_object_rotation_transports_signed_palm_tangent(self):
+        rotation = torch.eye(3).repeat(2, 1, 1)
+        rotation[1] = torch.tensor(
+            [[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
+        )
+        targets = build_fixed_object_grasp_targets(
+            torch.zeros(3), rotation, torch.zeros(2, 3), 0,
+            contact_tangent_world=torch.tensor([1.0, 0.0, 0.0]),
+        )
+        torch.testing.assert_close(
+            targets.tangent_world,
+            torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
+        )
+
+    def test_palm_center_target_orients_normal_and_preserves_shell_clearance(self):
+        target = build_palm_center_contact_target(
+            torch.zeros(3),
+            torch.tensor([1.0, 0.0, 0.0]),
+            torch.tensor([-0.03, 0.0, 0.0]),
+            torch.tensor([
+                [-0.01, 0.0, 0.0],
+                [-0.015, 0.01, 0.0],
+                [-0.02, -0.01, 0.0],
+            ]),
+            minimum_clearance=0.012,
+            maximum_clearance=0.040,
+        )
+        self.assertLess(float(target.center_position_world[0]), 0.0)
+        self.assertGreaterEqual(float(target.center_clearance), 0.012)
+        self.assertLessEqual(float(target.center_clearance), 0.040)
+        torch.testing.assert_close(
+            target.center_position_world,
+            target.surface_position_world
+            + target.center_clearance * target.surface_to_hand_world,
         )
 
     def test_targets_are_detached_from_fixed_object_pose(self):

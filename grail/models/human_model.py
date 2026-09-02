@@ -112,6 +112,13 @@ class HumanModel(ABC):
     ) -> torch.Tensor: ...
 
     @abstractmethod
+    def get_palm_axis_from_hand_joints(
+        self, hand_joints: torch.Tensor, hand: str
+    ) -> torch.Tensor:
+        """Return the signed index-MCP to pinky-MCP palm tangent."""
+        ...
+
+    @abstractmethod
     def get_palm_patch_indices(self, hand: str) -> tuple[int, ...]: ...
 
     @abstractmethod
@@ -357,6 +364,9 @@ class SomaHumanModel(HumanModel):
 
     def get_palm_normal_from_hand_joints(self, hand_joints, hand):
         raise NotImplementedError("SOMA has no verified palm normal")
+
+    def get_palm_axis_from_hand_joints(self, hand_joints, hand):
+        raise NotImplementedError("SOMA has no verified palm tangent axis")
 
     def get_palm_patch_indices(self, hand):
         raise NotImplementedError("SOMA has no verified palm mesh patch")
@@ -682,12 +692,27 @@ class SmplxHumanModel(HumanModel):
             self.get_palm_joint_indices(hand), device=hand_joints.device, dtype=torch.long
         )
         points = hand_joints[:, idx]
-        # Index/Middle and Ring/Pinky baselines define the palm plane. The
-        # normal sign is intentionally not assumed; normal loss compares |dot|.
+        # Index/Middle and Ring/Pinky baselines define the palm plane.  The
+        # target sign is selected once at contact and is never replaced by
+        # |dot|, which would make palm and back-of-hand contact equivalent.
         edge_a = points[:, 2] - points[:, 0]
         edge_b = points[:, 4] - points[:, 1]
         return torch.nn.functional.normalize(
             torch.cross(edge_a, edge_b, dim=-1), dim=-1, eps=1e-8
+        )
+
+    def get_palm_axis_from_hand_joints(self, hand_joints, hand):
+        hand = str(hand).lower()
+        if hand == "both":
+            left = self.get_palm_axis_from_hand_joints(hand_joints, "left")
+            right = self.get_palm_axis_from_hand_joints(hand_joints, "right")
+            return torch.nn.functional.normalize(left + right, dim=-1, eps=1e-8)
+        idx = torch.as_tensor(
+            self.get_palm_joint_indices(hand), device=hand_joints.device, dtype=torch.long
+        )
+        points = hand_joints[:, idx]
+        return torch.nn.functional.normalize(
+            points[:, 4] - points[:, 1], dim=-1, eps=1e-8
         )
 
     def get_palm_center_from_hand_joints(self, hand_joints, hand):
@@ -733,6 +758,7 @@ class SmplxHumanModel(HumanModel):
             "finger_contact_joint_indices": {
                 hand: list(indices) for hand, indices in self.FINGER_CONTACT_JOINTS.items()
             },
+            "palm_tangent_definition": "index_mcp_to_pinky_mcp",
             "palm_patch_vertex_indices": {
                 hand: list(self.get_palm_patch_indices(hand)) for hand in ("left", "right")
             },

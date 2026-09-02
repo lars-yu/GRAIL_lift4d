@@ -30,6 +30,13 @@ from grail.optimization.hoi_optimizer import HOIOptimizer
 from grail.optimization.loss_computer import LossComputer
 from grail.optimization.approach import hand_to_mesh_surface_distance
 from grail.optimization.fixed_object_grasp import fixed_object_grasp_position_error
+from grail.optimization.whole_body_ik import (
+    SupportFootAnchors,
+    contact_elbow_angles_degrees,
+    footstep_target_error,
+    rotation_residual_angle_degrees,
+    support_foot_anchor_error,
+)
 from grail.rendering.camera import project_world_to_screen, transform_world_to_camera
 
 
@@ -207,6 +214,118 @@ def _stage_metrics(optimizer, data, loss_cfg):
 
 
 @torch.no_grad()
+def _snapshot_optimizer_params(optimizer):
+    return {
+        name: value.detach().clone()
+        for name, value in vars(optimizer.params).items()
+        if isinstance(value, torch.Tensor)
+    }
+
+
+@torch.no_grad()
+def _restore_optimizer_params(optimizer, state):
+    for name, saved in state.items():
+        current = getattr(optimizer.params, name, None)
+        if isinstance(current, torch.Tensor):
+            current.copy_(saved.to(device=current.device, dtype=current.dtype))
+
+
+def _run_stage_record(optimizer, data, stage):
+    """Optimize one stage and return a JSON-serializable audit record."""
+
+    _, initial_total, initial_losses = _stage_metrics(
+        optimizer, data, stage["loss_cfg"]
+    )
+    runtime_stage = copy.deepcopy(stage)
+    runtime_stage.update(
+        {
+            "gradient_log_interval": 25,
+            "save_motion_progress": True,
+            "motion_progress_interval": 50,
+        }
+    )
+    optimizer.optimize_main(data, runtime_stage)
+    _, final_total, final_losses = _stage_metrics(
+        optimizer, data, stage["loss_cfg"]
+    )
+    return {
+        "stage": stage["stage"],
+        "ik_mode": stage.get("ik_mode"),
+        "niter": stage["niter"],
+        "opt_vars": copy.deepcopy(stage["opt_vars"]),
+        "loss_cfg": copy.deepcopy(stage["loss_cfg"]),
+        "initial_total_loss": initial_total,
+        "final_total_loss": final_total,
+        "initial_losses": initial_losses,
+        "final_losses": final_losses,
+    }
+
+
+@torch.no_grad()
+def _fixed_mode_evaluation(
+    optimizer,
+    data,
+    *,
+    mode,
+    contact_threshold,
+    require_stance,
+    require_swing,
+):
+    pred = optimizer.forward(data, optimizer.params)
+    frame = int(data.object_motion_state.move_start_frame)
+    palm = optimizer.human_model.get_palm_center_from_hand_joints(
+        pred.human.hand_joints_seq, data.contact_hand
+    )[frame]
+    contact_error = float(
+        torch.linalg.norm(palm - data.palm_target_world[frame].detach())
+    )
+    elbow = float(
+        contact_elbow_angles_degrees(
+            pred.human.body_joints_seq[frame : frame + 1], data.contact_hand
+        ).max()
+    )
+    anchor_mean = _foot_anchor_error(
+        optimizer, data, pred, reduction="mean", frame_end=frame
+    )
+    anchor_max = _foot_anchor_error(
+        optimizer, data, pred, reduction="max", frame_end=frame
+    )
+    step = _footstep_diagnostics(optimizer, data, pred)
+    contact_ok = contact_error <= float(contact_threshold)
+    elbow_ok = elbow <= 170.0
+    stance_ok = (
+        not require_stance
+        or (
+            np.isfinite(anchor_mean)
+            and np.isfinite(anchor_max)
+            and anchor_mean <= 0.01
+            and anchor_max <= 0.01
+        )
+    )
+    swing_ok = (
+        not require_swing
+        or (
+            step["planned_swing_tracking_error_max_m"] <= 0.03
+            and step["planned_touchdown_error_max_m"] <= 0.02
+        )
+    )
+    return {
+        "mode": str(mode),
+        "contact_error_m": contact_error,
+        "contact_threshold_m": float(contact_threshold),
+        "contact_elbow_degrees": elbow,
+        "support_anchor_mean_m": anchor_mean,
+        "support_anchor_max_m": anchor_max,
+        **step,
+        "contact_ok": bool(contact_ok),
+        "elbow_ok": bool(elbow_ok),
+        "stance_ok": bool(stance_ok),
+        "swing_ok": bool(swing_ok),
+        "accepted": bool(contact_ok and elbow_ok and stance_ok and swing_ok),
+    }
+
+
+@torch.no_grad()
 def _hand_object_distances(optimizer, data, pred, hand, top_k=32):
     labels = {"right": ["R_Hand"], "left": ["L_Hand"]}[hand]
     hand_seq = optimizer.human_model.get_verts_segment(pred.human.verts_seq, labels)
@@ -265,17 +384,27 @@ def _keypoint_rmse(predicted, target, confidence_threshold=0.2):
 
 @torch.no_grad()
 def _foot_sliding(optimizer, data, pred, threshold=0.5, reduction="mean"):
-    probs = data.human.foot_contact_probs
-    if probs is None:
-        return float("nan")
     left_idx, right_idx = optimizer.human_model.get_foot_joint_indices()
     joints = pred.human.body_joints_seq
     left_velocity = torch.linalg.norm(joints[1:, left_idx] - joints[:-1, left_idx], dim=-1)
     right_velocity = torch.linalg.norm(joints[1:, right_idx] - joints[:-1, right_idx], dim=-1)
-    left_contact = torch.max(probs[:, 0], probs[:, 1])
-    right_contact = torch.max(probs[:, 2], probs[:, 3])
-    left_weight = (torch.minimum(left_contact[:-1], left_contact[1:]) > threshold).float()
-    right_weight = (torch.minimum(right_contact[:-1], right_contact[1:]) > threshold).float()
+    plan = getattr(data, "footstep_plan", None)
+    if plan is not None:
+        stance = plan.stance_mask.to(device=joints.device)
+        left_weight = (stance[:-1, 0] & stance[1:, 0]).float()
+        right_weight = (stance[:-1, 1] & stance[1:, 1]).float()
+    else:
+        probs = data.human.foot_contact_probs
+        if probs is None:
+            return float("nan")
+        left_contact = torch.max(probs[:, 0], probs[:, 1])
+        right_contact = torch.max(probs[:, 2], probs[:, 3])
+        left_weight = (
+            torch.minimum(left_contact[:-1], left_contact[1:]) > threshold
+        ).float()
+        right_weight = (
+            torch.minimum(right_contact[:-1], right_contact[1:]) > threshold
+        ).float()
     active = torch.cat(
         [left_velocity[left_weight.bool()], right_velocity[right_weight.bool()]]
     )
@@ -286,6 +415,77 @@ def _foot_sliding(optimizer, data, pred, threshold=0.5, reduction="mean"):
     if reduction == "max":
         return float(active.max())
     raise ValueError(f"Unsupported foot-sliding reduction: {reduction!r}")
+
+
+@torch.no_grad()
+def _foot_anchor_error(optimizer, data, pred, reduction="mean", frame_end=None):
+    reference = data.support_foot_reference_world
+    mask = data.support_foot_mask
+    if reference is None or mask is None:
+        return float("nan")
+    active = mask.detach().clone()
+    if frame_end is not None:
+        active[int(frame_end) + 1 :] = False
+    errors = support_foot_anchor_error(
+        pred.human.body_joints_seq,
+        optimizer.human_model.get_foot_joint_indices(),
+        SupportFootAnchors(reference, active),
+    )
+    if errors.numel() == 0:
+        return float("nan")
+    if reduction == "mean":
+        return float(errors.mean())
+    if reduction == "max":
+        return float(errors.max())
+    raise ValueError(f"Unsupported foot-anchor reduction: {reduction!r}")
+
+
+@torch.no_grad()
+def _footstep_diagnostics(optimizer, data, pred):
+    plan = getattr(data, "footstep_plan", None)
+    if plan is None:
+        return {
+            "planned_step_count": 0,
+            "planned_step_length_max_m": 0.0,
+            "planned_swing_tracking_error_max_m": float("nan"),
+            "planned_touchdown_error_max_m": float("nan"),
+            "achieved_swing_clearance_min_m": float("nan"),
+            "touchdown_step_max_m": float("nan"),
+        }
+    joints = pred.human.body_joints_seq
+    indices = optimizer.human_model.get_foot_joint_indices()
+    swing_error = footstep_target_error(joints, indices, plan, phase="swing")
+    touchdown_error = footstep_target_error(
+        joints, indices, plan, phase="touchdown"
+    )
+    feet = torch.stack((joints[:, indices[0]], joints[:, indices[1]]), dim=1)
+    clearances = []
+    touchdown_steps = []
+    for start, end, side in plan.step_intervals:
+        baseline = feet[start, side, plan.gravity_axis]
+        clearances.append(
+            feet[start : end + 1, side, plan.gravity_axis].max() - baseline
+        )
+        if end > start:
+            touchdown_steps.append(
+                torch.linalg.norm(feet[end, side] - feet[end - 1, side])
+            )
+    return {
+        "planned_step_count": int(plan.step_count),
+        "planned_step_length_max_m": float(plan.step_lengths.max()),
+        "planned_swing_tracking_error_max_m": (
+            float(swing_error.max()) if swing_error.numel() else 0.0
+        ),
+        "planned_touchdown_error_max_m": (
+            float(touchdown_error.max()) if touchdown_error.numel() else 0.0
+        ),
+        "achieved_swing_clearance_min_m": (
+            float(torch.stack(clearances).min()) if clearances else 0.0
+        ),
+        "touchdown_step_max_m": (
+            float(torch.stack(touchdown_steps).max()) if touchdown_steps else 0.0
+        ),
+    }
 
 
 @torch.no_grad()
@@ -791,6 +991,7 @@ def _write_diagnostics(
     periodic_jump_count = max(
         (int(np.sum(late_jump_frames % 4 == phase)) for phase in range(4)), default=0
     )
+    footstep_metrics = _footstep_diagnostics(optimizer, data, pred)
     metrics = {
         "lift4d_supervised_frames": supervised,
         "frame_num": frame_num,
@@ -832,11 +1033,35 @@ def _write_diagnostics(
         "post_optimization_hand_object_distance": float(selected_distance[move_start]),
         "contact_hand": data.contact_hand,
         "hand_selection_reason": data.hand_selection_reason,
+        "adaptive_ik_mode": getattr(data, "adaptive_ik_mode", None),
+        "adaptive_ik_attempts": getattr(data, "adaptive_ik_attempts", None),
         "contact_or_grasp_grad_obj_depth_res": 0.0,
         "human_approach_distance": float(pred.human.approach_distance.detach()),
         "foot_sliding": _foot_sliding(optimizer, data, pred),
         "foot_sliding_max": _foot_sliding(
             optimizer, data, pred, reduction="max"
+        ),
+        "support_foot_anchor_error_mean_m": _foot_anchor_error(
+            optimizer, data, pred, reduction="mean"
+        ),
+        "support_foot_anchor_error_max_m": _foot_anchor_error(
+            optimizer, data, pred, reduction="max"
+        ),
+        "contact_elbow_angle_max_degrees": float(
+            contact_elbow_angles_degrees(
+                pred.human.body_joints_seq[move_start:], data.contact_hand
+            ).max()
+        ),
+        "human_root_translation_residual_max_m": float(
+            torch.linalg.norm(pred.human.trans_res.reshape(frame_num, 3), dim=1).max()
+        ),
+        "human_root_rotation_residual_max_degrees": float(
+            rotation_residual_angle_degrees(pred.human.pose_res[:, 0]).max()
+        ),
+        "palm_center_clearance_m": (
+            float(data.grasp_center_clearance)
+            if data.grasp_center_clearance is not None
+            else float("nan")
         ),
         "fixed_grasp_contact_error_m": (
             float(fixed_grasp_error[0]) if data.grasp_target_world is not None else float("nan")
@@ -879,6 +1104,7 @@ def _write_diagnostics(
         "palm_contact_csv": palm_csv_path,
         "palm_contact_plot": palm_plot_path,
         "palm_reprojection_plot": reproj_plot_path,
+        **footstep_metrics,
     }
     metrics["acceptance_gates"] = {
         "static_optimized_z_std_under_2mm": metrics["optimized_static_z_std"] < 0.002,
@@ -921,6 +1147,7 @@ def _write_diagnostics(
             "hand_keypoint_rmse_increase_under_5px",
             "palm_reprojection_median_under_5px",
             "palm_reprojection_p95_under_10px",
+            "palm_patch_coverage_at_least_30pct",
         ):
             metrics["acceptance_gates"].pop(key, None)
         threshold = float(optimizer.cfg.get("fixed_grasp_threshold", 0.005))
@@ -940,8 +1167,50 @@ def _write_diagnostics(
                 "contact_foot_sliding_max_under_1cm_per_frame": (
                     np.isfinite(foot_sliding_max) and foot_sliding_max <= 0.01
                 ),
+                "support_foot_anchor_mean_under_1cm": (
+                    np.isfinite(metrics["support_foot_anchor_error_mean_m"])
+                    and metrics["support_foot_anchor_error_mean_m"] <= 0.01
+                ),
+                "support_foot_anchor_max_under_1cm": (
+                    np.isfinite(metrics["support_foot_anchor_error_max_m"])
+                    and metrics["support_foot_anchor_error_max_m"] <= 0.01
+                ),
+                "contact_elbow_under_170_degrees": (
+                    metrics["contact_elbow_angle_max_degrees"] <= 170.0
+                ),
+                "palm_patch_coverage_at_least_15pct": (
+                    metrics["moving_mean_palm_patch_fraction_under_1cm"] >= 0.15
+                ),
             }
         )
+        ik_mode = metrics.get("adaptive_ik_mode")
+        if ik_mode == "m0_upper_body":
+            # M0 never changes the root or legs, so original HMR support
+            # position is evidence rather than a hard acceptance condition.
+            for key in (
+                "contact_foot_sliding_mean_under_1cm_per_frame",
+                "contact_foot_sliding_max_under_1cm_per_frame",
+                "support_foot_anchor_mean_under_1cm",
+                "support_foot_anchor_max_under_1cm",
+            ):
+                metrics["acceptance_gates"].pop(key, None)
+        elif ik_mode == "m2_step":
+            metrics["acceptance_gates"].update(
+                {
+                    "planned_swing_tracking_max_under_3cm": (
+                        metrics["planned_swing_tracking_error_max_m"] <= 0.03
+                    ),
+                    "planned_touchdown_error_max_under_2cm": (
+                        metrics["planned_touchdown_error_max_m"] <= 0.02
+                    ),
+                    "swing_clearance_at_least_2cm": (
+                        metrics["achieved_swing_clearance_min_m"] >= 0.02
+                    ),
+                    "touchdown_step_under_3cm": (
+                        metrics["touchdown_step_max_m"] <= 0.03
+                    ),
+                }
+            )
     return metrics
 
 
@@ -980,6 +1249,52 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--fixed-grasp-threshold", type=float, default=0.005,
         help="Required contact and post-contact palm error in metres.",
+    )
+    parser.add_argument(
+        "--refine-contact-fingers", action="store_true",
+        help="Opt in to Stage-C finger residuals; disabled by default to avoid distorted hands.",
+    )
+    parser.add_argument(
+        "--fixed-object-ik-mode",
+        choices=("adaptive", "upper-body", "stance", "step"),
+        default="adaptive",
+        help="Fixed-object human solver mode; adaptive escalates M0 -> M1 -> M2.",
+    )
+    parser.add_argument(
+        "--ik-probe-niter", type=int, default=250,
+        help="M0 upper-body probe iterations in adaptive mode.",
+    )
+    parser.add_argument(
+        "--ik-stance-niter", type=int, default=350,
+        help="M1 planted-stance iterations in adaptive mode.",
+    )
+    parser.add_argument(
+        "--stance-root-max", type=float, default=0.08,
+        help="Maximum M1 ground root correction before stepping is required.",
+    )
+    parser.add_argument(
+        "--max-step-length", type=float, default=0.22,
+        help="Maximum displacement of one synthesized footstep in metres.",
+    )
+    parser.add_argument(
+        "--swing-foot-clearance", type=float, default=0.05,
+        help="Peak vertical clearance of a synthesized swing foot in metres.",
+    )
+    parser.add_argument(
+        "--max-approach-steps", type=int, default=4,
+        help="Maximum number of synthesized swing episodes before contact.",
+    )
+    parser.add_argument(
+        "--min-swing-frames", type=int, default=8,
+        help="Minimum frames assigned to each synthesized swing episode.",
+    )
+    parser.add_argument(
+        "--step-settle-frames", type=int, default=3,
+        help="Double-support frames reserved immediately before contact.",
+    )
+    parser.add_argument(
+        "--first-step", choices=("auto", "left", "right"), default="auto",
+        help="First swing foot; auto uses the contact-side foot.",
     )
     parser.add_argument("--device", default="cuda")
     return parser
@@ -1093,6 +1408,23 @@ def _build_stage_loss_configs(
         stage_b_loss["hand_keypoint_reprojection"]["weight"] = 0.05
         stage_b_loss["human_silhouette"]["weight"] = 0.1
         stage_b_loss["palm_reprojection"]["weight"] = 0.5
+        stage_b_loss["human_foot_anchor"] = {
+            "weight": 20000.0, "delta": 0.01, "phase": "precontact"
+        }
+        stage_b_loss["human_root_reg"] = {
+            "weight": 50.0, "translation_scale": 0.10, "translation_weight": 0.02
+        }
+        stage_b_loss["human_root_smoothness"] = {
+            "weight": 1000.0, "acceleration_weight": 2.0
+        }
+        stage_b_loss["arm_anatomy"] = {
+            "weight": 500.0, "minimum_degrees": 5.0,
+            "maximum_degrees": 165.0, "phase": "precontact"
+        }
+        stage_b_loss["palm_surface"].update({"target_fraction": 0.15})
+        stage_b_loss["contact_coverage"].update(
+            {"target_fraction": 0.15, "finger_weight": 0.05}
+        )
         stage_c_loss["contact_anchor"]["weight"] = 20000.0
         stage_c_loss["hand_ray_ik"]["weight"] = 10000.0
         stage_c_loss["hand_path"]["weight"] = 5000.0
@@ -1101,6 +1433,26 @@ def _build_stage_loss_configs(
             {"weight": 5000.0, "terminal_weight": 10000.0}
         )
         stage_c_loss["palm_normal"]["weight"] = 100.0
+        stage_c_loss["palm_axis"] = {
+            "weight": 100.0, "phase": "joint", "overlap_frames": 5
+        }
+        stage_c_loss["human_foot_anchor"] = {
+            "weight": 20000.0, "delta": 0.01, "phase": "postcontact"
+        }
+        stage_c_loss["human_root_reg"] = {
+            "weight": 50.0, "translation_scale": 0.10, "translation_weight": 0.02
+        }
+        stage_c_loss["human_root_smoothness"] = {
+            "weight": 1000.0, "acceleration_weight": 2.0
+        }
+        stage_c_loss["arm_anatomy"] = {
+            "weight": 1000.0, "minimum_degrees": 5.0,
+            "maximum_degrees": 165.0, "phase": "joint", "overlap_frames": 5
+        }
+        stage_c_loss["palm_surface"].update({"target_fraction": 0.15})
+        stage_c_loss["contact_coverage"].update(
+            {"target_fraction": 0.15, "finger_weight": 0.05}
+        )
         stage_c_loss["body_keypoint_reprojection"]["weight"] = 0.5
         stage_c_loss["hand_keypoint_reprojection"]["weight"] = 0.1
         stage_c_loss["human_silhouette"]["weight"] = 0.1
@@ -1122,6 +1474,24 @@ def main() -> None:
         raise ValueError("--max-human-global-alignment must be positive")
     if args.fixed_grasp_threshold <= 0.0:
         raise ValueError("--fixed-grasp-threshold must be positive")
+    if min(args.ik_probe_niter, args.ik_stance_niter) < 1:
+        raise ValueError("Adaptive IK probe iteration counts must be >= 1")
+    if args.stance_root_max <= 0.0:
+        raise ValueError("--stance-root-max must be positive")
+    if args.stance_root_max >= args.max_human_global_alignment:
+        raise ValueError(
+            "--stance-root-max must be smaller than --max-human-global-alignment"
+        )
+    if args.max_step_length <= 0.0:
+        raise ValueError("--max-step-length must be positive")
+    if args.swing_foot_clearance <= 0.0:
+        raise ValueError("--swing-foot-clearance must be positive")
+    if args.max_approach_steps < 2:
+        raise ValueError("--max-approach-steps must be at least 2")
+    if args.min_swing_frames < 3:
+        raise ValueError("--min-swing-frames must be at least 3")
+    if args.step_settle_frames < 1:
+        raise ValueError("--step-settle-frames must be positive")
 
     config_file = _real_file(args.config_file, "GRAIL config")
     video_file = _real_file(args.video_file, "RGB video")
@@ -1204,6 +1574,16 @@ def main() -> None:
             ),
             "fixed_object_human_ik": bool(args.fixed_object_human_ik),
             "fixed_grasp_threshold": float(args.fixed_grasp_threshold),
+            "fixed_object_ik_mode": str(args.fixed_object_ik_mode),
+            "adaptive_step_ik": {
+                "stance_root_max": float(args.stance_root_max),
+                "max_step_length": float(args.max_step_length),
+                "swing_foot_clearance": float(args.swing_foot_clearance),
+                "max_approach_steps": int(args.max_approach_steps),
+                "min_swing_frames": int(args.min_swing_frames),
+                "step_settle_frames": int(args.step_settle_frames),
+                "first_step": str(args.first_step),
+            },
             "max_root_approach_distance": float(
                 contact_cfg.get("max_root_approach_distance", 0.03)
             ),
@@ -1273,135 +1653,326 @@ def main() -> None:
     stage_a_loss, stage_b_loss, stage_c_loss = _build_stage_loss_configs(
         motion_state_enabled, args.use_vggt_human_depth, args.fixed_object_human_ik
     )
-    stages = [
-        {
-            "stage": "stage_3a_lift4d_full_frame_object_depth",
-            # The Lift4D-initialized object trajectory is an immutable input
-            # in fixed-object mode; this stage then only evaluates it and
-            # refreshes the physical palm target.
-            "opt_vars": (
-                {}
-                if args.fixed_object_human_ik
-                else {"obj_depth_res": {"lr": 0.005, "freeze_anchor": True}}
-            ),
-            "niter": args.stage_a_niter,
-            "loss_cfg": stage_a_loss,
-            "restore_best_state": True,
-        },
-        {
-            "stage": "stage_3b_human_precontact_approach",
-            "overlap_frames": 5,
-            "opt_vars": (
-                {
-                    "human_trans_global": {
-                        "lr": 0.003, "xy_only": True,
-                        "gravity_axis": 2,
-                        "max_norm": float(args.max_human_global_alignment),
-                    },
+    stage_records = []
+    stage_a = {
+        "stage": "stage_3a_lift4d_full_frame_object_depth",
+        # The Lift4D-initialized object trajectory is immutable in fixed mode.
+        "opt_vars": (
+            {}
+            if args.fixed_object_human_ik
+            else {"obj_depth_res": {"lr": 0.005, "freeze_anchor": True}}
+        ),
+        "niter": args.stage_a_niter,
+        "loss_cfg": stage_a_loss,
+        "restore_best_state": True,
+    }
+    stage_records.append(_run_stage_record(optimizer, data, stage_a))
+    optimizer.refresh_hand_ray_targets_after_object_stage(data)
+    optimizer.capture_approach_target_boundary(data)
+
+    step_joint_limits = {
+        0: 20.0,
+        1: 40.0,
+        2: 40.0,
+        4: 55.0,
+        5: 55.0,
+        7: 30.0,
+        8: 30.0,
+        10: 25.0,
+        11: 25.0,
+    }
+    selected_mode = None
+    if args.fixed_object_human_ik:
+        optimizer.restore_hmr_support_anchors(data)
+        requested_mode = str(args.fixed_object_ik_mode)
+        attempts = []
+        data.adaptive_ik_attempts = attempts
+        m0_state = None
+
+        if requested_mode in ("adaptive", "upper-body"):
+            m0_stage = {
+                "stage": "stage_3b_m0_upper_body_probe",
+                "ik_mode": "m0_upper_body",
+                "overlap_frames": 5,
+                "opt_vars": {
                     "human_pose_res": {
-                        "lr": 0.0005,
+                        "lr": 0.0003,
                         "joint_scope": "torso_shoulders_and_arms",
+                        "contact_arm_only": True,
+                        "project_anatomical_limits": True,
                         "frame_radius": 2,
                     },
-                }
-                if args.fixed_object_human_ik
-                else {
-                    "human_approach_distance": {"lr": 0.00005},
-                    "human_pose_res": {
-                        "lr": 0.001, "joint_scope": "arms", "frame_radius": 2,
+                },
+                "niter": (
+                    args.ik_probe_niter
+                    if requested_mode == "adaptive"
+                    else args.stage_b_niter
+                ),
+                "loss_cfg": copy.deepcopy(stage_b_loss),
+                "restore_best_state": True,
+            }
+            m0_record = _run_stage_record(optimizer, data, m0_stage)
+            m0_eval = _fixed_mode_evaluation(
+                optimizer,
+                data,
+                mode="m0_upper_body",
+                contact_threshold=args.fixed_grasp_threshold,
+                require_stance=False,
+                require_swing=False,
+            )
+            m0_record["ik_evaluation"] = m0_eval
+            stage_records.append(m0_record)
+            attempts.append(m0_eval)
+            m0_state = _snapshot_optimizer_params(optimizer)
+            if m0_eval["accepted"]:
+                selected_mode = "m0_upper_body"
+            elif requested_mode == "upper-body":
+                raise RuntimeError(
+                    "Explicit upper-body IK did not pass the physical contact gates: "
+                    + json.dumps(m0_eval, sort_keys=True)
+                )
+
+        if selected_mode is None and requested_mode in ("adaptive", "stance"):
+            optimizer.restore_hmr_support_anchors(data)
+            optimizer.initialize_whole_body_root_alignment(
+                data,
+                gravity_axis=2,
+                max_distance=float(args.stance_root_max),
+            )
+            m1_stage = {
+                "stage": "stage_3b_m1_planted_stance",
+                "ik_mode": "m1_stance",
+                "overlap_frames": 5,
+                "opt_vars": {
+                    "human_trans_res": {
+                        "lr": 0.003,
+                        "gravity_axis": 2,
+                        "max_norm": float(args.stance_root_max),
+                        "max_vertical": 0.05,
                     },
+                    "human_pose_res": {
+                        "lr": 0.0003,
+                        "joint_scope": "whole_body_contact",
+                        "contact_arm_only": True,
+                        "project_anatomical_limits": True,
+                        "frame_radius": 2,
+                    },
+                },
+                "niter": (
+                    args.ik_stance_niter
+                    if requested_mode == "adaptive"
+                    else args.stage_b_niter
+                ),
+                "loss_cfg": copy.deepcopy(stage_b_loss),
+                "restore_best_state": True,
+            }
+            m1_record = _run_stage_record(optimizer, data, m1_stage)
+            m1_eval = _fixed_mode_evaluation(
+                optimizer,
+                data,
+                mode="m1_stance",
+                contact_threshold=args.fixed_grasp_threshold,
+                require_stance=True,
+                require_swing=False,
+            )
+            m1_record["ik_evaluation"] = m1_eval
+            stage_records.append(m1_record)
+            attempts.append(m1_eval)
+            if m1_eval["accepted"]:
+                selected_mode = "m1_stance"
+            elif requested_mode == "stance":
+                raise RuntimeError(
+                    "Explicit planted-stance IK did not pass the contact/foot gates: "
+                    + json.dumps(m1_eval, sort_keys=True)
+                )
+            else:
+                # M1 is a feasibility probe.  Its rejected pelvis/leg state
+                # must not contaminate M2; retain the useful M0 arm/torso seed.
+                if m0_state is None:
+                    raise AssertionError("Adaptive M1 requires a captured M0 state")
+                _restore_optimizer_params(optimizer, m0_state)
+                optimizer.restore_hmr_support_anchors(data)
+
+        if selected_mode is None and requested_mode in ("adaptive", "step"):
+            optimizer.initialize_step_aware_root_alignment(
+                data,
+                gravity_axis=2,
+                max_distance=float(args.max_human_global_alignment),
+                max_step_length=float(args.max_step_length),
+                max_steps=int(args.max_approach_steps),
+                swing_clearance=float(args.swing_foot_clearance),
+                min_swing_frames=int(args.min_swing_frames),
+                settle_frames=int(args.step_settle_frames),
+                first_step=args.first_step,
+            )
+            m2_loss = copy.deepcopy(stage_b_loss)
+            m2_loss["human_swing_foot"] = {
+                "weight": 20000.0,
+                "delta": 0.01,
+                "touchdown_weight": 2.0,
+            }
+            m2_loss["human_root_path"] = {"weight": 5000.0, "delta": 0.01}
+            m2_loss["human_root_reg"]["translation_weight"] = 0.005
+            m2_stage = {
+                "stage": "stage_3b_m2_step_aware_approach",
+                "ik_mode": "m2_step",
+                "overlap_frames": 5,
+                "opt_vars": {
+                    "human_trans_res": {
+                        "lr": 0.003,
+                        "gravity_axis": 2,
+                        "max_norm": float(args.max_human_global_alignment),
+                        "max_vertical": 0.05,
+                        "plan_reference": True,
+                        "max_plan_deviation": 0.04,
+                    },
+                    "human_pose_res": {
+                        "lr": 0.0003,
+                        "joint_scope": "whole_body_contact",
+                        "contact_arm_only": True,
+                        "project_anatomical_limits": True,
+                        "joint_limits_degrees": step_joint_limits,
+                        "frame_radius": 2,
+                    },
+                },
+                "niter": args.stage_b_niter,
+                "loss_cfg": m2_loss,
+                "restore_best_state": True,
+            }
+            m2_record = _run_stage_record(optimizer, data, m2_stage)
+            m2_eval = _fixed_mode_evaluation(
+                optimizer,
+                data,
+                mode="m2_step",
+                contact_threshold=args.fixed_grasp_threshold,
+                require_stance=True,
+                require_swing=True,
+            )
+            m2_record["ik_evaluation"] = m2_eval
+            stage_records.append(m2_record)
+            attempts.append(m2_eval)
+            if not m2_eval["accepted"]:
+                raise RuntimeError(
+                    "Step-aware IK did not pass the contact/stance/swing gates: "
+                    + json.dumps(m2_eval, sort_keys=True)
+                )
+            selected_mode = "m2_step"
+
+        if selected_mode is None:
+            raise AssertionError("Fixed-object IK finished without selecting a mode")
+        data.adaptive_ik_mode = selected_mode
+        optimizer.logger.info(
+            "Selected fixed-object human IK mode: %s | attempts=%s",
+            selected_mode,
+            attempts,
+        )
+        stage_b_base_pose_residual = optimizer.params.human_pose_res.detach().clone()
+        optimizer.capture_stage_boundary_state(data)
+
+        stage_c_mode_loss = copy.deepcopy(stage_c_loss)
+        stage_c_pose_scope = (
+            "torso_shoulders_and_arms"
+            if selected_mode == "m0_upper_body"
+            else "whole_body_contact"
+        )
+        stage_c_opt_vars = {
+            "human_pose_res": {
+                "lr": 0.0001,
+                "joint_scope": stage_c_pose_scope,
+                "contact_arm_only": True,
+                "project_anatomical_limits": True,
+                "frame_radius": 2,
+                **(
+                    {"joint_limits_degrees": step_joint_limits}
+                    if selected_mode == "m2_step"
+                    else {}
+                ),
+            },
+            **(
+                {
+                    "hand_pose_res": {
+                        "lr": 0.00005,
+                        "hand": "contact",
+                        "frame_radius": 5,
+                    }
                 }
+                if args.refine_contact_fingers
+                else {}
             ),
+        }
+        if selected_mode in ("m1_stance", "m2_step"):
+            stage_c_opt_vars["human_trans_res"] = {
+                "lr": 0.003,
+                "gravity_axis": 2,
+                "max_norm": float(
+                    args.stance_root_max
+                    if selected_mode == "m1_stance"
+                    else args.max_human_global_alignment
+                ),
+                "max_vertical": 0.05,
+                "plan_reference": selected_mode == "m2_step",
+                "max_plan_deviation": 0.04,
+            }
+        if selected_mode == "m2_step":
+            stage_c_mode_loss["human_root_path"] = {
+                "weight": 5000.0,
+                "delta": 0.01,
+            }
+            stage_c_mode_loss["human_root_reg"]["translation_weight"] = 0.005
+        stage_c = {
+            "stage": "stage_3c_joint_contact_refinement",
+            "ik_mode": selected_mode,
+            "opt_vars": stage_c_opt_vars,
+            "niter": args.stage_c_niter,
+            "loss_cfg": stage_c_mode_loss,
+            "restore_best_state": True,
+        }
+    else:
+        optimizer.initialize_human_approach_direction(data, gravity_axis="z")
+        legacy_stage_b = {
+            "stage": "stage_3b_human_precontact_approach",
+            "overlap_frames": 5,
+            "opt_vars": {
+                "human_approach_distance": {"lr": 0.00005},
+                "human_pose_res": {
+                    "lr": 0.001,
+                    "joint_scope": "arms",
+                    "frame_radius": 2,
+                },
+            },
             "niter": args.stage_b_niter,
             "loss_cfg": stage_b_loss,
             "restore_best_state": True,
-        },
-        {
+        }
+        stage_records.append(_run_stage_record(optimizer, data, legacy_stage_b))
+        stage_b_base_pose_residual = optimizer.params.human_pose_res.detach().clone()
+        optimizer.capture_stage_boundary_state(data)
+        stage_c = {
             "stage": "stage_3c_joint_contact_refinement",
             "opt_vars": {
-                # Post-contact residual translation must close the observed
-                # frame-90+ depth jump within the fixed Stage-C window.
-                "human_trans_res": {
-                    "lr": 0.008,
-                    "lock_support_feet": bool(args.fixed_object_human_ik),
-                    "contact_threshold": 0.5,
-                },
+                "human_trans_res": {"lr": 0.008, "gravity_axis": 2},
                 "human_pose_res": {
                     "lr": 0.00005,
-                    "joint_scope": (
-                        "torso_shoulders_and_arms"
-                        if args.fixed_object_human_ik else "arms"
-                    ),
+                    "joint_scope": "arms",
                     "frame_radius": 2,
                 },
-                "hand_pose_res": {"lr": 0.0001, "hand": "contact", "frame_radius": 5},
+                "hand_pose_res": {
+                    "lr": 0.00005,
+                    "hand": "contact",
+                    "frame_radius": 5,
+                },
             },
             "niter": args.stage_c_niter,
             "loss_cfg": stage_c_loss,
             "restore_best_state": True,
-        },
-    ]
-    stage_records = []
-    stage_b_base_pose_residual = None
-    for stage in stages:
-        if stage["stage"] == "stage_3b_human_precontact_approach":
-            if args.fixed_object_human_ik:
-                optimizer.initialize_human_global_alignment(data, gravity_axis=2)
-            else:
-                optimizer.initialize_human_approach_direction(data, gravity_axis="z")
-            optimizer.capture_approach_target_boundary(data)
-        elif stage["stage"] == "stage_3c_joint_contact_refinement":
-            optimizer.initialize_postcontact_pose_residuals(
-                data,
-                stage["opt_vars"]["human_pose_res"]["joint_scope"],
-                base_pose_residual=stage_b_base_pose_residual,
-            )
-        if stage["stage"] == "stage_3b_human_precontact_approach":
-            stage_b_base_pose_residual = optimizer.params.human_pose_res.detach().clone()
-        _, initial_total, initial_losses = _stage_metrics(
-            optimizer, data, stage["loss_cfg"]
-        )
-        stage.update({
-        "gradient_log_interval": 25,
-        "save_motion_progress": True,
-        "motion_progress_interval": 50,
-        })
-        optimizer.optimize_main(data, stage)
-        if stage["stage"] == "stage_3a_lift4d_full_frame_object_depth":
-            optimizer.refresh_hand_ray_targets_after_object_stage(data)
-        elif stage["stage"] == "stage_3b_human_precontact_approach":
-            if args.fixed_object_human_ik:
-                contact_pred = optimizer.forward(data, optimizer.params)
-                contact_frame = int(data.object_motion_state.move_start_frame)
-                contact_palm = optimizer.human_model.get_palm_center_from_hand_joints(
-                    contact_pred.human.hand_joints_seq, data.contact_hand
-                )[contact_frame]
-                contact_error = float(
-                    torch.linalg.norm(
-                        contact_palm - data.palm_target_world[contact_frame].detach()
-                    )
-                )
-                if contact_error > float(args.fixed_grasp_threshold):
-                    raise RuntimeError(
-                        "Fixed-object contact keyframe is infeasible: "
-                        f"error={contact_error:.6f} m > "
-                        f"threshold={args.fixed_grasp_threshold:.6f} m. "
-                        "Stage C was not started."
-                    )
-            optimizer.capture_stage_boundary_state(data)
-        _, final_total, final_losses = _stage_metrics(
-            optimizer, data, stage["loss_cfg"]
-        )
-        stage_records.append({
-            "stage": stage["stage"],
-            "niter": stage["niter"],
-            "opt_vars": copy.deepcopy(stage["opt_vars"]),
-            "loss_cfg": copy.deepcopy(stage["loss_cfg"]),
-            "initial_total_loss": initial_total,
-            "final_total_loss": final_total,
-            "initial_losses": initial_losses,
-            "final_losses": final_losses,
-        })
+        }
+
+    optimizer.initialize_postcontact_pose_residuals(
+        data,
+        stage_c["opt_vars"]["human_pose_res"]["joint_scope"],
+        base_pose_residual=stage_b_base_pose_residual,
+    )
+    stage_records.append(_run_stage_record(optimizer, data, stage_c))
 
     final_pred = optimizer.forward(data, optimizer.params)
     fixed_object_pose_lock = None
@@ -1438,6 +2009,22 @@ def main() -> None:
         "mesh_path": mesh_file,
         "synthetic_data_used": False,
         "fixed_object_pose_lock": fixed_object_pose_lock,
+        "adaptive_human_ik": {
+            "requested_mode": (
+                str(args.fixed_object_ik_mode)
+                if args.fixed_object_human_ik else None
+            ),
+            "selected_mode": getattr(data, "adaptive_ik_mode", None),
+            "attempts": getattr(data, "adaptive_ik_attempts", None),
+            "step_count": (
+                int(data.footstep_plan.step_count)
+                if getattr(data, "footstep_plan", None) is not None else 0
+            ),
+            "step_intervals": (
+                [list(item) for item in data.footstep_plan.step_intervals]
+                if getattr(data, "footstep_plan", None) is not None else []
+            ),
+        },
     }
     output_path = os.path.join(output_dir, "hoi_data.pkl")
     metrics_path = os.path.join(output_dir, "optimization_metrics.json")
@@ -1486,6 +2073,8 @@ def main() -> None:
     print(f"static target z std={diagnostics['static_target_z_std']:.9g}")
     print(f"optimized static z std={diagnostics['optimized_static_z_std']:.9g}")
     print(f"human approach distance={diagnostics['human_approach_distance']:.9g}")
+    print(f"adaptive IK mode={diagnostics.get('adaptive_ik_mode')}")
+    print(f"planned step count={diagnostics.get('planned_step_count', 0)}")
     print(f"foot sliding={diagnostics['foot_sliding']:.9g}")
     print(f"acceptance gates={json.dumps(diagnostics['acceptance_gates'], sort_keys=True)}")
     if args.use_vggt_human_depth:

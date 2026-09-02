@@ -55,8 +55,16 @@ from grail.optimization.approach import (
     smoothstep_approach_ramp,
 )
 from grail.optimization.fixed_object_grasp import (
+    build_palm_center_contact_target,
     build_fixed_object_grasp_targets,
     ground_alignment_delta,
+    object_local_point_to_world,
+    world_point_to_object_local,
+)
+from grail.optimization.whole_body_ik import (
+    build_alternating_footstep_plan,
+    build_support_foot_anchors,
+    project_rotation_residuals_,
 )
 from grail.pose_est.utils import smooth_axis_angle_sequence, smooth_pose_sequence
 from grail.preprocessing.preprocess import load_depth_from_cache, load_masks_from_cache
@@ -194,6 +202,19 @@ class HOIOptimizer:
             motion_data, output_joints=False, require_grad=False
         )[1]
         gt_body_kp, gt_hand_kp = self.human_model.extract_gt_keypoints(motion_data)
+        initial_body_joints = self.human_model.get_body_joints(
+            motion_data, require_grad=False
+        )
+        support_anchors = build_support_foot_anchors(
+            initial_body_joints,
+            self.human_model.get_foot_joint_indices(),
+            foot_contact_probs,
+            threshold=float(
+                (self.cfg.get("contact", {}) or {}).get(
+                    "foot_contact_threshold", 0.5
+                )
+            ),
+        )
 
         # 9. Transform object vertices to per-frame positions
         obj_verts_seq = torch.bmm(
@@ -222,6 +243,7 @@ class HOIOptimizer:
         motion_cfg = self.cfg.get("object_motion_state", {}) or {}
         motion_state = None
         hand_selection = None
+        hand_selection_reason_suffix = ""
         hand_ray_target_world = None
         hand_ray_ramp = None
         hand_initial_cam = None
@@ -274,6 +296,28 @@ class HOIOptimizer:
             contact_hand = hand_selection.hand if configured_hand == "auto" else configured_hand
             if contact_hand not in ("left", "right", "both"):
                 raise ValueError(f"contact.hand must be auto/left/right/both, got {contact_hand!r}")
+            if self.cfg.get("fixed_object_human_ik", False) and contact_hand == "both":
+                if configured_hand == "both":
+                    raise ValueError(
+                        "Fixed-object whole-body IK currently requires one contact hand; "
+                        "choose --contact-hand left or right"
+                    )
+                lookback = int(contact_cfg.get("hand_selection_lookback", 5))
+                start = max(0, move_start - lookback)
+                left_median = float(
+                    np.nanmedian(hand_selection.left_distance_px[start : move_start + 1])
+                )
+                right_median = float(
+                    np.nanmedian(hand_selection.right_distance_px[start : move_start + 1])
+                )
+                contact_hand = "left" if left_median < right_median else "right"
+                hand_selection_reason_suffix = (
+                    f"; fixed_object_single_hand={contact_hand}"
+                )
+                self.logger.info(
+                    "Resolved auto two-hand candidate to %s for fixed-object whole-body IK",
+                    contact_hand,
+                )
             explicit_window = contact_cfg.get("approach_window")
             initial_hand_world = self.human_model.get_palm_center_from_hand_joints(
                 initial_hand_joints, contact_hand
@@ -409,7 +453,9 @@ class HOIOptimizer:
                 None if hand_selection is None else hand_selection.right_distance_px
             ),
             hand_selection_reason=(
-                "legacy_contact_labels" if hand_selection is None else hand_selection.reason
+                "legacy_contact_labels"
+                if hand_selection is None
+                else hand_selection.reason + hand_selection_reason_suffix
             ),
             hand_ray_target_world=hand_ray_target_world,
             hand_ray_ramp=hand_ray_ramp,
@@ -424,6 +470,11 @@ class HOIOptimizer:
             palm_pixel_fallback=palm_pixel_fallback,
             grail_camera_intrinsics=grail_K.detach(),
             palm_metadata=palm_metadata,
+            support_foot_reference_world=support_anchors.reference_world,
+            support_foot_mask=support_anchors.support_mask,
+            hmr_support_foot_reference_world=support_anchors.reference_world.clone(),
+            hmr_support_foot_mask=support_anchors.support_mask.clone(),
+            adaptive_ik_attempts=[],
         )
 
     @staticmethod
@@ -1054,9 +1105,16 @@ class HOIOptimizer:
                     "human_approach_distance",
                     "obj_z_opt",
                     "log_lift4d_depth_scale",
+                    "human_trans_global",
+                    "human_trans_res",
+                    "human_pose_res",
+                    "hand_pose_res",
+                    "obj_R_res",
                 ):
-                    # These are absolute physical quantities, not zero-centered
-                    # residuals. AdamW decay would introduce an unrelated depth drift.
+                    # Translation variables are physical residuals and 6D
+                    # rotations are identity-centred, not zero-centred.
+                    # AdamW decay would move masked frames and shrink identity
+                    # rotations toward an invalid zero representation.
                     group["weight_decay"] = 0.0
                 opt_params_cfg.append(group)
 
@@ -1254,46 +1312,130 @@ class HOIOptimizer:
             return_normals=True,
             strict_frames=strict_frames,
         )
-        target_cam, ramp = camera_ray_hand_targets(
+        surface_target_cam, ramp = camera_ray_hand_targets(
             data.hand_initial_cam.detach(),
             surface_depth.detach(),
             int(data.object_motion_state.move_start_frame),
             int(data.approach_window),
-            target_distance=float(
-                (self.cfg.get("contact", {}) or {}).get("palm_target_distance", 0.005)
+            target_distance=(
+                0.0
+                if self.cfg.get("fixed_object_human_ik", False)
+                else float(
+                    (self.cfg.get("contact", {}) or {}).get(
+                        "palm_target_distance", 0.005
+                    )
+                )
             ),
             query_pixels=data.observed_palm_pixels.detach(),
             camera_intrinsics=intrinsics,
         )
-        data.palm_target_cam = target_cam.detach()
-        data.palm_target_world = transform_camera_to_world(
-            target_cam.detach(), self.opencv_cam_R, self.opencv_cam_t
+        surface_target_world = transform_camera_to_world(
+            surface_target_cam.detach(), self.opencv_cam_R, self.opencv_cam_t
         ).detach()
-        data.palm_target_normal_world = torch.nn.functional.normalize(
+        raw_surface_normal_world = torch.nn.functional.normalize(
             surface_normal_cam.detach() @ self.opencv_cam_R.T, dim=-1, eps=1e-8
         )
         move_start = int(data.object_motion_state.move_start_frame)
         if self.cfg.get("fixed_object_human_ik", False):
+            palm_center = self.human_model.get_palm_center_from_hand_joints(
+                pred.human.hand_joints_seq.detach(), data.contact_hand
+            )
+            palm_patch = pred.human.verts_seq.detach()[
+                move_start,
+                list(self.human_model.get_palm_patch_indices(data.contact_hand)),
+            ]
+            contact_target = build_palm_center_contact_target(
+                surface_target_world[move_start],
+                raw_surface_normal_world[move_start],
+                palm_center[move_start],
+                palm_patch,
+                clearance_quantile=float(
+                    (self.cfg.get("contact", {}) or {}).get(
+                        "palm_clearance_quantile", 0.85
+                    )
+                ),
+                minimum_clearance=float(
+                    (self.cfg.get("contact", {}) or {}).get(
+                        "minimum_palm_center_clearance", 0.012
+                    )
+                ),
+                maximum_clearance=float(
+                    (self.cfg.get("contact", {}) or {}).get(
+                        "maximum_palm_center_clearance", 0.040
+                    )
+                ),
+            )
+            center_offset = (
+                contact_target.center_position_world
+                - contact_target.surface_position_world
+            )
+            center_target_world = (
+                surface_target_world + ramp[:, None].detach() * center_offset[None]
+            ).detach()
+
+            initial_normal = self.human_model.get_palm_normal_from_hand_joints(
+                pred.human.hand_joints_seq.detach(), data.contact_hand
+            )
+            normal_sign = torch.where(
+                torch.sum(raw_surface_normal_world * initial_normal, dim=-1, keepdim=True)
+                < 0.0,
+                -torch.ones_like(raw_surface_normal_world[:, :1]),
+                torch.ones_like(raw_surface_normal_world[:, :1]),
+            )
+            signed_normal_world = (raw_surface_normal_world * normal_sign).detach()
+            initial_tangent = self.human_model.get_palm_axis_from_hand_joints(
+                pred.human.hand_joints_seq.detach(), data.contact_hand
+            )
             grasp_targets = build_fixed_object_grasp_targets(
-                data.palm_target_world[move_start],
+                contact_target.center_position_world,
                 pred.obj.R.detach(),
                 pred.obj.trans.detach(),
                 move_start,
-                contact_normal_world=data.palm_target_normal_world[move_start],
+                contact_normal_world=signed_normal_world[move_start],
+                contact_tangent_world=initial_tangent[move_start],
             )
+            surface_anchor = world_point_to_object_local(
+                contact_target.surface_position_world,
+                pred.obj.R.detach()[move_start],
+                pred.obj.trans.detach()[move_start],
+            ).detach()
+            data.palm_surface_target_world = surface_target_world
+            data.palm_target_world = center_target_world
+            data.palm_target_cam = transform_world_to_camera(
+                center_target_world, self.opencv_cam_R, self.opencv_cam_t
+            ).detach()
+            data.palm_target_normal_world = signed_normal_world
             data.grasp_anchor_obj_local = grasp_targets.anchor_object
+            data.grasp_surface_anchor_obj_local = surface_anchor
             data.grasp_normal_obj_local = grasp_targets.normal_object
+            data.grasp_tangent_obj_local = grasp_targets.tangent_object
             data.grasp_target_world = grasp_targets.position_world
+            data.grasp_surface_target_world = object_local_point_to_world(
+                surface_anchor, pred.obj.R.detach(), pred.obj.trans.detach()
+            ).detach()
             data.grasp_target_normal_world = grasp_targets.normal_world
+            data.grasp_target_tangent_world = grasp_targets.tangent_world
+            data.grasp_contact_direction_world = contact_target.surface_to_hand_world
+            data.grasp_center_clearance = contact_target.center_clearance
         else:
+            data.palm_surface_target_world = surface_target_world
+            data.palm_target_world = surface_target_world
+            data.palm_target_cam = surface_target_cam.detach()
+            data.palm_target_normal_world = raw_surface_normal_world
             data.grasp_anchor_obj_local = None
+            data.grasp_surface_anchor_obj_local = None
             data.grasp_normal_obj_local = None
+            data.grasp_tangent_obj_local = None
             data.grasp_target_world = None
+            data.grasp_surface_target_world = None
             data.grasp_target_normal_world = None
+            data.grasp_target_tangent_world = None
+            data.grasp_contact_direction_world = None
+            data.grasp_center_clearance = None
         data.hand_ray_target_world = data.palm_target_world
         data.hand_ray_ramp = ramp.detach()
         data.hand_initial_cam_depth = data.hand_initial_cam[:, 2].detach()
-        data.hand_target_cam_depth = target_cam[:, 2].detach()
+        data.hand_target_cam_depth = data.palm_target_cam[:, 2].detach()
         data.object_surface_depth = surface_depth.detach()
         data.hand_ray_surface_fallback = fallback.detach()
         data.palm_surface_fallback = fallback.detach()
@@ -1303,10 +1445,13 @@ class HOIOptimizer:
         )
         self.logger.info(
             "Refreshed Stage-A hand ray targets | surface_z[move]=%.6f | "
-            "fallback_frames=%d | initial_distance=%.6f",
+            "fallback_frames=%d | initial_distance=%.6f | palm_clearance=%.6f",
             float(surface_depth[int(data.object_motion_state.move_start_frame)]),
             int(fallback.sum()),
             float(data.hand_approach_initial_distance),
+            float(data.grasp_center_clearance)
+            if data.grasp_center_clearance is not None
+            else 0.0,
         )
         K_lift4d = data.lift4d_depth.camera_intrinsics.detach()
         equal_intrinsics = bool(torch.allclose(intrinsics, K_lift4d, atol=1e-6, rtol=0.0))
@@ -1435,6 +1580,159 @@ class HOIOptimizer:
         )
         return delta
 
+    @torch.no_grad()
+    def initialize_whole_body_root_alignment(
+        self, data, gravity_axis=2, max_distance=None
+    ):
+        """Seed a time-varying root translation for fixed-object whole-body IK.
+
+        Unlike a constant global offset, this leaves all frames before the
+        approach window unchanged.  The root reaches the bounded contact
+        correction with the same smoothstep ramp used by the palm target;
+        legs can then compensate against immutable world-space foot anchors.
+        """
+        if data.palm_target_world is None:
+            raise ValueError("Whole-body root alignment requires refreshed palm targets")
+        frame = int(
+            data.object_motion_state.move_start_frame
+            if data.object_motion_state is not None
+            else data.contact_frame
+        )
+        pred = self.forward(data, self.params)
+        actual = self.human_model.get_palm_center_from_hand_joints(
+            pred.human.hand_joints_seq, data.contact_hand
+        )[frame]
+        target = data.palm_target_world[frame].detach()
+        max_distance = float(
+            self.cfg.get("max_human_global_alignment_distance", 0.35)
+            if max_distance is None
+            else max_distance
+        )
+        if not np.isfinite(max_distance) or max_distance <= 0.0:
+            raise ValueError("Whole-body root alignment bound must be positive")
+        delta = ground_alignment_delta(
+            actual.detach(), target, gravity_axis=int(gravity_axis),
+            max_distance=max_distance,
+        )
+        ramp = smoothstep_approach_ramp(
+            data.frame_num,
+            frame,
+            int(data.approach_window),
+            device=delta.device,
+            dtype=delta.dtype,
+        )
+        self.params.human_trans_global.zero_()
+        self.params.human_trans_res.copy_(ramp[:, None] * delta[None])
+        remaining = target - (actual + delta)
+        self.logger.info(
+            "Initialized whole-body root ramp at frame %d: "
+            "[%.6f, %.6f, %.6f] m | remaining palm residual=%.6f m",
+            frame,
+            *delta.tolist(),
+            float(torch.linalg.norm(remaining)),
+        )
+        return delta
+
+    @torch.no_grad()
+    def restore_hmr_support_anchors(self, data):
+        """Deactivate a rejected step solve and restore the original HMR support."""
+
+        reference = getattr(data, "hmr_support_foot_reference_world", None)
+        mask = getattr(data, "hmr_support_foot_mask", None)
+        if reference is None or mask is None:
+            raise ValueError("Original HMR support anchors were not initialized")
+        data.support_foot_reference_world = reference.detach().clone()
+        data.support_foot_mask = mask.detach().clone()
+        data.footstep_plan = None
+
+    @torch.no_grad()
+    def initialize_step_aware_root_alignment(
+        self,
+        data,
+        *,
+        gravity_axis=2,
+        max_distance=None,
+        max_step_length=0.22,
+        max_steps=4,
+        swing_clearance=0.05,
+        min_swing_frames=8,
+        settle_frames=3,
+        first_step="auto",
+    ):
+        """Replace root sliding with a detached alternating footstep plan."""
+
+        if data.palm_target_world is None:
+            raise ValueError("Step-aware root alignment requires refreshed palm targets")
+        frame = int(
+            data.object_motion_state.move_start_frame
+            if data.object_motion_state is not None
+            else data.contact_frame
+        )
+        pred = self.forward(data, self.params)
+        actual = self.human_model.get_palm_center_from_hand_joints(
+            pred.human.hand_joints_seq, data.contact_hand
+        )[frame]
+        target = data.palm_target_world[frame].detach()
+        max_distance = float(
+            self.cfg.get("max_human_global_alignment_distance", 0.35)
+            if max_distance is None
+            else max_distance
+        )
+        if not np.isfinite(max_distance) or max_distance <= 0.0:
+            raise ValueError("Step-aware root alignment bound must be positive")
+        delta = ground_alignment_delta(
+            actual.detach(), target, gravity_axis=int(gravity_axis),
+            max_distance=max_distance,
+        )
+
+        first_step = str(first_step).lower()
+        if first_step == "auto":
+            # The contact-side foot leads so the final support polygon moves
+            # underneath the reaching hand instead of increasing cross-body
+            # reach.  HMR contact probabilities remain only a prior and cannot
+            # veto the synthesized swing phase.
+            first_swing_side = 0 if str(data.contact_hand).lower() == "left" else 1
+        elif first_step == "left":
+            first_swing_side = 0
+        elif first_step == "right":
+            first_swing_side = 1
+        else:
+            raise ValueError("first_step must be auto, left, or right")
+
+        plan = build_alternating_footstep_plan(
+            pred.human.body_joints_seq.detach(),
+            self.human_model.get_foot_joint_indices(),
+            delta,
+            frame,
+            int(data.approach_window),
+            first_swing_side=first_swing_side,
+            gravity_axis=int(gravity_axis),
+            max_step_length=float(max_step_length),
+            max_steps=int(max_steps),
+            swing_clearance=float(swing_clearance),
+            min_swing_frames=int(min_swing_frames),
+            settle_frames=int(settle_frames),
+        )
+        data.footstep_plan = plan
+        data.support_foot_reference_world = plan.foot_targets_world
+        data.support_foot_mask = plan.stance_mask
+        self.params.human_trans_global.zero_()
+        self.params.human_trans_res.copy_(plan.root_translation_residual)
+        interval_text = ", ".join(
+            f"{'L' if side == 0 else 'R'}:{start}-{end}"
+            for start, end, side in plan.step_intervals
+        )
+        self.logger.info(
+            "Initialized step-aware root path at frame %d: delta=[%.6f, %.6f, %.6f] m | "
+            "steps=%d | lengths=%s | swings=%s",
+            frame,
+            *delta.tolist(),
+            plan.step_count,
+            [round(float(value), 4) for value in plan.step_lengths],
+            interval_text,
+        )
+        return plan
+
     @staticmethod
     def _projected_approach_distance(actual_palm, target_palm, direction, max_distance):
         """Project the contact-frame palm correction onto the allowed root direction."""
@@ -1502,6 +1800,9 @@ class HOIOptimizer:
             # Fixed-object IK must not rotate the pelvis/root because that
             # would move both planted feet even when leg joints are frozen.
             "torso_shoulders_and_arms": {3, 6, 9, 12, 13, 14, 16, 17, 18, 19, 20, 21},
+            # Root + both legs + torso + arms.  The head is intentionally
+            # excluded because it cannot improve hand reach or foot support.
+            "whole_body_contact": set(range(num_body_joints)) - {15},
         }
         if scope == "full_body":
             allowed = set(range(num_body_joints))
@@ -1513,7 +1814,7 @@ class HOIOptimizer:
             raise ValueError(
                 f"Invalid human_pose_res joint_scope={scope!r}; expected arms, lower_body, "
                 "lower_body_and_arms, upper_body_and_arms, "
-                "torso_shoulders_and_arms, or full_body"
+                "torso_shoulders_and_arms, whole_body_contact, or full_body"
             )
         return sorted(index for index in allowed if index < num_body_joints)
 
@@ -1691,6 +1992,8 @@ class HOIOptimizer:
                 opt_config, obj_depth_reference
             )
             self._project_human_global_stage_constraints(opt_config)
+            self._project_human_translation_stage_constraints(opt_config, data=data)
+            self._project_human_pose_stage_constraints(data, opt_config)
             if self.params.human_approach_distance is not None:
                 with torch.no_grad():
                     self.params.human_approach_distance.clamp_(
@@ -1775,6 +2078,107 @@ class HOIOptimizer:
             if not (cfg.get("xy_only", False) or cfg.get("ground_only", False)):
                 value[gravity_axis] = vertical
 
+    @torch.no_grad()
+    def _project_human_translation_stage_constraints(self, opt_config, data=None):
+        cfg = opt_config.get("opt_vars", {}).get("human_trans_res")
+        if cfg is None:
+            return
+        value = self.params.human_trans_res
+        gravity_axis = int(cfg.get("gravity_axis", 2))
+        if gravity_axis not in (0, 1, 2):
+            raise ValueError("human_trans_res.gravity_axis must be 0, 1, or 2")
+        max_vertical = cfg.get("max_vertical")
+        if max_vertical is not None:
+            max_vertical = float(max_vertical)
+            if not np.isfinite(max_vertical) or max_vertical <= 0.0:
+                raise ValueError("human_trans_res.max_vertical must be finite and positive")
+            value[:, gravity_axis].clamp_(-max_vertical, max_vertical)
+        max_norm = cfg.get("max_norm")
+        if max_norm is not None:
+            max_norm = float(max_norm)
+            if not np.isfinite(max_norm) or max_norm <= 0.0:
+                raise ValueError("human_trans_res.max_norm must be finite and positive")
+            magnitude = torch.linalg.norm(value, dim=1, keepdim=True)
+            value.mul_(torch.clamp(max_norm / magnitude.clamp_min(1e-8), max=1.0))
+
+        if not cfg.get("plan_reference", False):
+            return
+        plan = None if data is None else getattr(data, "footstep_plan", None)
+        if plan is None:
+            raise ValueError("human_trans_res.plan_reference requires an active footstep plan")
+        reference = plan.root_translation_residual.to(
+            device=value.device, dtype=value.dtype
+        )
+        if reference.shape != value.shape:
+            raise ValueError("Footstep root path shape does not match human_trans_res")
+        max_deviation = float(cfg.get("max_plan_deviation", 0.04))
+        if not np.isfinite(max_deviation) or max_deviation <= 0.0:
+            raise ValueError("human_trans_res.max_plan_deviation must be positive")
+        deviation = value - reference
+        vertical = deviation[:, gravity_axis].clone()
+        ground = deviation.clone()
+        ground[:, gravity_axis] = 0.0
+        ground_norm = torch.linalg.norm(ground, dim=1, keepdim=True)
+        ground.mul_(
+            torch.clamp(max_deviation / ground_norm.clamp_min(1e-8), max=1.0)
+        )
+        vertical.clamp_(-max_deviation, max_deviation)
+        value.copy_(reference + ground)
+        value[:, gravity_axis] = reference[:, gravity_axis] + vertical
+        if max_norm is not None:
+            magnitude = torch.linalg.norm(value, dim=1, keepdim=True)
+            value.mul_(
+                torch.clamp(max_norm / magnitude.clamp_min(1e-8), max=1.0)
+            )
+
+    @staticmethod
+    def _human_stage_frame_bounds(data, opt_config, frame_radius=2):
+        if data.object_motion_state is None:
+            motion_frame = int(data.contact_frame)
+            start = max(0, motion_frame - int(data.approach_window))
+            end = min(data.frame_num, motion_frame + int(frame_radius) + 1)
+            return start, end
+        motion_frame = int(data.object_motion_state.move_start_frame)
+        stage = str(opt_config.get("stage", ""))
+        if "stage_3b" in stage:
+            return max(0, motion_frame - int(data.approach_window)), min(
+                data.frame_num, motion_frame + 1
+            )
+        if "stage_3c" in stage:
+            return min(data.frame_num, motion_frame + 1), data.frame_num
+        return max(0, motion_frame - int(data.approach_window)), data.frame_num
+
+    @torch.no_grad()
+    def _project_human_pose_stage_constraints(self, data, opt_config):
+        cfg = opt_config.get("opt_vars", {}).get("human_pose_res")
+        if cfg is None or not cfg.get("project_anatomical_limits", False):
+            return
+        start, end = self._human_stage_frame_bounds(
+            data, opt_config, cfg.get("frame_radius", 2)
+        )
+        frame_mask = torch.zeros(
+            data.frame_num, dtype=torch.bool, device=self.params.human_pose_res.device
+        )
+        frame_mask[start:end] = True
+        default_limits = {
+            0: 15.0,
+            1: 25.0, 2: 25.0,
+            3: 12.0, 4: 30.0, 5: 30.0, 6: 12.0,
+            7: 18.0, 8: 18.0, 9: 12.0, 10: 18.0, 11: 18.0,
+            12: 15.0, 13: 20.0, 14: 20.0,
+            16: 40.0, 17: 40.0, 18: 30.0, 19: 30.0,
+            20: 20.0, 21: 20.0,
+        }
+        configured = cfg.get("joint_limits_degrees")
+        limits = dict(default_limits)
+        if configured is not None:
+            limits.update(
+                {int(joint): float(limit) for joint, limit in configured.items()}
+            )
+        project_rotation_residuals_(
+            self.params.human_pose_res, limits, frame_mask=frame_mask
+        )
+
     def _apply_obj_depth_gradient_constraints(self, opt_config, data=None):
         depth_cfg = opt_config.get("opt_vars", {}).get("obj_depth_res")
         depth_res = self.params.obj_depth_res
@@ -1815,6 +2219,16 @@ class HOIOptimizer:
             return
         scope = pose_cfg.get("joint_scope", "full_body")
         allowed = self._human_pose_joint_indices(scope, self.num_body_joints)
+        if pose_cfg.get("contact_arm_only", False):
+            contact_hand = str(data.contact_hand).lower()
+            left_arm = {13, 16, 18, 20}
+            right_arm = {14, 17, 19, 21}
+            if contact_hand == "left":
+                allowed = sorted(set(allowed) - right_arm)
+            elif contact_hand == "right":
+                allowed = sorted(set(allowed) - left_arm)
+            elif contact_hand != "both":
+                raise ValueError(f"Unsupported contact hand: {data.contact_hand!r}")
         joint_mask = torch.zeros(
             self.num_body_joints,
             dtype=self.params.human_pose_res.grad.dtype,
@@ -1827,22 +2241,9 @@ class HOIOptimizer:
             dtype=joint_mask.dtype,
             device=joint_mask.device,
         )
-        if data.object_motion_state is None:
-            motion_frame = int(data.contact_frame)
-            start = max(0, motion_frame - int(data.approach_window))
-            end = min(data.frame_num, motion_frame + int(pose_cfg.get("frame_radius", 2)) + 1)
-        else:
-            motion_frame = int(data.object_motion_state.move_start_frame)
-            stage = str(opt_config.get("stage", ""))
-            if "stage_3b" in stage:
-                start = max(0, motion_frame - int(data.approach_window))
-                end = min(data.frame_num, motion_frame + 1)
-            elif "stage_3c" in stage:
-                start = min(data.frame_num, motion_frame + 1)
-                end = data.frame_num
-            else:
-                start = max(0, motion_frame - int(data.approach_window))
-                end = data.frame_num
+        start, end = self._human_stage_frame_bounds(
+            data, opt_config, pose_cfg.get("frame_radius", 2)
+        )
         frame_mask[start:end] = 1.0
         self.params.human_pose_res.grad.mul_(
             frame_mask[:, None, None] * joint_mask[None, :, None]
@@ -1864,17 +2265,6 @@ class HOIOptimizer:
                     dtype=trans_mask.dtype, device=trans_mask.device,
                 )
                 trans_mask[ramp_end:end] = 1.0
-            if trans_cfg.get("lock_support_feet", False):
-                probs = data.human.foot_contact_probs
-                if probs is not None:
-                    if probs.ndim != 2 or probs.shape != (data.frame_num, 4):
-                        raise ValueError(
-                            "foot_contact_probs must have shape [frame_num,4]"
-                        )
-                    probs = probs.to(device=trans_mask.device)
-                    threshold = float(trans_cfg.get("contact_threshold", 0.5))
-                    support = probs.max(dim=1).values > threshold
-                    trans_mask[support] = 0.0
             self.params.human_trans_res.grad.mul_(trans_mask[:, None])
         hand_cfg = opt_config.get("opt_vars", {}).get("hand_pose_res")
         if hand_cfg is None or self.params.hand_pose_res.grad is None:
@@ -2161,6 +2551,11 @@ class HOIOptimizer:
                         if to_numpy and data.palm_target_world is not None
                         else data.palm_target_world
                     ),
+                    "surface_target_world": (
+                        tensor_to_numpy(data.palm_surface_target_world)
+                        if to_numpy and data.palm_surface_target_world is not None
+                        else data.palm_surface_target_world
+                    ),
                     "target_normal_world": (
                         tensor_to_numpy(data.palm_target_normal_world)
                         if to_numpy and data.palm_target_normal_world is not None
@@ -2171,20 +2566,67 @@ class HOIOptimizer:
                         if to_numpy and data.grasp_anchor_obj_local is not None
                         else data.grasp_anchor_obj_local
                     ),
+                    "grasp_surface_anchor_object": (
+                        tensor_to_numpy(data.grasp_surface_anchor_obj_local)
+                        if to_numpy and data.grasp_surface_anchor_obj_local is not None
+                        else data.grasp_surface_anchor_obj_local
+                    ),
                     "grasp_normal_object": (
                         tensor_to_numpy(data.grasp_normal_obj_local)
                         if to_numpy and data.grasp_normal_obj_local is not None
                         else data.grasp_normal_obj_local
+                    ),
+                    "grasp_tangent_object": (
+                        tensor_to_numpy(data.grasp_tangent_obj_local)
+                        if to_numpy and data.grasp_tangent_obj_local is not None
+                        else data.grasp_tangent_obj_local
+                    ),
+                    "center_clearance": (
+                        float(data.grasp_center_clearance)
+                        if data.grasp_center_clearance is not None
+                        else None
                     ),
                     "grasp_target_world": (
                         tensor_to_numpy(data.grasp_target_world)
                         if to_numpy and data.grasp_target_world is not None
                         else data.grasp_target_world
                     ),
+                    "grasp_surface_target_world": (
+                        tensor_to_numpy(data.grasp_surface_target_world)
+                        if to_numpy and data.grasp_surface_target_world is not None
+                        else data.grasp_surface_target_world
+                    ),
                     "grasp_target_normal_world": (
                         tensor_to_numpy(data.grasp_target_normal_world)
                         if to_numpy and data.grasp_target_normal_world is not None
                         else data.grasp_target_normal_world
+                    ),
+                    "grasp_target_tangent_world": (
+                        tensor_to_numpy(data.grasp_target_tangent_world)
+                        if to_numpy and data.grasp_target_tangent_world is not None
+                        else data.grasp_target_tangent_world
+                    ),
+                },
+                "whole_body_ik": {
+                    "support_foot_reference_world": (
+                        tensor_to_numpy(data.support_foot_reference_world)
+                        if to_numpy and data.support_foot_reference_world is not None
+                        else data.support_foot_reference_world
+                    ),
+                    "support_foot_mask": (
+                        tensor_to_numpy(data.support_foot_mask)
+                        if to_numpy and data.support_foot_mask is not None
+                        else data.support_foot_mask
+                    ),
+                    "root_translation_residual": (
+                        tensor_to_numpy(pred.human.trans_res.reshape(data.frame_num, 3))
+                        if to_numpy
+                        else pred.human.trans_res.reshape(data.frame_num, 3)
+                    ),
+                    "root_rotation_residual_6d": (
+                        tensor_to_numpy(pred.human.pose_res[:, 0])
+                        if to_numpy
+                        else pred.human.pose_res[:, 0]
                     ),
                 },
             },

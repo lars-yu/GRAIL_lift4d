@@ -20,8 +20,77 @@ class FixedObjectGraspTargets:
     contact_frame: int
     anchor_object: torch.Tensor
     normal_object: torch.Tensor | None
+    tangent_object: torch.Tensor | None
     position_world: torch.Tensor
     normal_world: torch.Tensor | None
+    tangent_world: torch.Tensor | None
+
+
+@dataclass(frozen=True)
+class PalmCenterContactTarget:
+    """A shell contact and anatomically feasible palm-centre target."""
+
+    surface_position_world: torch.Tensor
+    center_position_world: torch.Tensor
+    surface_to_hand_world: torch.Tensor
+    center_clearance: torch.Tensor
+
+
+def build_palm_center_contact_target(
+    surface_position_world: torch.Tensor,
+    surface_normal_world: torch.Tensor,
+    initial_palm_center_world: torch.Tensor,
+    initial_palm_patch_world: torch.Tensor,
+    *,
+    clearance_quantile: float = 0.85,
+    minimum_clearance: float = 0.012,
+    maximum_clearance: float = 0.040,
+) -> PalmCenterContactTarget:
+    """Offset a surface target by the posed SMPL-X palm-shell thickness.
+
+    A wrist/MCP palm centre lives inside the hand.  Targeting that centre to a
+    point five millimetres outside an object while also preventing mesh
+    penetration is geometrically contradictory.  We estimate centre-to-shell
+    clearance from the initial posed palm and place the centre outside the
+    surface along an oriented object-to-hand normal.
+    """
+
+    if surface_position_world.shape != (3,) or surface_normal_world.shape != (3,):
+        raise ValueError("surface position and normal must have shape [3]")
+    if initial_palm_center_world.shape != (3,):
+        raise ValueError("initial palm centre must have shape [3]")
+    if initial_palm_patch_world.ndim != 2 or initial_palm_patch_world.shape[1] != 3:
+        raise ValueError("initial palm patch must have shape [N,3]")
+    if initial_palm_patch_world.shape[0] == 0:
+        raise ValueError("initial palm patch must be non-empty")
+    if not 0.0 <= float(clearance_quantile) <= 1.0:
+        raise ValueError("clearance_quantile must be in [0,1]")
+    if not 0.0 < float(minimum_clearance) <= float(maximum_clearance):
+        raise ValueError("clearance bounds must satisfy 0 < min <= max")
+
+    surface = surface_position_world.detach()
+    center = initial_palm_center_world.detach()
+    patch = initial_palm_patch_world.detach()
+    direction = torch.nn.functional.normalize(
+        surface_normal_world.detach(), dim=0, eps=1e-8
+    )
+    if torch.linalg.norm(direction) < 1e-6:
+        raise ValueError("surface normal must be non-zero")
+    # Mesh normals can arrive with either winding.  Contact clearance must point
+    # from the object surface towards the observed initial hand.
+    if torch.dot(direction, center - surface) < 0.0:
+        direction = -direction
+    projected_shell_depth = torch.sum((center[None] - patch) * direction[None], dim=-1)
+    clearance = torch.quantile(
+        projected_shell_depth.clamp_min(0.0), float(clearance_quantile)
+    ).clamp(float(minimum_clearance), float(maximum_clearance))
+    target = surface + clearance * direction
+    return PalmCenterContactTarget(
+        surface_position_world=surface,
+        center_position_world=target.detach(),
+        surface_to_hand_world=direction.detach(),
+        center_clearance=clearance.detach(),
+    )
 
 
 def _validate_pose_sequence(
@@ -71,6 +140,7 @@ def build_fixed_object_grasp_targets(
     contact_frame: int,
     *,
     contact_normal_world: torch.Tensor | None = None,
+    contact_tangent_world: torch.Tensor | None = None,
 ) -> FixedObjectGraspTargets:
     """Freeze a contact anchor in object coordinates and transport it over time."""
     _validate_pose_sequence(object_rotation, object_translation)
@@ -109,12 +179,30 @@ def build_fixed_object_grasp_targets(
             normal_world, dim=-1, eps=1e-8
         ).detach()
 
+    tangent_object = None
+    tangent_world = None
+    if contact_tangent_world is not None:
+        if contact_tangent_world.shape != (3,):
+            raise ValueError("contact_tangent_world must have shape [3]")
+        tangent = torch.nn.functional.normalize(
+            contact_tangent_world.detach(), dim=0, eps=1e-8
+        )
+        tangent_object = torch.matmul(tangent, rotation[contact_frame]).detach()
+        tangent_world = torch.matmul(
+            tangent_object.reshape(1, 1, 3), rotation.transpose(1, 2)
+        ).reshape(-1, 3)
+        tangent_world = torch.nn.functional.normalize(
+            tangent_world, dim=-1, eps=1e-8
+        ).detach()
+
     return FixedObjectGraspTargets(
         contact_frame=contact_frame,
         anchor_object=anchor_object,
         normal_object=normal_object,
+        tangent_object=tangent_object,
         position_world=position_world,
         normal_world=normal_world,
+        tangent_world=tangent_world,
     )
 
 
@@ -157,4 +245,3 @@ def fixed_object_grasp_position_error(
     return torch.linalg.norm(
         palm_world[contact_frame:] - target_world[contact_frame:].detach(), dim=-1
     )
-
