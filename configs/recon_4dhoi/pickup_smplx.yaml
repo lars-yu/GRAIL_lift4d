@@ -11,6 +11,14 @@
 geometry_backend: "moge" # moge | vggt
 camera_mode: "fixed" # fixed | dynamic
 
+# Video mask backend. SAM3 consumes the first-frame object/human masks generated
+# by FoundationPose and propagates both masks through the video.
+mask_backend: "sam3" # sam2 | sam3
+sam3:
+  checkpoint_path: "/home/jiaoyufei_insta360.com/PRE/GRAIL_4d_stage3_depth_approach_backup/imports/Lift4D/sam3/checkpoints/sam3/sam3.pt"
+  python_path: "/home/jiaoyufei_insta360.com/do-as-i-do/do-as-i-do/reconstruction/modules/sam3"
+  compile: false
+
 # Dense, temporally consistent depth used by the normal reconstruction path.
 # VDA is optional at runtime only in the sense that this can be changed to
 # moge; the default pipeline uses VDA as requested by the fixed-object solve.

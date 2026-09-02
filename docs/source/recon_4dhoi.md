@@ -54,7 +54,9 @@ Validated outputs land under
   - GEM-SMPL body + WiLoR hands, fused per-frame. ~45 s/video on an L40S.
 * - 2
   - Preprocess
-  - SAM2 mask tracking + MoGe monocular depth for fixed-camera runs. VGGT runs keep SAM2 masks here and estimate geometry in the VGGT stages.
+  - SAM2 or SAM3 mask tracking + monocular depth for fixed-camera runs. Set
+    `mask_backend: "sam3"` and provide `sam3.checkpoint_path` in the YAML to
+    use the local SAM3 video tracker; the rest of the cache format is unchanged.
 * - 2.1
   - VGGT reconstruction
   - Dynamic-camera only. Runs VGGT-Omega on all video frames and writes `vggt/depth.npy`, `confidence.npy`, `intrinsics.npy`, `c2w.npy`, `raw_scene.ply`, and `metadata.json`.
@@ -66,7 +68,7 @@ Validated outputs land under
   - Dynamic-camera only. Converts GENMO/WiLoR camera-space root translation/orientation with per-frame `T_B<-C_t` and caches `vggt_aligned/<video_id>/human_motion/motion_world.npz` as a preview/debug artifact; local body pose, hand pose, shape, and auxiliary observations are preserved.
 * - 2.4
   - VGGT observations
-  - Dynamic-camera only. Extracts eroded SAM2 human/object/static point observations in Blender metric world space.
+  - Dynamic-camera only. Extracts eroded tracked human/object/static point observations in Blender metric world space.
 * - 3
   - Object pose
   - FoundationPose 6-DoF tracking from cached masks + RGB. Dynamic-camera runs pass per-frame VGGT intrinsics and initialize frame 0 with `T_C0<-O = inv(T_B<-C0) T_B<-O0`; VGGT depth is not fed into FoundationPose. Dynamic runs track the original frame sequence only, because ffmpeg-interpolated frames would need interpolated camera calibration. Dynamic runs also save `pose_estimation_output/poses_in_world.pkl` / `.npy` as `T_B<-O,t` for downstream validation.
@@ -244,7 +246,7 @@ If the generated first frame is not pixel-aligned with the Blender seed render,
 set `vggt.alignment_mode: hybrid` and point `vggt.static_scene_ply` at the
 exported `scene_reference/static_scene.ply`. The pipeline first tries the
 strong first-frame pixel correspondences, then falls back to static-scene ICP
-using SAM2 masks to remove human/object pixels. The ICP fallback uses one
+using the tracked masks to remove human/object pixels. The ICP fallback uses one
 global Sim(3) for the whole video: robust nearest-neighbor/Umeyama updates for
 coarse alignment followed by point-to-plane refinement against normals estimated
 on the Blender static scene.

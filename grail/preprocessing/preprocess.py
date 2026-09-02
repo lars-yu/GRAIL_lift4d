@@ -3,7 +3,7 @@
 Preprocessing Functions for 4D HOI Reconstruction
 
 This module provides preprocessing functions for:
-1. Segmentation mask tracking using SAM2
+1. Segmentation mask tracking using SAM2 or SAM3
 2. Depth estimation
 3. Depth alignment with ground truth
 
@@ -21,7 +21,12 @@ from tqdm import tqdm
 
 # Add project root to path
 from grail.adapters.depth import est_depth
-from grail.adapters.sam import get_bbox_from_mask, track_masks, track_masks_from_bbox
+from grail.adapters.sam import (
+    get_bbox_from_mask,
+    track_masks,
+    track_masks_from_bbox,
+    track_masks_sam3,
+)
 from grail.core.video import extract_frames_from_video, save_images_to_video
 
 
@@ -32,9 +37,13 @@ def preprocess_masks(
     cache_file,
     device="cuda",
     debug_dir=None,
+    mask_backend="sam2",
+    sam3_checkpoint_path=None,
+    sam3_python_path=None,
+    sam3_compile=False,
 ):
     """
-    Track segmentation masks through the video using SAM2.
+    Track segmentation masks through the video using the configured backend.
 
     Args:
         video_path: Path to the video file
@@ -43,6 +52,11 @@ def preprocess_masks(
         cache_file: Path to save the masks cache (.npz)
         device: Device to run inference on
         debug_dir: Directory to save debug visualizations (optional)
+        mask_backend: ``"sam2"`` (default) or ``"sam3"``. Both backends use
+            the first-frame object and human masks as mask prompts.
+        sam3_checkpoint_path: Optional local SAM3 checkpoint path.
+        sam3_python_path: Optional SAM3 source/install root to add to ``sys.path``.
+        sam3_compile: Enable SAM3 model compilation when supported.
 
     Returns:
         dict: Video masks dictionary mapping frame_idx -> obj_id -> binary_mask
@@ -67,18 +81,28 @@ def preprocess_masks(
     first_frame_obj_mask = (first_frame_obj_mask > 0).astype(np.uint8)
     first_frame_human_mask = (first_frame_human_mask > 0).astype(np.uint8)
 
-    # Extract RGB frames for SAM2
+    # Extract RGB frames for the selected video mask backend.
     basename = os.path.basename(video_path)
     temp_rgb_dir = os.path.join(os.path.dirname(cache_file), f"{basename}_frames_temp")
     os.makedirs(temp_rgb_dir, exist_ok=True)
     frame_count = extract_frames_from_video(video_path, temp_rgb_dir, image_format="jpg")
 
-    print(f"Tracking masks through video using SAM2 ({frame_count} frames)...")
-
-    # Track masks through the video
-    # Object mask = obj_id 0, Human mask = obj_id 1
-    video_masks = track_masks(
-        [first_frame_obj_mask, first_frame_human_mask], temp_rgb_dir, device=device, frame_idx=0
+    backend = str(mask_backend or "sam2").lower()
+    if backend not in ("sam2", "sam3"):
+        raise ValueError(f"Unsupported mask backend: {mask_backend!r}; expected sam2 or sam3")
+    tracker = track_masks_sam3 if backend == "sam3" else track_masks
+    print(f"Tracking masks through video using {backend.upper()} ({frame_count} frames)...")
+    tracker_kwargs = {"device": device, "frame_idx": 0}
+    if backend == "sam3":
+        tracker_kwargs.update(
+            {
+                "checkpoint_path": sam3_checkpoint_path,
+                "sam3_python_path": sam3_python_path,
+                "compile_model": sam3_compile,
+            }
+        )
+    video_masks = tracker(
+        [first_frame_obj_mask, first_frame_human_mask], temp_rgb_dir, **tracker_kwargs
     )
 
     # Save masks to cache (compressed to reduce file size)
@@ -122,7 +146,7 @@ def preprocess_depth(
         image_list: List of image paths (frames extracted from video)
         cache_file: Path to save the depth cache (.pt)
         gt_depth_path: Path to ground truth depth PNG from Blender (optional)
-        video_masks: Video masks dict from SAM2 (frame_idx -> obj_id -> mask)
+        video_masks: Video masks dict from SAM2/SAM3 (frame_idx -> obj_id -> mask)
         first_frame_obj_mask: First frame object mask from Blender (numpy array)
         first_frame_human_mask: First frame human mask from Blender (numpy array)
         intrinsics: Camera intrinsics (3, 3) numpy array or path to cam_K.txt (optional)
@@ -196,7 +220,7 @@ def align_depth_with_gt(
     Args:
         depth_list: List of estimated depth tensors
         gt_depth_path: Path to ground truth depth PNG (16-bit, millimeter scale)
-        video_masks: Video masks dict from SAM2 (frame_idx -> obj_id -> mask)
+        video_masks: Video masks dict from SAM2/SAM3 (frame_idx -> obj_id -> mask)
         first_frame_obj_mask: First frame object mask from Blender (numpy array, binary)
         first_frame_human_mask: First frame human mask from Blender (numpy array, binary)
         device: Device for computation
@@ -245,7 +269,7 @@ def align_depth_with_gt(
     print(f"Aligning depth for {len(depth_list)} frames (per-frame scale/shift)...")
 
     for frame_idx, est_depth in enumerate(tqdm(depth_list, desc="Aligning depth")):
-        # Get foreground mask for this frame from video_masks (SAM2 tracked)
+        # Get foreground mask for this frame from the selected tracker.
         frame_foreground_mask = None
         if video_masks is not None and frame_idx in video_masks:
             # obj_id 0 = object, obj_id 1 = human

@@ -3,7 +3,7 @@
 
 Steps:
     1. Human motion prediction (HMR4D)
-    2. Preprocessing (SAM2 mask tracking + depth estimation)
+    2. Preprocessing (SAM2/SAM3 mask tracking + depth estimation)
     3. Object pose estimation (FoundationPose)
     4. 4D HOI optimization
     5. Filter & post-process results
@@ -107,7 +107,7 @@ def step1_predict_human_motion(video_ids, args):
 
 
 def step2_preprocess_data(video_ids, args):
-    """Step 2: SAM2 mask tracking + depth estimation."""
+    """Step 2: SAM2/SAM3 mask tracking + depth estimation."""
     os.makedirs(f"{args.results_dir}/{args.recon_cache_dir}", exist_ok=True)
 
     for video_id in tqdm(sorted(video_ids), desc="Step 2 — Preprocess"):
@@ -143,6 +143,12 @@ def step2_preprocess_data(video_ids, args):
                     cache_file=masks_cache,
                     device=args.device,
                     debug_dir=debug_dir,
+                    mask_backend=args.cfg.get("mask_backend", "sam2"),
+                    sam3_checkpoint_path=(args.cfg.get("sam3", {}) or {}).get(
+                        "checkpoint_path"
+                    ),
+                    sam3_python_path=(args.cfg.get("sam3", {}) or {}).get("python_path"),
+                    sam3_compile=bool((args.cfg.get("sam3", {}) or {}).get("compile", False)),
                 )
 
             # Estimate depth
