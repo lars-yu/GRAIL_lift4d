@@ -258,6 +258,9 @@ def main():
                 else OBJECT_CONFIG[category_prefix]
             )
             print("Loaded obj_config: ", obj_config)
+        elif "default" in OBJECT_CONFIG:
+            obj_config = OBJECT_CONFIG["default"]
+            print("Using default object config: ", obj_config)
 
         # Determine scene configuration
         if args.scene is not None:
@@ -267,10 +270,9 @@ def main():
             scene_key = obj_config["scene"]
             print(f"Auto-selected scene '{scene_key}' for category '{args.category}'")
         else:
-            if args.use_table_scene:
-                scene_key = OBJECT_CONFIG["table-default"]["scene"]
-            else:
-                scene_key = OBJECT_CONFIG["floor-default"]["scene"]
+            fallback_key = "table-default" if args.use_table_scene else "floor-default"
+            fallback_cfg = OBJECT_CONFIG.get(fallback_key, OBJECT_CONFIG.get("default", {}))
+            scene_key = fallback_cfg.get("scene", "indoor2-pickup-table")
             print(f"No scene specified for category '{args.category}', using '{scene_key}'")
 
         if scene_key not in SCENE_CONFIG:
