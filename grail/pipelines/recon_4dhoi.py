@@ -282,6 +282,93 @@ def step3_obj_pose_estimation(video_ids, args):
             print(f"  Error (step3) {video_id}: {e}\n{traceback.format_exc()}")
 
 
+def _prepare_lift4d_motion_prior(video_id, args, prior_path):
+    """Generate a Lift4D motion prior from the current video when needed.
+
+    The preparation is deliberately motion-only: SAM3D reconstructs each frame,
+    Lift4D runs its geometry (``node``) stage, and the checkpoint exporter writes
+    the NPZ consumed by GRAIL. Appearance/SDS training is not part of this path.
+    """
+    cfg = args.cfg.get("lift4d_preprocess", {}) or {}
+    if not bool(cfg.get("enabled", False)):
+        return prior_path
+    if prior_path and os.path.isfile(prior_path):
+        print(f"  Reusing Lift4D motion prior: {prior_path}")
+        return prior_path
+    if not prior_path:
+        raise ValueError("Lift4D preparation requires a resolved prior output path")
+
+    video_id = _strip_mp4(video_id)
+    video_path = os.path.join(args.results_dir, args.video_dir, f"{video_id}.mp4")
+    masks_cache = os.path.join(args.results_dir, args.recon_cache_dir, "masks", f"{video_id}.npz")
+    video_masks = load_masks_from_cache(masks_cache)
+
+    root = os.path.abspath(args.results_dir)
+    data_root = os.path.abspath(os.path.join(root, cfg.get("data_root", "generation/lift4d_input")))
+    sam3d_out = os.path.abspath(os.path.join(root, cfg.get("sam3d_output_dir", "generation/lift4d_sam3d_output")))
+    scgs_out = os.path.abspath(os.path.join(root, cfg.get("scgs_output_dir", "generation/lift4d_scgs")))
+    safe_name = video_id.replace("/", "__").replace("\\", "__")
+    video_root = os.path.join(data_root, "custom", safe_name)
+    frames_dir = os.path.join(video_root, "frames")
+    masks_dir = os.path.join(video_root, "masks")
+    os.makedirs(frames_dir, exist_ok=True)
+    os.makedirs(masks_dir, exist_ok=True)
+    frame_count = extract_frames_from_video(video_path, frames_dir, image_format="jpg")
+    for frame_idx in range(frame_count):
+        frame_mask = video_masks.get(frame_idx, {}).get(0)
+        if frame_mask is None:
+            raise ValueError(f"Lift4D preparation has no object mask for frame {frame_idx}: {masks_cache}")
+        mask_path = os.path.join(masks_dir, f"{frame_idx:06d}_object_1.png")
+        cv2.imwrite(mask_path, (np.asarray(frame_mask).squeeze() > 0).astype(np.uint8) * 255)
+
+    python_exe = cfg.get("python") or sys.executable
+    sam3d_script = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), cfg.get("sam3d_script", "imports/Lift4D/sam3d/run_inference.py")))
+    scgs_script = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), cfg.get("scgs_script", "imports/Lift4D/lift4d_scgs/train_lift4d_scgs.py")))
+    mask_name = str(cfg.get("mask_name", "object_1"))
+    common = [
+        "--dataset", "custom", "--object_name", safe_name, "--mask_name", mask_name,
+        "--data_root", data_root, "--sam3d_out", sam3d_out,
+    ]
+    sam3d_cmd = [python_exe, sam3d_script, *common,
+                 "--video_consistency", str(cfg.get("video_consistency", 0.2)),
+                 "--decode_formats", "gaussian"]
+    if bool(cfg.get("run_da3", False)):
+        sam3d_cmd.append("--run_da3")
+    else:
+        sam3d_cmd.append("--no-run_da3")
+    print("  Preparing Lift4D SAM3D motion input...")
+    subprocess.run(sam3d_cmd, check=True)
+
+    iterations = int(cfg.get("stage3_iterations", 10000))
+    model_base = os.path.join(scgs_out, f"custom_{safe_name}_{mask_name}")
+    train_cmd = [python_exe, scgs_script, *common,
+                 "--sam3d_input_dir", sam3d_out, "--output_dir", scgs_out,
+                 "--model_path", model_base, "--deform-type", "node",
+                 "--iterations", str(iterations), "--save_checkpoints",
+                 "--skip_training_videos", "--optimize_gs_xyz"]
+    print(f"  Fitting Lift4D geometry motion ({iterations} iterations)...")
+    subprocess.run(train_cmd, check=True)
+
+    export_cmd = [python_exe, scgs_script, *common,
+                  "--sam3d_input_dir", sam3d_out, "--output_dir", scgs_out,
+                  "--model_path", model_base, "--deform-type", "node",
+                  "--load_checkpoint", str(iterations), "--export_motion_npz",
+                  "--motion_output", os.path.abspath(prior_path)]
+    fp_intrinsics = os.path.join(
+        args.results_dir,
+        args.foundation_pose_dir,
+        _origin_id(video_id),
+        "cam_K.txt",
+    )
+    if os.path.isfile(fp_intrinsics):
+        export_cmd.extend(["--motion_intrinsics", os.path.abspath(fp_intrinsics)])
+    print(f"  Exporting Lift4D motion prior: {prior_path}")
+    subprocess.run(export_cmd, check=True)
+    if not os.path.isfile(prior_path):
+        raise FileNotFoundError(f"Lift4D exporter did not create prior: {prior_path}")
+    return prior_path
+
+
 def step4_optimize_4dhoi(video_ids, args):
     """Step 4: 4D HOI optimization."""
     for video_id in tqdm(sorted(video_ids), desc="Step 4 — Optimize"):
@@ -323,6 +410,7 @@ def step4_optimize_4dhoi(video_ids, args):
             if isinstance(prior_path, str) and prior_path and not os.path.isabs(prior_path):
                 prior_path = os.path.join(args.results_dir, prior_path)
             if prior_path:
+                prior_path = _prepare_lift4d_motion_prior(video_id, args, prior_path)
                 opt_cfg["lift4d_motion_prior_path"] = prior_path
 
             if args.fixed_object_human_ik is not None:

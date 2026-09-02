@@ -19,6 +19,21 @@ sam3:
   python_path: "/home/jiaoyufei_insta360.com/do-as-i-do/do-as-i-do/reconstruction/modules/sam3"
   compile: false
 
+# Motion-only Lift4D preparation before fixed-object trajectory optimization.
+# Set `enabled: false` to reuse externally exported NPZ files only.
+lift4d_preprocess:
+  enabled: true
+  python: null # optional executable containing SAM3D/Lift4D dependencies
+  data_root: "generation/lift4d_input"
+  sam3d_output_dir: "generation/lift4d_sam3d_output"
+  scgs_output_dir: "generation/lift4d_scgs"
+  sam3d_script: "imports/Lift4D/sam3d/run_inference.py"
+  scgs_script: "imports/Lift4D/lift4d_scgs/train_lift4d_scgs.py"
+  mask_name: "object_1"
+  video_consistency: 0.2
+  run_da3: false
+  stage3_iterations: 10000
+
 # Dense, temporally consistent depth used by the normal reconstruction path.
 # VDA is optional at runtime only in the sense that this can be changed to
 # moge; the default pipeline uses VDA as requested by the fixed-object solve.

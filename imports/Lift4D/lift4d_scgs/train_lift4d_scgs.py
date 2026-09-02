@@ -27,8 +27,12 @@ if SAM3D_PATH not in sys.path:
     sys.path.insert(0, SAM3D_PATH)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
+_GRAIL_ROOT = os.path.dirname(os.path.dirname(_REPO_ROOT))
+if _GRAIL_ROOT not in sys.path:
+    sys.path.insert(0, _GRAIL_ROOT)
 os.environ['LIDRA_SKIP_INIT'] = '1'
 import lift4d_datasets as ds_registry
+from grail.adapters.lift4d import save_motion_npz, weighted_kabsch_umeyama
 
 from pytorch3d.transforms import quaternion_multiply, quaternion_invert, matrix_to_quaternion
 from pytorch3d.ops import knn_points
@@ -717,6 +721,7 @@ class GUI:
         self.lambda_rc = getattr(args, 'lambda_rc', 0.0)
         self.lambda_sds_rgb = getattr(args, 'lambda_sds_rgb', 0.0)
         self.enable_lpips = getattr(args, 'enable_lpips', False)
+        self.skip_training_videos = getattr(args, 'skip_training_videos', False)
 
         if self.sam3d_data is None:
             raise ValueError("Lift4D requires a data mode: pass --dataset or --frames_dir")
@@ -1241,18 +1246,20 @@ class GUI:
 
             # Evaluate and save comparison video at intervals
             if self.iteration % self.vis_interval == 0:
-                self.eval_metrics()
-                self.save_comparison_video()
-                self.save_orbit_video()
                 if self.save_checkpoints:
                     self.save_lift4d_checkpoint()
+                if not self.skip_training_videos:
+                    self.eval_metrics()
+                    self.save_comparison_video()
+                    self.save_orbit_video()
 
         # Final evaluation and visualization
-        self.eval_metrics()
-        self.save_comparison_video()
-        self.save_orbit_video()
         if self.save_checkpoints:
             self.save_lift4d_checkpoint()
+        if not self.skip_training_videos:
+            self.eval_metrics()
+            self.save_comparison_video()
+            self.save_orbit_video()
 
         print(f"\nLift4D training complete. Final iteration: {self.iteration}")
 
@@ -1530,6 +1537,158 @@ class GUI:
         if self.is_node_delta:
             d_xyz = d_xyz + self._compute_node_delta_base(canonical_xyz, fid)
         return canonical_xyz + d_xyz
+
+    @torch.no_grad()
+    def _deformed_camera_points_for_motion(self, frame_idx):
+        """Return final camera-space Gaussian centers after Lift4D transforms."""
+        deformed_xyz = self._deform_at_frame(frame_idx)
+        rotation = self.gaussians.get_rotation.detach()
+        scaling = self.gaussians.get_scaling.detach()
+        if self.optimize_per_frame_compose_transforms_app:
+            deformed_xyz, scaling = self.apply_compose_transform_app(deformed_xyz, frame_idx, scaling)
+        transform = self.sam3d_data.get_transform(frame_idx)
+        xyz_cam, _, _ = self.sam3d_data.apply_transform_to_gaussian(
+            deformed_xyz, rotation, scaling, transform
+        )
+        return xyz_cam
+
+    @torch.no_grad()
+    def export_motion_prior(
+        self,
+        output_path,
+        max_points=4096,
+        opacity_min=0.15,
+        min_visibility=0.25,
+        min_points=16,
+        intrinsics_path=None,
+    ):
+        """Export the geometry-stage motion as a GRAIL-compatible NPZ.
+
+        Only high-opacity Gaussian centers are exported.  GRAIL performs the
+        stable-point selection and temporal smoothing when it loads this file.
+        """
+        frame_indices = list(self.frame_indices)
+        canonical_xyz = self.gaussians.get_xyz.detach()
+        opacity = self.gaussians.get_opacity.detach().reshape(-1)
+        finite = torch.isfinite(canonical_xyz).all(dim=1) & torch.isfinite(opacity)
+        keep = finite & (opacity >= float(opacity_min))
+        if int(keep.sum()) < int(min_points):
+            finite_idx = torch.where(finite)[0]
+            k = min(max(int(max_points), int(min_points)), int(finite_idx.numel()))
+            if k < int(min_points):
+                raise RuntimeError(f"Not enough Lift4D points for motion export: {k} < {min_points}")
+            base_idx = finite_idx[torch.topk(opacity[finite], k=k, largest=True).indices]
+        else:
+            base_idx = torch.where(keep)[0]
+            if int(base_idx.numel()) > int(max_points):
+                base_idx = base_idx[torch.topk(opacity[base_idx], k=int(max_points), largest=True).indices]
+
+        canonical_sel = canonical_xyz[base_idx]
+        opacity_sel = opacity[base_idx].clamp_min(0.0)
+        target_cam, visibility, intrinsics_seq = [], [], []
+        first_image_size = None
+        K_override = None
+        if intrinsics_path:
+            K_override = np.loadtxt(intrinsics_path, dtype=np.float32)
+            if K_override.shape != (3, 3):
+                raise ValueError(
+                    f"--motion_intrinsics must contain a 3x3 matrix, got {K_override.shape}: "
+                    f"{intrinsics_path}"
+                )
+
+        for frame_idx in frame_indices:
+            xyz_cam = self._deformed_camera_points_for_motion(frame_idx)[base_idx]
+            target_cam.append(xyz_cam.detach().cpu().numpy())
+            gt_image = self.sam3d_data.get_gt_image(frame_idx)
+            mask = self.sam3d_data.get_mask(frame_idx)
+            if gt_image is not None:
+                height, width = int(gt_image.shape[0]), int(gt_image.shape[1])
+                first_image_size = first_image_size or (height, width)
+                K_np = K_override.copy() if K_override is not None else None
+                if K_np is None and hasattr(self.sam3d_data, "da3_intrinsics"):
+                    K_np = self.sam3d_data.da3_intrinsics.get(frame_idx)
+                if K_np is None:
+                    focal = float(self.sam3d_data.focal_length or max(height, width) * 1.2)
+                    max_dim = max(width, height)
+                    cx, cy = max_dim / 2.0, max_dim / 2.0
+                    if width > height:
+                        cy -= (max_dim - height) // 2
+                    else:
+                        cx -= (max_dim - width) // 2
+                    K_np = np.asarray([[focal, 0.0, cx], [0.0, focal, cy], [0.0, 0.0, 1.0]], dtype=np.float32)
+                intrinsics_seq.append(np.asarray(K_np, dtype=np.float32))
+                K_t = torch.as_tensor(K_np, dtype=xyz_cam.dtype, device=xyz_cam.device)
+                z = xyz_cam[:, 2].clamp(min=1e-6)
+                u = K_t[0, 0] * xyz_cam[:, 0] / z + K_t[0, 2]
+                v = K_t[1, 1] * xyz_cam[:, 1] / z + K_t[1, 2]
+                in_bounds = (u >= 0) & (u < width) & (v >= 0) & (v < height) & (xyz_cam[:, 2] > 0)
+                if mask is not None:
+                    ui = u.long().clamp(0, width - 1)
+                    vi = v.long().clamp(0, height - 1)
+                    in_mask = torch.zeros_like(in_bounds)
+                    in_mask[in_bounds] = mask[vi[in_bounds], ui[in_bounds]] > 0.5
+                    vis = in_bounds & in_mask
+                else:
+                    vis = in_bounds
+            else:
+                intrinsics_seq.append(np.eye(3, dtype=np.float32))
+                vis = xyz_cam[:, 2] > 0
+            visibility.append(vis.detach().cpu().numpy().astype(bool))
+
+        target_cam = np.stack(target_cam, axis=0)
+        visibility = np.stack(visibility, axis=0)
+        stable = visibility.mean(axis=0) >= float(min_visibility)
+        if int(stable.sum()) < int(min_points):
+            stable = visibility.any(axis=0)
+        if int(stable.sum()) < int(min_points):
+            raise RuntimeError(f"Not enough stable Lift4D points for motion export: {int(stable.sum())} < {min_points}")
+
+        canonical_np = canonical_sel.cpu().numpy()[stable]
+        opacity_np = opacity_sel.cpu().numpy()[stable]
+        target_np = target_cam[:, stable, :]
+        visible_np = visibility[:, stable]
+        canonical_center = np.average(canonical_np, axis=0, weights=np.clip(opacity_np, 1e-6, None))
+        poses, confidence, rmse, scales, inliers, valid_counts = [], [], [], [], [], []
+        for frame_pos in range(len(frame_indices)):
+            fit = weighted_kabsch_umeyama(
+                canonical_np,
+                target_np[frame_pos],
+                weights=opacity_np * visible_np[frame_pos].astype(np.float64),
+                estimate_scale=True,
+                min_points=int(min_points),
+            )
+            T = np.eye(4, dtype=np.float32)
+            T[:3, :3] = fit.R.astype(np.float32)
+            T[:3, 3] = fit.t.astype(np.float32)
+            poses.append(T)
+            confidence.append(fit.confidence)
+            rmse.append(fit.rmse)
+            scales.append(fit.scale)
+            inliers.append(fit.inlier_mask)
+            valid_counts.append(fit.valid_point_count)
+
+        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+        save_motion_npz(
+            output_path,
+            frame_indices=np.asarray(frame_indices, dtype=np.int64),
+            object_poses_cam=np.stack(poses, axis=0),
+            motion_confidence=np.asarray(confidence, dtype=np.float32),
+            rigid_fit_rmse=np.asarray(rmse, dtype=np.float32),
+            object_scales=np.asarray(scales, dtype=np.float32),
+            image_size=first_image_size or (0, 0),
+            camera_convention="opencv_camera",
+            transform_direction=np.asarray("T_C<-G_canonical_gaussian"),
+            pose_source=np.asarray("weighted_kabsch_canonical_gaussian_to_camera_points"),
+            camera_intrinsics=np.stack(intrinsics_seq, axis=0).astype(np.float32),
+            canonical_object_center=canonical_center.astype(np.float32),
+            canonical_points=canonical_np.astype(np.float32),
+            point_trajectories_cam=target_np.astype(np.float32),
+            point_visibility=visible_np.astype(np.bool_),
+            point_fit_inliers=np.stack(inliers, axis=0).astype(np.bool_),
+            point_opacity=opacity_np.astype(np.float32),
+            valid_point_count=np.asarray(valid_counts, dtype=np.int32),
+        )
+        print(f"[Lift4D motion] exported {len(frame_indices)} frames to {output_path} | points={canonical_np.shape[0]}")
 
     def _ensure_knn_precomputed(self):
         """Lazily precompute KNN indices, weights, and canonical distances for physical priors.
@@ -2881,6 +3040,24 @@ if __name__ == "__main__":
                         help="Save debug images for occlusion pipeline (masks, depths, color matching)")
     parser.add_argument("--load_checkpoint", type=int, default=-1,
                         help="Load checkpoint at this iteration (-1 = none, 0 = latest)")
+    parser.add_argument("--skip_training_videos", action="store_true",
+                        help="Skip Lift4D evaluation/comparison videos; useful for motion-only export")
+    parser.add_argument("--export_motion_npz", action="store_true",
+                        help="Load a Lift4D checkpoint and export a motion-only NPZ for GRAIL, then exit")
+    parser.add_argument("--export_grail_prior", type=str, default=None,
+                        help="Alias for --export_motion_npz --motion_output <path>")
+    parser.add_argument("--motion_output", type=str, default=None,
+                        help="Output path for --export_motion_npz (default: <model_path>/lift4d_motion_prior.npz)")
+    parser.add_argument("--motion_intrinsics", type=str, default=None,
+                        help="Optional 3x3 camera matrix (e.g. FoundationPose cam_K.txt) for motion export")
+    parser.add_argument("--motion_max_points", type=int, default=4096,
+                        help="Maximum high-opacity points used for rigid motion fitting")
+    parser.add_argument("--motion_opacity_min", type=float, default=0.15,
+                        help="Minimum opacity for candidate motion points")
+    parser.add_argument("--motion_min_visibility", type=float, default=0.25,
+                        help="Minimum fraction of frames where a point must project inside the object mask")
+    parser.add_argument("--motion_min_points", type=int, default=16,
+                        help="Minimum valid points required per rigid fit")
     parser.add_argument("--position_lr_init_app", type=float, default=None,
                         help="Override position_lr_init after checkpoint load, with LR schedule reset to step 0 "
                              "(e.g. --load_checkpoint 50000 --iterations 60000 --position_lr_init_app 1.6e-4 "
@@ -2914,6 +3091,9 @@ if __name__ == "__main__":
 
     # Point the shared dataset registry at the chosen data root.
     os.environ["LIFT4D_DATA_ROOT"] = os.path.abspath(args.data_root)
+    if args.export_grail_prior:
+        args.export_motion_npz = True
+        args.motion_output = args.export_grail_prior
 
     def _run_training(args):
         """Run training for the current args configuration."""
@@ -2925,6 +3105,22 @@ if __name__ == "__main__":
         print("Optimizing " + args.model_path)
         safe_state(False)
         gui = GUI(args=args, dataset=lp.extract(args), opt=op.extract(args))
+        if args.export_motion_npz:
+            load_iter = getattr(args, "load_checkpoint", -1)
+            if load_iter < 0:
+                load_iter = 0
+            if not gui.load_lift4d_checkpoint(iteration=load_iter):
+                raise RuntimeError("--export_motion_npz requires a saved Lift4D checkpoint")
+            output_path = args.motion_output or os.path.join(args.model_path, "lift4d_motion_prior.npz")
+            gui.export_motion_prior(
+                output_path,
+                max_points=args.motion_max_points,
+                opacity_min=args.motion_opacity_min,
+                min_visibility=args.motion_min_visibility,
+                min_points=args.motion_min_points,
+                intrinsics_path=args.motion_intrinsics,
+            )
+            return
         gui.train(args.iterations)
 
     if args.dataset in ("consistent4d", "davis"):
