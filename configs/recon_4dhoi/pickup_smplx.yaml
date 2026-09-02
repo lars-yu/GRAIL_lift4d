@@ -11,6 +11,18 @@
 geometry_backend: "moge" # moge | vggt
 camera_mode: "fixed" # fixed | dynamic
 
+# Dense, temporally consistent depth used by the normal reconstruction path.
+# VDA is optional at runtime only in the sense that this can be changed to
+# moge; the default pipeline uses VDA as requested by the fixed-object solve.
+depth:
+  method: "vda" # vda | moge | foundationgeo
+  encoder: "vitb"
+  metric: true
+  input_size: 518
+  max_res: 1280
+  target_fps: -1
+  fp32: false
+
 vggt:
   checkpoint_path: "imports/vggt-omega/checkpoints/vggt_omega_1b_512.pt"
   image_resolution: 512
@@ -86,7 +98,7 @@ optimization:
 
   # Real Lift4D Gaussian-center camera-Z prior. Formal runs supervise every frame
   # and preserve FoundationPose image-plane position and rotation.
-  use_lift4d_depth_prior: false
+  use_lift4d_depth_prior: true
   lift4d_motion:
     enabled: false
     source: "point_trajectories_cam"
@@ -102,7 +114,9 @@ optimization:
     huber_delta: 0.02
     optimize_depth_only: true
     use_kabsch_pose: false
-  lift4d_motion_prior_path: null # required when enabled; no guessed path or fallback
+  lift4d_motion_prior_path: "generation/lift4d_depth/{video_id}.npz"
+  fixed_object_human_ik: true
+  fixed_object_ik_mode: "adaptive"
   freeze_foundationpose_image_plane_translation: false
   lift4d_stable_point_count: 2500
   lift4d_median_window: 7

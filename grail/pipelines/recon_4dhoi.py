@@ -14,6 +14,7 @@ import argparse
 import os
 import pickle
 import shutil
+import subprocess
 import sys
 import time
 import traceback
@@ -189,6 +190,7 @@ def step2_preprocess_data(video_ids, args):
                     first_frame_human_mask=first_human_mask,
                     intrinsics=intrinsics,
                     device=args.device,
+                    depth_cfg=(args.cfg.get("depth", {}) or {}),
                 )
 
                 if args.verbose and intrinsics:
@@ -301,6 +303,77 @@ def step4_optimize_4dhoi(video_ids, args):
                 opt_cfg["human_model"] = args.cfg["human_model"]
             else:
                 opt_cfg = dict(args.cfg)
+
+            # Resolve the per-video Lift4D motion prior for the optimizer.  A
+            # template in YAML may use ``{video_id}``; the CLI directory form
+            # keeps the original dataset/category/character invocation concise.
+            prior_path = opt_cfg.get("lift4d_motion_prior_path")
+            if args.lift4d_prior_dir:
+                prior_path = os.path.join(
+                    args.results_dir, args.lift4d_prior_dir, f"{video_id}.npz"
+                )
+            elif isinstance(prior_path, str) and "{video_id}" in prior_path:
+                prior_path = prior_path.replace("{video_id}", video_id)
+            if isinstance(prior_path, str) and prior_path and not os.path.isabs(prior_path):
+                prior_path = os.path.join(args.results_dir, prior_path)
+            if prior_path:
+                opt_cfg["lift4d_motion_prior_path"] = prior_path
+
+            if args.fixed_object_human_ik is not None:
+                opt_cfg["fixed_object_human_ik"] = bool(args.fixed_object_human_ik)
+            if args.fixed_object_ik_mode is not None:
+                opt_cfg["fixed_object_ik_mode"] = args.fixed_object_ik_mode
+            if opt_cfg.get("fixed_object_human_ik", False):
+                # The fixed-object solver requires the immutable Lift4D depth
+                # trajectory to detect motion and lock the FoundationPose pose.
+                opt_cfg["use_lift4d_depth_prior"] = True
+                opt_cfg.setdefault("fixed_object_ik_mode", "adaptive")
+
+                if not prior_path:
+                    raise ValueError(
+                        "fixed_object_human_ik requires optimization.lift4d_motion_prior_path "
+                        "or --lift4d_prior_dir"
+                    )
+                # Reuse the formal runner's M0/M1/M2 cascade so the original
+                # dataset/category/character entry gets the same acceptance
+                # gates and diagnostics as the standalone command.
+                formal_cmd = [
+                    sys.executable,
+                    os.path.join(
+                        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                        "scripts",
+                        "run_lift4d_vggt_optimization.py",
+                    ),
+                    "--config-file",
+                    os.path.abspath(args.config),
+                    "--video-id",
+                    video_id,
+                    "--video-file",
+                    video_file,
+                    "--hmr-file",
+                    hmr_file,
+                    "--mesh-file",
+                    obj_path,
+                    "--foundationpose-poses",
+                    obj_pose_file,
+                    "--render-config",
+                    render_cfg_file,
+                    "--cache-dir",
+                    os.path.join(args.results_dir, args.recon_cache_dir),
+                    "--results-dir",
+                    args.results_dir,
+                    "--lift4d-prior",
+                    prior_path,
+                    "--output-dir",
+                    output_dir,
+                    "--device",
+                    args.device,
+                    "--fixed-object-human-ik",
+                    "--fixed-object-ik-mode",
+                    str(opt_cfg.get("fixed_object_ik_mode", "adaptive")),
+                ]
+                subprocess.run(formal_cmd, check=True)
+                continue
 
             optimizer = HOIOptimizer(
                 exp_name=video_id,
@@ -533,6 +606,24 @@ def main():
     parser.add_argument("--skip_done", action="store_true")
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--is_static_obj", action="store_true")
+    parser.add_argument(
+        "--lift4d_prior_dir",
+        type=str,
+        default=None,
+        help="Directory containing per-video Lift4D prior NPZ files (video_id.npz).",
+    )
+    parser.add_argument(
+        "--fixed_object_human_ik",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Override config and enable fixed-object whole-body IK.",
+    )
+    parser.add_argument(
+        "--fixed_object_ik_mode",
+        choices=("adaptive", "upper-body", "stance", "step"),
+        default=None,
+        help="Override fixed-object IK mode.",
+    )
 
     parser.set_defaults(**cfg_flat)
     args = parser.parse_args()

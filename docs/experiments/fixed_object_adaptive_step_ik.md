@@ -72,3 +72,23 @@ to the existing fixed-grasp, palm, penetration, and elbow gates, M2 requires:
 The diagnostics include the selected mode, every attempted mode, step count,
 maximum planned step length, swing/touchdown errors, swing clearance, and stance
 foot sliding.
+
+## Unified pipeline entry
+
+The normal `recon_4dhoi` entry now runs the complete chain: HMR/motion
+reconstruction, configured dense depth (VDA by default), FoundationPose, Lift4D
+motion-depth optimization, and fixed-object adaptive human IK.  The optimizer
+expects one Lift4D prior per video at
+`results/generation/lift4d_depth/<video_id>.npz`; use
+`--lift4d_prior_dir <directory-relative-to-results>` to select another
+directory.  Existing depth caches made with a different backend must be
+removed or regenerated before rerunning step 2.
+
+```bash
+python -m grail.pipelines.recon_4dhoi \
+  --config configs/recon_4dhoi/pickup_smplx.yaml \
+  --dataset dl300_delta \
+  --category dl300 \
+  --character kid_001 \
+  --lift4d_prior_dir generation/lift4d_depth
+```
