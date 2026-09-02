@@ -10,6 +10,7 @@ import math
 import os
 import random
 import shutil
+import tempfile
 from pathlib import Path
 
 import bpy  # isort: skip
@@ -20,7 +21,7 @@ import numpy as np
 from grail.core.dataset import category2object
 
 
-def load_object_from_category(dataset, category, position, rotation, scale):
+def load_object_from_category(dataset, category, position, rotation, scale, dataset_path=None):
     """
     Load object by globbing for meshes under data/<dataset>/<category>.
 
@@ -35,13 +36,19 @@ def load_object_from_category(dataset, category, position, rotation, scale):
         object: The imported Blender object
     """
     # Get object path from category
-    object_path = category2object(f"data/{dataset}", category)
+    object_path = category2object(dataset_path or f"data/{dataset}", category)
     print(f"Loading object: {object_path}")
 
-    if dataset == "SAM3D":
-        return load_glb_asset(object_path.replace(".obj", ".glb"), position, rotation, scale)
-    else:
+    if dataset == "SAM3D" and Path(object_path).suffix.lower() == ".obj":
+        sibling_glb = str(Path(object_path).with_suffix(".glb"))
+        if os.path.isfile(sibling_glb):
+            object_path = sibling_glb
+    suffix = Path(object_path).suffix.lower()
+    if suffix == ".obj":
         return load_obj_asset(object_path, position, rotation, scale)
+    if suffix in (".glb", ".gltf"):
+        return load_glb_asset(object_path, position, rotation, scale)
+    raise ValueError(f"Unsupported object mesh format '{suffix}': {object_path}")
 
 
 def repose_renderpeople(parent_obj, rand_seed=None):
@@ -990,6 +997,18 @@ def load_glb_asset(glb_file_path, position=(0, 0, 0), rotation=(0, 0, 0), scale=
     if not os.path.exists(glb_file_path):
         raise FileNotFoundError(f"GLB file not found: {glb_file_path}")
 
+    # Habitat YCB's compressed GLB uses Basis/KTX textures. Prefer the sibling
+    # PNG-textured original when present so Blender preserves the material.
+    import_path = glb_file_path
+    temporary_glb = None
+    original_glb = f"{glb_file_path}.orig"
+    if glb_file_path.lower().endswith(".glb") and os.path.isfile(original_glb):
+        temporary_glb = tempfile.NamedTemporaryFile(suffix=".glb", delete=False)
+        temporary_glb.close()
+        shutil.copyfile(original_glb, temporary_glb.name)
+        import_path = temporary_glb.name
+        print(f"Using uncompressed textured GLB variant: {original_glb}")
+
     print(f"Loading GLB asset: {glb_file_path}")
 
     # Clear selection
@@ -999,7 +1018,11 @@ def load_glb_asset(glb_file_path, position=(0, 0, 0), rotation=(0, 0, 0), scale=
     objects_before = set(bpy.data.objects)
 
     # Import the GLB file
-    bpy.ops.import_scene.gltf(filepath=glb_file_path)
+    try:
+        bpy.ops.import_scene.gltf(filepath=import_path)
+    finally:
+        if temporary_glb is not None:
+            os.unlink(temporary_glb.name)
 
     # Get the newly imported objects
     objects_after = set(bpy.data.objects)
@@ -1041,9 +1064,20 @@ def load_glb_asset(glb_file_path, position=(0, 0, 0), rotation=(0, 0, 0), scale=
     for mesh_obj in mesh_objects:
         if mesh_obj.type == "MESH":
             mesh = mesh_obj.data
+            has_image_texture = any(
+                mat
+                and mat.use_nodes
+                and any(
+                    node.type == "TEX_IMAGE" and node.image is not None
+                    for node in mat.node_tree.nodes
+                )
+                for mat in mesh.materials
+            )
 
             # Check if the mesh has color attributes (vertex colors)
-            if hasattr(mesh, "color_attributes") and len(mesh.color_attributes) > 0:
+            if has_image_texture:
+                print(f"  Preserving imported image texture material: {mesh_obj.name}")
+            elif hasattr(mesh, "color_attributes") and len(mesh.color_attributes) > 0:
                 print(f"  Setting up vertex colors for mesh: {mesh_obj.name}")
                 print(f"  Found {len(mesh.color_attributes)} color attribute(s)")
 
@@ -1098,6 +1132,7 @@ def load_glb_asset(glb_file_path, position=(0, 0, 0), rotation=(0, 0, 0), scale=
     combined_rotation = (base_rotation.to_matrix() @ user_rotation.to_matrix()).to_euler()
 
     # transform_obj.rotation_euler = combined_rotation
+    transform_obj.rotation_mode = "XYZ"
     transform_obj.rotation_euler = rotation
     print(f"Object rotated to: {combined_rotation} radians (includes X-up to Z-up conversion)")
 

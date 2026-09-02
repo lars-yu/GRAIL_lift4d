@@ -393,6 +393,7 @@ def simulate_object_initial_state(
     dataset,
     category,
     output_dir,
+    dataset_path=None,
     drop_height=2.0,
     settling_time=5.0,
     skip_done=False,
@@ -417,7 +418,7 @@ def simulate_object_initial_state(
     """
     # Get object path
     try:
-        object_path = category2object(f"data/{dataset}", category)
+        object_path = category2object(dataset_path or f"data/{dataset}", category)
         print(f"Found object: {object_path}")
     except Exception as e:
         raise RuntimeError(
@@ -475,6 +476,10 @@ def main():
         type=str,
         required=True,
         help="Object category (e.g., barbell, chair)",
+    )
+    parser.add_argument(
+        "--dataset_path", type=str, default=None,
+        help="Optional mesh root overriding data/<dataset>.",
     )
 
     # Output settings
@@ -540,6 +545,7 @@ def main():
                 dataset=args.dataset,
                 category=args.category,
                 output_dir=args.output_dir,
+                dataset_path=args.dataset_path,
                 drop_height=args.drop_height,
                 settling_time=args.settling_time,
                 skip_done=args.skip_done,

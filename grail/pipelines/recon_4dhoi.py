@@ -26,7 +26,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from grail.core.config import load_recon_config
+from grail.core.config import load_object_config_full, load_recon_config
 from grail.core.dataset import category2object
 from grail.core.io import load_hoi_data, save_hoi_data, save_human_motion_data, vis_keypoints_data
 from grail.core.logging import create_logger
@@ -57,6 +57,18 @@ def _strip_mp4(video_id):
 def _origin_id(video_id):
     """Strip -end suffix to get the original video ID."""
     return video_id[: video_id.find("-end")] if "end" in video_id else video_id
+
+
+def _resolve_object_mesh(args, dataset, category):
+    """Resolve a generated or source mesh, including nested YCB GLB assets."""
+    generated_dir = os.path.join(args.results_dir, "generation", "mesh", dataset, category)
+    patterns = ("*.obj", "*.usda", "*.glb", "*.gltf")
+    for pattern in patterns:
+        hits = sorted(glob(os.path.join(generated_dir, "**", pattern), recursive=True))
+        if hits:
+            return hits[0]
+    dataset_root = getattr(args, "dataset_path", None) or os.path.join("data", dataset)
+    return category2object(dataset_root, category)
 
 
 # ---------------------------------------------------------------------------
@@ -248,11 +260,11 @@ def step3_obj_pose_estimation(video_ids, args):
             video_file = f"{args.results_dir}/{args.video_dir}/{video_id}.mp4"
             dataset, category = video_id.split("/")[:2]
             parent_dir = os.path.dirname(f"{args.results_dir}/{args.foundation_pose_dir}")
-            mesh_files = glob(f"{parent_dir}/mesh/{dataset}/{category}/*.obj")
-            if not mesh_files:
-                print(f"  No mesh: {parent_dir}/mesh/{dataset}/{category}/")
+            try:
+                mesh_file = _resolve_object_mesh(args, dataset, category)
+            except FileNotFoundError:
+                print(f"  No mesh for {dataset}/{category}")
                 return False
-            mesh_file = mesh_files[0]
 
             masks_cache = f"{args.results_dir}/{args.recon_cache_dir}/masks/{video_id}.npz"
             if not os.path.exists(masks_cache):
@@ -385,9 +397,7 @@ def step4_optimize_4dhoi(video_ids, args):
                 raise FileNotFoundError(f"No HMR file: {hmr_file}")
 
             dataset, category = video_id.split("/")[:2]
-            obj_path = sorted(
-                glob(f"{args.results_dir}/generation/mesh/{dataset}/{category}/*.obj")
-            )[0]
+            obj_path = _resolve_object_mesh(args, dataset, category)
             obj_pose_file = f"{args.results_dir}/{args.foundation_pose_output_dir}/{video_id}/pose_estimation_output/poses_in_cam.pkl"
             render_cfg_file = f"{args.results_dir}/{args.foundation_pose_output_dir}/{video_id}/first_frame_pose.pickle"
 
@@ -531,9 +541,7 @@ def step5_filter_hoi_result(video_ids, args):
                 continue
 
             dataset, category = video_id.split("/")[:2]
-            obj_path = sorted(
-                glob(f"{args.results_dir}/generation/mesh/{dataset}/{category}/*.obj")
-            )[0]
+            obj_path = _resolve_object_mesh(args, dataset, category)
             hoi_data["meta"].update(
                 {
                     "obj_path": obj_path,
@@ -646,9 +654,7 @@ def step6_visualize_hoi_result(video_ids, args):
                 open(f"{args.results_dir}/{args.output_dir}/{video_id}/hoi_data.pkl", "rb")
             )
             dataset, category = video_id.split("/")[:2]
-            hoi_data["object_path"] = category2object(
-                f"{args.results_dir}/generation/mesh/{dataset}", category
-            )
+            hoi_data["object_path"] = _resolve_object_mesh(args, dataset, category)
             vis_input = prep_visualizer_input(hoi_data)
             os.makedirs(os.path.dirname(html_file), exist_ok=True)
             sp_vis.vis_scene(vis_input, html_file, window_size=(400, 400), fps=16)
@@ -682,6 +688,10 @@ def main():
     parser = argparse.ArgumentParser(description="4D HOI Reconstruction Pipeline")
     parser.add_argument("--config", type=str, default=pre_args.config)
     parser.add_argument("--dataset", type=str, default=None)
+    parser.add_argument(
+        "--dataset_path", type=str, default=None,
+        help="Optional mesh root overriding data/<dataset>; supports YCB GLB assets.",
+    )
     parser.add_argument("--category", type=str, default=None)
     parser.add_argument("--character", type=str, default=None)
     parser.add_argument("--video_id", type=str, default=None)
@@ -726,6 +736,25 @@ def main():
 
     cfg = parse_recon_config(cfg)
     args.cfg = cfg
+
+    # Match the 2D YCB entry point: when a dataset-specific object config is
+    # present, use its mesh root automatically.  Generated meshes still take
+    # precedence in _resolve_object_mesh().
+    if args.dataset_path is None and args.dataset:
+        object_cfg_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "configs", "objects", f"{args.dataset}.yaml",
+        )
+        if os.path.isfile(object_cfg_path):
+            configured_root = load_object_config_full(object_cfg_path).get("dataset_path")
+            if configured_root:
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                candidates = [
+                    os.path.abspath(configured_root),
+                    os.path.abspath(os.path.join(project_root, configured_root)),
+                    os.path.abspath(os.path.join(os.path.dirname(project_root), configured_root)),
+                ]
+                args.dataset_path = next((p for p in candidates if os.path.isdir(p)), configured_root)
 
     if args.device == "cuda" and not torch.cuda.is_available():
         print("CUDA not available, falling back to CPU")

@@ -59,8 +59,10 @@ def _get_object_extents(object_path):
     """Return axis-aligned bounding box extents (dx, dy, dz) in metres."""
     import trimesh
 
-    loaded = trimesh.load(object_path, force="mesh")
+    loaded = trimesh.load(object_path)
     if isinstance(loaded, trimesh.Scene):
+        if not loaded.geometry:
+            raise ValueError(f"Mesh scene contains no geometry: {object_path}")
         mn, mx = loaded.bounds
         return tuple(mx[i] - mn[i] for i in range(3))
     return tuple(loaded.extents)
@@ -203,6 +205,8 @@ def step1_simulate_initial_state(dataset, category, args):
         "--seed",
         str(args.seed),
     ]
+    if args.dataset_path:
+        script_args.extend(["--dataset_path", args.dataset_path])
     if args.skip_done:
         script_args.append("--skip_done")
     if args.save_usd:
@@ -287,6 +291,10 @@ def step2_determine_obj_scale(dataset, category, args):
                 "--texture_dir",
                 args.texture_dir,
             ]
+            if args.dataset_path:
+                scale_args.extend(["--dataset_path", args.dataset_path])
+            if args.obj_rot_override is not None:
+                scale_args.extend(["--obj_rot_override", *[str(v) for v in args.obj_rot_override]])
             if args.character:
                 scale_args.extend(["--character_name", args.character])
             if args.use_initial_state:
@@ -341,7 +349,9 @@ def step2_determine_obj_scale(dataset, category, args):
     min_obj_volume = getattr(args, "min_obj_volume", None)
     if min_obj_volume and min_obj_volume > 0:
         try:
-            extents = _get_object_extents(category2object(f"data/{dataset}", category))
+            extents = _get_object_extents(
+                category2object(args.dataset_path or f"data/{dataset}", category)
+            )
             volume = _compute_bbox_volume(extents, scale)
             if volume < min_obj_volume:
                 old = scale
@@ -439,6 +449,10 @@ def step3_render_blender_scene(dataset, category, args):
             "--texture_dir",
             args.texture_dir,
         ]
+        if args.dataset_path:
+            script_args.extend(["--dataset_path", args.dataset_path])
+        if args.obj_rot_override is not None:
+            script_args.extend(["--obj_rot_override", *[str(v) for v in args.obj_rot_override]])
 
         if not args.skip_step2:
             script_args.extend(["--obj_scale_dir", args.obj_scale_dir])
@@ -757,10 +771,19 @@ def main():
     pre = argparse.ArgumentParser(add_help=False)
     pre.add_argument("--config", type=str, default="configs/gen_2dhoi/manipulation.yaml")
     pre.add_argument("--object_config", type=str, default=None)
+    pre.add_argument("--dataset", type=str, default=None)
     pre_args, _ = pre.parse_known_args()
 
     yaml_flat = load_gen_config(pre_args.config)
     pipeline_cfg = load_pipeline_config(pre_args.config)
+
+    # A dataset CLI override can select its matching object catalog directly;
+    # this makes ``--dataset ycb --category ...`` work with generic configs.
+    if pre_args.dataset and pre_args.object_config is None:
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        candidate = os.path.join(project_root, "configs", "objects", f"{pre_args.dataset}.yaml")
+        if os.path.isfile(candidate):
+            pre_args.object_config = candidate
 
     # CLI --object_config overrides the pipeline yaml's object_config path so a single
     # base manipulation.yaml can drive multiple per-dataset object yamls without cloning.
@@ -771,10 +794,12 @@ def main():
         objects = full.get("objects", full)
         pipeline_cfg["objects"] = objects
         pipeline_cfg["dataset"] = full.get("dataset")
+        pipeline_cfg["dataset_path"] = full.get("dataset_path")
         pipeline_cfg["categories"] = [k for k in objects if k != "default"]
         pipeline_cfg["object_config_path"] = pre_args.object_config
 
     yaml_flat["dataset"] = pipeline_cfg.get("dataset")
+    yaml_flat["dataset_path"] = pipeline_cfg.get("dataset_path")
     yaml_flat["object_config"] = pipeline_cfg.get("object_config_path")
 
     parser = argparse.ArgumentParser(description="2D HOI Generation Pipeline")
@@ -782,6 +807,15 @@ def main():
     parser.add_argument("--object_config", type=str, default=None,
                         help="Override the pipeline yaml's object_config path.")
     parser.add_argument("--dataset", type=str, default=None)
+    parser.add_argument(
+        "--dataset_path", type=str, default=None,
+        help="Optional mesh root overriding data/<dataset>.",
+    )
+    parser.add_argument(
+        "--obj_rot_override", type=float, nargs=3, default=None,
+        metavar=("RX", "RY", "RZ"),
+        help="Override object Euler rotation in degrees.",
+    )
     parser.add_argument("--category", type=str, default=None)
     parser.add_argument("--scene", type=str, default=None)
     parser.add_argument("--num_job_chunks", type=int, default=1)

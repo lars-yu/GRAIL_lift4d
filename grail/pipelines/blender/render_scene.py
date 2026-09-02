@@ -59,6 +59,10 @@ def main():
     # Input/Output arguments
     parser.add_argument("--dataset", type=str, default="ComAsset",
                         help="Dataset name. Meshes are looked up under data/<dataset>/<category>/.")
+    parser.add_argument(
+        "--dataset_path", type=str, default=None,
+        help="Optional mesh root overriding data/<dataset>.",
+    )
     parser.add_argument("--category", type=str, default="barbell", help="Object category")
     parser.add_argument(
         "--character_name", type=str, default=None, help="Character name (use 'G1' for G1 robot)"
@@ -186,6 +190,11 @@ def main():
         nargs=3,
         default=None,
         help="Override object scale [x, y, z]",
+    )
+    parser.add_argument(
+        "--obj_rot_override", type=float, nargs=3, default=None,
+        metavar=("RX", "RY", "RZ"),
+        help="Override object Euler rotation in degrees.",
     )
     parser.add_argument(
         "--render_only",
@@ -376,8 +385,11 @@ def main():
             print(f"Overriding obj_scale from CLI: {args.obj_scale_override}")
 
         # Determine object rotation
-        obj_rot = scene_config.get("obj_rot", None)
-        if args.use_initial_state:
+        obj_rot = scene_config.get("obj_rot", [0.0, 0.0, 0.0])
+        if args.obj_rot_override is not None:
+            rotation_radians = [math.radians(deg) for deg in args.obj_rot_override]
+            print(f"Using CLI object rotation override: {list(args.obj_rot_override)} degrees")
+        elif args.use_initial_state:
             # Load initial state data from simulation
             initial_state_data = load_initial_state_data(
                 args.dataset, args.category, f"{args.results_dir}/{args.initial_state_dir}"
@@ -404,6 +416,7 @@ def main():
             position=scene_config["obj_pos"],
             rotation=rotation_radians,
             scale=scene_config["obj_scale"],
+            dataset_path=args.dataset_path,
         )
 
         # Print object dimensions
@@ -656,7 +669,9 @@ def main():
         save_camera_intrinsics(intrinsics, foundation_pose_intrinsics_path)
 
         # Copy mesh files for FoundationPose
-        obj_file_path = category2object(f"data/{args.dataset}", args.category)
+        obj_file_path = category2object(
+            args.dataset_path or f"data/{args.dataset}", args.category
+        )
         copy_mesh_files(obj_file_path, foundation_pose_mesh_dir)
 
         # Save camera and object data

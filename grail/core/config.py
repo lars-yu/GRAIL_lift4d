@@ -56,6 +56,7 @@ def load_pipeline_config(path=None):
       - ``dataset``   – string pulled from the object config YAML
       - ``categories`` – list of object keys (everything except ``dataset`` and
                          ``default``)
+      - ``dataset_path`` – optional mesh root pulled from the object config
       - ``object_config_path`` – resolved path so sub-processes can receive it
     """
     with open(path or _DEFAULT_PIPELINE) as f:
@@ -70,6 +71,19 @@ def load_pipeline_config(path=None):
 
     cfg["objects"] = objects
     cfg["dataset"] = dataset
+    dataset_path = full.get("dataset_path")
+    if dataset_path and not os.path.isabs(dataset_path):
+        # Accept configs copied from the reference GRAIL checkout where paths
+        # are relative to either that checkout or its parent PRE directory.
+        project_root = os.path.abspath(_PROJECT_ROOT)
+        candidates = [
+            os.path.abspath(dataset_path),
+            os.path.abspath(os.path.join(project_root, dataset_path)),
+            os.path.abspath(os.path.join(os.path.dirname(project_root), dataset_path)),
+            os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(project_root)), dataset_path)),
+        ]
+        dataset_path = next((p for p in candidates if os.path.isdir(p)), candidates[1])
+    cfg["dataset_path"] = dataset_path
     cfg["categories"] = categories
     cfg["object_config_path"] = obj_cfg_path
 
@@ -101,6 +115,7 @@ _GEN_TOP_LEVEL_KEYS = [
     "character",
     "character_dir",
     "texture_dir",
+    "scene",
     "results_dir",
     "character_init_pose_file",
     "object_config",
