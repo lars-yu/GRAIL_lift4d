@@ -11,6 +11,7 @@ Steps:
 """
 
 import argparse
+import json
 import os
 import pickle
 import shutil
@@ -292,6 +293,30 @@ def step3_obj_pose_estimation(video_ids, args):
 
         except Exception as e:
             print(f"  Error (step3) {video_id}: {e}\n{traceback.format_exc()}")
+
+
+def step35_genmo_contact_guidance(video_ids, args):
+    """Stage 3.5: build anchored object motion, freeze it, then guide GENMO."""
+    from grail.pipelines.genmo_contact_guidance import (
+        OBJECT_TRAJECTORY_METHOD,
+        run_genmo_contact_guidance_stage,
+    )
+
+    for video_id in tqdm(sorted(video_ids), desc="Stage 3.5 - GENMO contact guidance"):
+        video_id = _strip_mp4(video_id)
+        output_dir = os.path.join(args.results_dir, args.genmo_guidance_dir, video_id)
+        diagnostics_file = os.path.join(output_dir, "diagnostics.json")
+        if args.skip_done and os.path.isfile(diagnostics_file):
+            try:
+                with open(diagnostics_file) as handle:
+                    diagnostics = json.load(handle)
+                if diagnostics.get("object_pose_source") == OBJECT_TRAJECTORY_METHOD:
+                    continue
+            except (OSError, ValueError, TypeError):
+                pass
+        dataset, category = video_id.split("/")[:2]
+        object_mesh = _resolve_object_mesh(args, dataset, category)
+        run_genmo_contact_guidance_stage(video_id, args, object_mesh)
 
 
 def _prepare_lift4d_motion_prior(video_id, args, prior_path):
@@ -671,10 +696,28 @@ _STEPS = [
     (1, "skip_step1", step1_predict_human_motion),
     (2, "skip_step2", step2_preprocess_data),
     (3, "skip_step3", step3_obj_pose_estimation),
+    (3.5, "skip_step35", step35_genmo_contact_guidance),
     (4, "skip_step4", step4_optimize_4dhoi),
     (5, "skip_step5", step5_filter_hoi_result),
     # (6, "skip_step6", step6_visualize_hoi_result),
 ]
+
+
+def should_stop_after_pipeline_step(step_num, args):
+    return bool(
+        step_num == 3.5
+        and args.genmo_contact_guidance_poc
+        and args.stop_after_genmo_guidance
+    )
+
+
+def run_pipeline_steps(video_ids, args, steps=None):
+    """Run enabled stages, honoring the Stage 3.5 early-exit contract."""
+    for step_num, skip_attr, step_fn in _STEPS if steps is None else steps:
+        if not getattr(args, skip_attr):
+            step_fn(video_ids, args)
+            if should_stop_after_pipeline_step(step_num, args):
+                break
 
 
 def main():
@@ -728,13 +771,110 @@ def main():
         default=None,
         help="Override fixed-object IK mode.",
     )
-
+    parser.add_argument(
+        "--contact-hand",
+        choices=("auto", "left", "right", "both"),
+        default=None,
+        help="Local mask/keypoint contact hand selection; no VLM is used.",
+    )
+    parser.add_argument(
+        "--genmo-contact-guidance-poc",
+        action="store_true",
+        help="Build anchored Lift4D object motion followed by GENMO guidance.",
+    )
+    parser.add_argument(
+        "--genmo-motion-prior",
+        type=str,
+        default=None,
+        help="Explicit Lift4D point-trajectory NPZ used by the Stage 3.5 POC.",
+    )
+    parser.add_argument(
+        "--stop-after-genmo-guidance",
+        action="store_true",
+        help="Exit successfully after Stage 3.5 artifacts are saved and rendered.",
+    )
+    parser.add_argument("--genmo-guidance-seed", type=int, default=42)
+    parser.add_argument("--reach-error-threshold", type=float, default=0.03)
+    parser.add_argument("--max-arm-rotation-change-deg", type=float, default=30.0)
+    parser.add_argument("--max-root-correction", type=float, default=0.25)
+    parser.add_argument("--genmo-guidance-strength", type=float, default=0.7)
+    parser.add_argument(
+        "--genmo-contact-transition-frames",
+        type=int,
+        default=None,
+        help="Contact guidance ramp length; defaults to hand-candidate-to-motion-onset.",
+    )
+    parser.add_argument(
+        "--genmo-guidance-temporal-weight",
+        type=float,
+        default=0.5,
+        help="Temporal smoothness weight for persistent contact guidance.",
+    )
+    parser.add_argument(
+        "--genmo-post-contact-relative-velocity-weight",
+        type=float,
+        default=8.0,
+        help="Weight that keeps palm motion synchronized with frozen object motion after contact.",
+    )
+    parser.add_argument(
+        "--genmo-post-contact-worst-frame-weight",
+        type=float,
+        default=0.0,
+        help="Extra DDIM guidance weight on the worst post-contact palm frames.",
+    )
+    parser.add_argument(
+        "--genmo-post-contact-terminal-position-weight",
+        type=float,
+        default=1.0,
+        help="Optional smooth final-frame multiplier; 1 disables terminal reweighting.",
+    )
+    parser.add_argument(
+        "--genmo-post-contact-terminal-frames",
+        type=int,
+        default=16,
+        help="Number of final frames over which terminal contact weight ramps up.",
+    )
+    parser.add_argument(
+        "--genmo-contact-frame-position-weight",
+        type=float,
+        default=1.25,
+        help="Smooth emphasis applied at the detected contact frame.",
+    )
+    parser.add_argument(
+        "--genmo-contact-frame-weight-radius",
+        type=int,
+        default=2,
+        help="Radius in frames for the smooth contact-frame emphasis.",
+    )
+    parser.add_argument(
+        "--genmo-root-guidance-multiplier",
+        type=float,
+        default=1.0,
+        help="Scale only root-velocity gradients during arm+root fallback.",
+    )
+    parser.add_argument(
+        "--genmo-guidance-dir",
+        type=str,
+        default="generation/genmo_contact_guidance_poc",
+    )
+    parser.add_argument(
+        "--genmo-skip-poc-preview-render",
+        action="store_true",
+        help="Skip the slow temporary POC overlay; saved motions remain renderable by GRAIL.",
+    )
     parser.set_defaults(**cfg_flat)
     args = parser.parse_args()
+    if args.stop_after_genmo_guidance and not args.genmo_contact_guidance_poc:
+        parser.error("--stop-after-genmo-guidance requires --genmo-contact-guidance-poc")
+    args.skip_step35 = not args.genmo_contact_guidance_poc
 
     from grail.core.types import parse_recon_config
 
     cfg = parse_recon_config(cfg)
+    if args.contact_hand is not None:
+        cfg.setdefault("optimization", {}).setdefault("contact", {})[
+            "hand"
+        ] = args.contact_hand
     args.cfg = cfg
 
     # Match the 2D YCB entry point: when a dataset-specific object config is
@@ -789,9 +929,7 @@ def main():
     success = True
 
     try:
-        for step_num, skip_attr, step_fn in _STEPS:
-            if not getattr(args, skip_attr):
-                step_fn(video_ids, args)
+        run_pipeline_steps(video_ids, args)
     except KeyboardInterrupt:
         print("\nInterrupted")
         success = False

@@ -5,6 +5,8 @@ import sys
 from collections.abc import Sequence
 from typing import List, Optional
 
+import numpy as np
+
 from grail.adapters.openai_api import DEFAULT_REASONING_MODEL, chat_with_image
 
 # Allowed joints using canonical SMPL-style names (L_/R_)
@@ -373,3 +375,137 @@ def detect_contact_joints_interval(
         idx = interval_end
 
     return contact_labels_per_interval
+
+
+def _as_mask_array(masks, frame_num: int) -> np.ndarray:
+    import numpy as np
+
+    arr = np.asarray(masks).astype(bool)
+    if arr.ndim == 4 and arr.shape[1] == 1:
+        arr = arr[:, 0]
+    if arr.ndim == 4 and arr.shape[-1] == 1:
+        arr = arr[..., 0]
+    if arr.ndim != 3 or arr.shape[0] != frame_num:
+        raise ValueError(f"masks must have shape [T,H,W], got {arr.shape}")
+    return arr
+
+
+def detect_contact_labels_from_masks(
+    hand_keypoints_2d,
+    human_masks,
+    object_masks,
+    *,
+    start_idx: int = 0,
+    end_idx: int | None = None,
+    interval_length: int = 8,
+    hand: str = "auto",
+    distance_threshold_px: float = 12.0,
+    min_mask_iou: float = 0.001,
+    min_hand_inside_ratio: float = 0.20,
+    required_consecutive: int = 2,
+) -> tuple[list[list[str] | None], int, dict]:
+    """Compute contact labels without a VLM.
+
+    A frame is contact-positive when the selected hand has keypoints close to
+    or inside the object mask and the human/object masks overlap (or the hand
+    has sufficient in-mask coverage).  The earliest sustained positive frame
+    is returned and labels are serialized in the legacy per-interval format.
+    """
+    import numpy as np
+    from scipy.ndimage import binary_dilation, distance_transform_edt
+
+    points = np.asarray(hand_keypoints_2d, dtype=np.float64)
+    if points.ndim != 3 or points.shape[1] < 2 or points.shape[1] % 2:
+        raise ValueError(f"hand_keypoints_2d must be [T,32,2/3], got {points.shape}")
+    if points.shape[-1] == 2:
+        points = np.concatenate([points, np.ones((*points.shape[:2], 1))], axis=-1)
+    frame_num = points.shape[0]
+    human = _as_mask_array(human_masks, frame_num)
+    obj = _as_mask_array(object_masks, frame_num)
+    end_idx = frame_num if end_idx is None else min(frame_num, int(end_idx))
+    start_idx = max(0, int(start_idx))
+    if end_idx <= start_idx:
+        return [], start_idx, {"contact_frames": [], "mask_iou": [], "left_distance_px": [], "right_distance_px": []}
+    hand = str(hand).lower()
+    if hand not in {"auto", "left", "right", "both"}:
+        raise ValueError("contact.hand must be auto, left, right, or both")
+    split = points.shape[1] // 2
+    side_points = {"left": points[:, :split], "right": points[:, split:]}
+    distances = {"left": np.full(frame_num, np.inf), "right": np.full(frame_num, np.inf)}
+    inside = {"left": np.zeros(frame_num), "right": np.zeros(frame_num)}
+    mask_iou = np.zeros(frame_num, dtype=np.float64)
+    for i in range(frame_num):
+        union = np.logical_or(human[i], obj[i]).sum()
+        mask_iou[i] = np.logical_and(human[i], obj[i]).sum() / max(float(union), 1.0)
+        dilated = binary_dilation(obj[i], iterations=2)
+        distance = distance_transform_edt(~dilated)
+        for side, side_kp in side_points.items():
+            valid = np.isfinite(side_kp[i, :, :2]).all(axis=1) & (side_kp[i, :, 2] >= 0.2)
+            if not valid.any():
+                continue
+            xy = np.rint(side_kp[i, valid, :2]).astype(np.int64)
+            in_bounds = (
+                (xy[:, 0] >= 0) & (xy[:, 0] < obj.shape[2]) &
+                (xy[:, 1] >= 0) & (xy[:, 1] < obj.shape[1])
+            )
+            xy = xy[in_bounds]
+            if xy.size == 0:
+                continue
+            distances[side][i] = float(np.median(distance[xy[:, 1], xy[:, 0]]))
+            inside[side][i] = float(np.mean(dilated[xy[:, 1], xy[:, 0]]))
+
+    def positive(side):
+        return (distances[side] <= float(distance_threshold_px)) & (
+            (mask_iou >= float(min_mask_iou)) |
+            (inside[side] >= float(min_hand_inside_ratio))
+        )
+
+    positives = {side: positive(side) for side in ("left", "right")}
+    if hand == "both":
+        frame_positive = positives["left"] & positives["right"]
+        label_sides = ("left", "right")
+    elif hand in ("left", "right"):
+        frame_positive = positives[hand]
+        label_sides = (hand,)
+    else:
+        frame_positive = positives["left"] | positives["right"]
+        label_sides = ("left", "right")
+
+    run = max(1, int(required_consecutive))
+    contact_start = end_idx
+    for i in range(start_idx, max(start_idx, end_idx - run + 1)):
+        if bool(np.all(frame_positive[i : i + run])):
+            contact_start = i
+            break
+    if contact_start >= end_idx:
+        # Preserve a usable cache even when masks are noisy; object motion onset
+        # remains the physically computed fallback supplied by the caller.
+        contact_start = start_idx
+        frame_positive[start_idx:end_idx] = True
+        if hand == "both":
+            positives["left"][start_idx:end_idx] = True
+            positives["right"][start_idx:end_idx] = True
+        elif hand in ("left", "right"):
+            positives[hand][start_idx:end_idx] = True
+        else:
+            positives["right"][start_idx:end_idx] = True
+
+    labels: list[list[str] | None] = []
+    idx = start_idx
+    while idx < end_idx:
+        interval_end = min(end_idx, idx + max(1, int(interval_length)))
+        if interval_end <= contact_start:
+            labels.append(None)
+        else:
+            active = [s for s in label_sides if np.any(positives[s][max(idx, contact_start):interval_end])]
+            if hand == "both":
+                active = ["left", "right"] if np.any(frame_positive[max(idx, contact_start):interval_end]) else []
+            labels.append(["L_Hand" if s == "left" else "R_Hand" for s in active] or None)
+        idx = interval_end
+    diagnostics = {
+        "contact_frames": np.flatnonzero(frame_positive).astype(int).tolist(),
+        "mask_iou": mask_iou.astype(float).tolist(),
+        "left_distance_px": distances["left"].astype(float).tolist(),
+        "right_distance_px": distances["right"].astype(float).tolist(),
+    }
+    return labels, int(contact_start), diagnostics
