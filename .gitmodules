@@ -9,8 +9,8 @@
 	url = https://github.com/NVlabs/FoundationPose
 [submodule "imports/GEM-SMPL"]
 	path = imports/GEM-SMPL
-	url = https://github.com/NVlabs/GENMO
-	branch = grail
+	url = https://github.com/lars-yu/GENMO
+	branch = codex/genmo-contact-guidance-v19
 [submodule "imports/GEM-SOMA"]
 	path = imports/GEM-SOMA
 	url = https://github.com/NVlabs/GEM-X
