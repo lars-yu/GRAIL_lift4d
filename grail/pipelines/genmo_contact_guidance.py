@@ -26,7 +26,7 @@ from grail.optimization.motion_state import detect_object_motion
 
 GENMO_GUIDANCE_OUTPUT_DIR = "generation/genmo_contact_guidance_poc"
 SMPL24_PARENTS = (-1, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 12, 13, 14, 16, 17, 18, 19)
-OBJECT_TRAJECTORY_METHOD = "fp_first_frame_anchor_lift4d_relative_depth_v1"
+OBJECT_TRAJECTORY_METHOD = "fp_contact_anchor_lift4d_relative_depth_v2"
 HUMAN_MESH_COLOR = (0.8, 0.6, 0.4)
 HUMAN_MESH_COLOR_RGB = (244, 132, 32)
 
@@ -99,7 +99,7 @@ def _resolve_genmo_motion_prior(video_id, args):
 
 
 def _compose_anchored_object_trajectory(raw_poses, motion_depth_cam, move_start_frame):
-    """Recover the v10 object path from FP rays and relative Lift4D depth."""
+    """Recover a contact-continuous path from FP motion and Lift4D depth."""
     raw_poses = np.asarray(raw_poses, dtype=np.float64)
     motion_depth_cam = np.asarray(motion_depth_cam, dtype=np.float64).reshape(-1)
     frame_num = raw_poses.shape[0]
@@ -124,10 +124,22 @@ def _compose_anchored_object_trajectory(raw_poses, motion_depth_cam, move_start_
     if np.any(raw_translation[:, 2] <= 0) or np.any(target_depth <= 0):
         raise ValueError("FoundationPose and Lift4D object depth must be positive")
     camera_rays = raw_translation / raw_translation[:, 2:3]
-    translations = camera_rays * target_depth[:, None]
+    candidate_translation = camera_rays * target_depth[:, None]
+    # The object is static before contact. Anchor the candidate trajectory at
+    # the contact frame instead of switching from pose 0 to an unrelated
+    # absolute FoundationPose estimate at move_start_frame.
+    translations = (
+        first_gt_translation
+        + candidate_translation
+        - candidate_translation[move_start_frame]
+    )
     translations[:move_start_frame] = first_gt_translation
 
     poses = raw_poses.copy()
+    anchor_rotation = raw_poses[0, :3, :3]
+    contact_rotation = raw_poses[move_start_frame, :3, :3]
+    relative_rotation = raw_poses[:, :3, :3] @ contact_rotation.T
+    poses[:, :3, :3] = relative_rotation @ anchor_rotation
     poses[:, :3, 3] = translations
     poses[:move_start_frame] = raw_poses[0]
     if not np.isfinite(poses).all():
@@ -161,8 +173,8 @@ def _build_frozen_object_motion(
         "first_frame_gt_anchor_depth_m": float(raw_poses[0, 2, 3]),
         "first_frame_anchor_source": "foundationpose_first_frame_gt_aligned",
         "pre_contact_hard_freeze": [0, move_start],
-        "post_contact_translation_source": "foundationpose_camera_ray_plus_lift4d_relative_depth",
-        "post_contact_rotation_source": "foundationpose",
+        "post_contact_translation_source": "contact_anchored_foundationpose_ray_plus_lift4d_relative_depth",
+        "post_contact_rotation_source": "contact_anchored_foundationpose_relative_rotation",
         "lift4d_kabsch_pose_used": False,
         "contact_losses_enabled": False,
         "optimizer_run": False,
@@ -884,8 +896,64 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
     post_contact_relative_velocity_weight = float(
         getattr(args, "genmo_post_contact_relative_velocity_weight", 8.0)
     )
+    post_contact_hold_radius = float(
+        getattr(args, "genmo_post_contact_hold_radius", 0.02)
+    )
+    post_contact_relative_step_tolerance = float(
+        getattr(args, "genmo_post_contact_relative_step_tolerance", 0.01)
+    )
+    max_guidance_update_norm = float(
+        getattr(args, "genmo_max_guidance_update_norm", 0.25)
+    )
+    final_guidance_update_norm = float(
+        getattr(args, "genmo_final_guidance_update_norm", 0.05)
+    )
+    arm_guidance_fade_fraction = float(
+        getattr(args, "genmo_arm_guidance_fade_fraction", 0.20)
+    )
+    root_guidance_final_scale = float(
+        getattr(args, "genmo_root_guidance_final_scale", 0.10)
+    )
+    late_inner_steps = int(getattr(args, "genmo_late_inner_steps", 2))
+    final_inner_steps = int(getattr(args, "genmo_final_inner_steps", 5))
+    arm_max_update_cap = float(getattr(args, "genmo_arm_max_update_cap", 0.60))
+    arm_final_update_cap = float(getattr(args, "genmo_arm_final_update_cap", 0.25))
+    root_max_update_cap = float(getattr(args, "genmo_root_max_update_cap", 0.05))
+    root_final_update_cap = float(getattr(args, "genmo_root_final_update_cap", 0.02))
+    root_gradient_smooth_kernel = int(
+        getattr(args, "genmo_root_gradient_smooth_kernel", 9)
+    )
+    inner_line_search = bool(getattr(args, "genmo_inner_line_search", True))
+    arm_gradient_smooth_kernel = int(getattr(args, "genmo_arm_gradient_smooth_kernel", 9))
+    contact_standoff_m = float(getattr(args, "genmo_contact_standoff_m", 0.05))
+    contact_min_clearance_m = float(getattr(args, "genmo_contact_min_clearance_m", 0.04))
+    penetration_weight = float(getattr(args, "genmo_penetration_weight", 60.0))
+    root_activation_distance_min = float(
+        getattr(args, "genmo_root_activation_distance_min", 0.06)
+    )
+    root_activation_distance_max = float(
+        getattr(args, "genmo_root_activation_distance_max", 0.15)
+    )
+    root_leg_fade_fraction = float(getattr(args, "genmo_root_leg_fade_fraction", 0.30))
+    torso_max_update_cap = float(getattr(args, "genmo_torso_max_update_cap", 0.05))
+    torso_final_update_cap = float(getattr(args, "genmo_torso_final_update_cap", 0.01))
+    leg_max_update_cap = float(getattr(args, "genmo_leg_max_update_cap", 0.05))
+    leg_final_update_cap = float(getattr(args, "genmo_leg_final_update_cap", 0.02))
+    w_root_target = float(getattr(args, "genmo_root_target_weight", 1.0))
+    w_root_vertical_lock = float(getattr(args, "genmo_root_vertical_lock_weight", 5.0))
+    support_foot_weight = float(getattr(args, "genmo_support_foot_weight", 2.0))
+    ground_contact_weight = float(getattr(args, "genmo_ground_contact_weight", 1.0))
+    leg_reference_weight = float(getattr(args, "genmo_leg_reference_weight", 1.0))
+    arm_reference_weight = float(getattr(args, "genmo_arm_reference_weight", 0.05))
+    arm_smoothness_weight = float(getattr(args, "genmo_arm_smoothness_weight", 0.15))
+    approach_smoothness_weight = float(
+        getattr(args, "genmo_approach_smooth_weight", 0.0)
+    )
+    post_contact_follow_mode = str(
+        getattr(args, "genmo_post_contact_follow_mode", "translation")
+    )
     post_contact_worst_frame_weight = float(
-        getattr(args, "genmo_post_contact_worst_frame_weight", 0.0)
+        getattr(args, "genmo_post_contact_worst_frame_weight", 0.5)
     )
     post_contact_terminal_position_weight = float(
         getattr(args, "genmo_post_contact_terminal_position_weight", 1.0)
@@ -946,12 +1014,46 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         object_poses_cam=object_poses,
         contact_transition_frames=contact_transition_frames,
         guidance_temporal_weight=guidance_temporal_weight,
+        post_contact_hold_radius=post_contact_hold_radius,
         post_contact_relative_velocity_weight=post_contact_relative_velocity_weight,
+        post_contact_relative_step_tolerance=post_contact_relative_step_tolerance,
+        max_guidance_update_norm=max_guidance_update_norm,
+        final_guidance_update_norm=final_guidance_update_norm,
+        arm_guidance_fade_fraction=arm_guidance_fade_fraction,
+        root_guidance_final_scale=root_guidance_final_scale,
+        late_inner_steps=late_inner_steps,
+        final_inner_steps=final_inner_steps,
+        arm_max_update_cap=arm_max_update_cap,
+        arm_final_update_cap=arm_final_update_cap,
+        root_max_update_cap=root_max_update_cap,
+        root_final_update_cap=root_final_update_cap,
+        root_gradient_smooth_kernel=root_gradient_smooth_kernel,
+        arm_gradient_smooth_kernel=arm_gradient_smooth_kernel,
+        inner_line_search=inner_line_search,
+        contact_standoff_m=contact_standoff_m,
+        contact_min_clearance_m=contact_min_clearance_m,
+        penetration_weight=penetration_weight,
+        root_activation_distance_min=root_activation_distance_min,
+        root_activation_distance_max=root_activation_distance_max,
+        root_leg_fade_fraction=root_leg_fade_fraction,
+        torso_max_update_cap=torso_max_update_cap,
+        torso_final_update_cap=torso_final_update_cap,
+        leg_max_update_cap=leg_max_update_cap,
+        leg_final_update_cap=leg_final_update_cap,
+        w_root_target=w_root_target,
+        w_root_vertical_lock=w_root_vertical_lock,
+        support_foot_weight=support_foot_weight,
+        ground_contact_weight=ground_contact_weight,
+        leg_reference_weight=leg_reference_weight,
+        arm_reference_weight=arm_reference_weight,
+        arm_smoothness_weight=arm_smoothness_weight,
         post_contact_worst_frame_weight=post_contact_worst_frame_weight,
         post_contact_terminal_position_weight=post_contact_terminal_position_weight,
         post_contact_terminal_frames=post_contact_terminal_frames,
         contact_frame_position_weight=contact_frame_position_weight,
         contact_frame_weight_radius=contact_frame_weight_radius,
+        approach_smoothness_weight=approach_smoothness_weight,
+        post_contact_follow_mode=post_contact_follow_mode,
     )
     result["diagnostics"]["object_pose_at_contact_frame"] = pose_at_contact.tolist()
     result["diagnostics"]["object_pose_source"] = OBJECT_TRAJECTORY_METHOD
@@ -984,6 +1086,52 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         )
         save_human_motion_data(motion_global, motion_incam, str(output_dir / filename))
         saved_motions[filename] = (motion_global, motion_incam)
+
+    # Finger-grasp refinement: optimize the grasping hand so fingers wrap the
+    # object without penetrating (arm/body from GENMO stay fixed).  Updates the
+    # selected motion in place (both the exported npz and the render input).
+    if bool(getattr(args, "genmo_finger_grasp", True)):
+        from grail.optimization.finger_grasp import FingerGraspConfig, refine_finger_grasp
+        from grail.models.smplx_model import setup_smplx_model
+
+        fg_model_path = Path(args.cfg["human_model"]["smplx_model_path"])
+        if not fg_model_path.is_absolute():
+            fg_model_path = Path.cwd() / fg_model_path
+        fg_model = setup_smplx_model(
+            model_path=str(fg_model_path), flat_hand_mean=True, device="cuda"
+        )
+        fg_config = FingerGraspConfig(
+            contact_frame=contact_frame,
+            selected_hand=selected_hand,
+            iterations=int(getattr(args, "genmo_finger_iterations", 150)),
+            contact_weight=float(getattr(args, "genmo_finger_contact_weight", 8.0)),
+            penetration_weight=float(getattr(args, "genmo_finger_penetration_weight", 300.0)),
+            min_clearance=float(getattr(args, "genmo_finger_min_clearance_m", 0.0)),
+            target_clearance=float(getattr(args, "genmo_finger_target_clearance_m", 0.005)),
+            hand_pose_reg_weight=float(getattr(args, "genmo_finger_pose_reg_weight", 0.5)),
+            wrist_reg_weight=float(getattr(args, "genmo_finger_wrist_reg_weight", 1.0)),
+            elbow_reg_weight=float(getattr(args, "genmo_finger_elbow_reg_weight", 3.0)),
+        )
+        sel_global, sel_incam = saved_motions["selected_guided_motion.npz"]
+        refined_incam, fg_diag = refine_finger_grasp(
+            sel_incam, object_vertices, object_faces, object_poses,
+            contact_frame, selected_hand, fg_model, fg_config, device="cuda",
+        )
+        # Body pose (incl. wrist/elbow) and hand pose are frame-local, identical
+        # in global and in-camera; copy them from the refined in-camera motion.
+        refined_global = dict(sel_global)
+        rg_poses = np.array(sel_global["poses"], copy=True)
+        rg_poses[:, 3:] = np.asarray(refined_incam["poses"])[:, 3:]
+        refined_global["poses"] = rg_poses
+        for k in ("left_hand_pose", "right_hand_pose"):
+            if k in refined_incam:
+                refined_global[k] = refined_incam[k]
+        save_human_motion_data(
+            refined_global, refined_incam, str(output_dir / "selected_guided_motion.npz")
+        )
+        saved_motions["selected_guided_motion.npz"] = (refined_global, refined_incam)
+        result["diagnostics"]["finger_grasp"] = fg_diag
+        del fg_model
 
     if bool(getattr(args, "genmo_skip_poc_preview_render", False)):
         result["diagnostics"]["poc_preview_render_skipped"] = True

@@ -151,6 +151,10 @@ def create_renderer(
             image_size=image_size,
             blur_radius=0.0,
             faces_per_pixel=1,
+            # bin_size=None uses PyTorch3D's coarse-to-fine binned rasterizer.
+            # The default bin_size=0 (naive) is O(H*W*F) and takes ~100s/frame at
+            # 1280x720; binned is pixel-identical but ~1000x faster.
+            bin_size=None,
         )
 
         renderer = MeshRenderer(
@@ -187,6 +191,10 @@ def create_renderer(
             image_size=image_size,
             blur_radius=0.0,
             faces_per_pixel=1,
+            # bin_size=None uses PyTorch3D's coarse-to-fine binned rasterizer.
+            # The default bin_size=0 (naive) is O(H*W*F) and takes ~100s/frame at
+            # 1280x720; binned is pixel-identical but ~1000x faster.
+            bin_size=None,
         )
 
         renderer = MeshRenderer(
@@ -203,6 +211,10 @@ def create_renderer(
             image_size=image_size,
             blur_radius=0.0,
             faces_per_pixel=1,
+            # bin_size=None uses PyTorch3D's coarse-to-fine binned rasterizer.
+            # The default bin_size=0 (naive) is O(H*W*F) and takes ~100s/frame at
+            # 1280x720; binned is pixel-identical but ~1000x faster.
+            bin_size=None,
         )
 
         renderer = MeshRenderer(

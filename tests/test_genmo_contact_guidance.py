@@ -18,6 +18,8 @@ from hmr4d.model.genmo.contact_guidance import (  # noqa: E402
     ROOT_VELOCITY_SLICE,
     allowed_channel_mask,
     arm_channel_slices,
+    group_channel_slices,
+    leg_channel_slices,
     generate_sampling_noise,
     make_contact_guidance,
     root_candidate_improves_hold,
@@ -34,6 +36,23 @@ from grail.pipelines.genmo_contact_guidance import (  # noqa: E402
     _compose_anchored_object_trajectory,
 )
 from grail.optimization.motion_state import detect_object_motion  # noqa: E402
+from grail.optimization.finger_grasp import (  # noqa: E402
+    signed_point_mesh_distance,
+)
+
+
+def _unit_cube_mesh():
+    """Axis-aligned unit cube [-0.5,0.5]^3 as (verts[8,3], faces[12,3])."""
+    v = torch.tensor([
+        [-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5],
+        [-0.5, -0.5, 0.5], [0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5],
+    ], dtype=torch.float32)
+    f = torch.tensor([
+        [0, 1, 2], [0, 2, 3], [4, 6, 5], [4, 7, 6],
+        [0, 4, 5], [0, 5, 1], [1, 5, 6], [1, 6, 2],
+        [2, 6, 7], [2, 7, 3], [3, 7, 4], [3, 4, 0],
+    ], dtype=torch.long)
+    return v, f
 
 
 class GenmoContactGuidanceTests(unittest.TestCase):
@@ -67,7 +86,8 @@ class GenmoContactGuidanceTests(unittest.TestCase):
 
         np.testing.assert_array_equal(poses[:3], np.repeat(raw[:1], 3, axis=0))
         target_depth = raw[0, 2, 3] + motion_depth - motion_depth[3]
-        expected = raw[:, :3, 3] / raw[:, 2:3, 3] * target_depth[:, None]
+        candidate = raw[:, :3, 3] / raw[:, 2:3, 3] * target_depth[:, None]
+        expected = raw[0, :3, 3] + candidate - candidate[3]
         expected[:3] = raw[0, :3, 3]
         np.testing.assert_allclose(
             poses[:, :3, 3], expected
@@ -87,7 +107,9 @@ class GenmoContactGuidanceTests(unittest.TestCase):
         depth = np.repeat(2.0, 5)
         poses, _ = _compose_anchored_object_trajectory(raw, depth, 3)
         np.testing.assert_allclose(poses[2, :3, :3], raw[0, :3, :3], atol=1e-6)
-        np.testing.assert_allclose(poses[3, :3, :3], raw[3, :3, :3], atol=1e-6)
+        np.testing.assert_allclose(poses[3], raw[0], atol=1e-6)
+        expected_rotation = raw[4, :3, :3] @ raw[3, :3, :3].T @ raw[0, :3, :3]
+        np.testing.assert_allclose(poses[4, :3, :3], expected_rotation, atol=1e-6)
         self.assertFalse(np.allclose(poses[3, :3, :3], poses[4, :3, :3]))
 
     def test_motion_onset_defines_contact_and_freeze_boundary(self):
@@ -223,12 +245,584 @@ class GenmoContactGuidanceTests(unittest.TestCase):
                 w_reference=0.0,
                 w_temporal=0.0,
                 guidance_strength=0.1,
+                arm_gradient_smooth_kernel=1,  # test raw per-frame behavior
             ),
             palm_position,
         )
         guided = callback(reference, torch.tensor([25]))
         self.assertTrue(torch.equal(guided[:, :2], reference[:, :2]))
         self.assertTrue(torch.all(guided[:, 2:, 72] < reference[:, 2:, 72]))
+
+    def test_approach_smoothness_weight_accepted_and_finite(self):
+        reference = torch.ones(1, 6, 151)
+
+        def palm_position(motion, _hand):
+            value = motion[..., 72:73]
+            return torch.cat((value, value * 0, value * 0), dim=-1)
+
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=4,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                pre_contact_surface_target=torch.zeros(3),
+                post_contact_surface_targets=torch.zeros(2, 3),
+                reference_motion=reference,
+                contact_transition_frames=4,
+                approach_smoothness_weight=5.0,
+                w_reference=0.0,
+                w_temporal=0.0,
+                guidance_strength=0.1,
+                arm_gradient_smooth_kernel=1,
+            ),
+            palm_position,
+        )
+        guided = callback(reference, torch.tensor([25]))
+        self.assertTrue(torch.isfinite(guided).all())
+
+    def test_negative_approach_smoothness_weight_raises(self):
+        reference = torch.ones(1, 6, 151)
+
+        def palm_position(motion, _hand):
+            value = motion[..., 72:73]
+            return torch.cat((value, value * 0, value * 0), dim=-1)
+
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=4,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                pre_contact_surface_target=torch.zeros(3),
+                post_contact_surface_targets=torch.zeros(2, 3),
+                reference_motion=reference,
+                contact_transition_frames=4,
+                approach_smoothness_weight=-1.0,
+                guidance_strength=0.1,
+            ),
+            palm_position,
+        )
+        with self.assertRaises(ValueError):
+            callback(reference, torch.tensor([25]))
+
+    def test_post_contact_hold_radius_has_zero_gradient_inside_two_cm(self):
+        reference = torch.zeros(1, 6, 151)
+        reference[:, :, 72] = torch.tensor([0.0, 0.0, 0.010, 0.015, 0.019, 0.018])
+
+        def palm_position(motion, _hand):
+            value = motion[..., 72:73]
+            return torch.cat((value, value * 0, value * 0), dim=-1)
+
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=2,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                object_surface_targets=torch.zeros(6, 3),
+                reference_motion=reference,
+                contact_transition_frames=0,
+                post_contact_hold_radius=0.02,
+                post_contact_relative_velocity_weight=0.0,
+                w_reference=0.0,
+                w_temporal=0.0,
+                guidance_strength=0.1,
+            ),
+            palm_position,
+        )
+        guided = callback(reference, torch.tensor([25]))
+        self.assertTrue(torch.allclose(guided, reference))
+
+    def test_post_contact_hold_radius_pulls_back_only_outside_two_cm(self):
+        reference = torch.zeros(1, 6, 151)
+        reference[:, :, 72] = torch.tensor([0.0, 0.0, 0.010, 0.030, 0.040, 0.050])
+
+        def palm_position(motion, _hand):
+            value = motion[..., 72:73]
+            return torch.cat((value, value * 0, value * 0), dim=-1)
+
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=2,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                object_surface_targets=torch.zeros(6, 3),
+                reference_motion=reference,
+                contact_transition_frames=0,
+                post_contact_hold_radius=0.02,
+                post_contact_relative_velocity_weight=0.0,
+                w_reference=0.0,
+                w_temporal=0.0,
+                guidance_strength=0.1,
+                grad_clip_norm=100.0,
+                arm_gradient_smooth_kernel=1,  # test raw per-frame behavior
+            ),
+            palm_position,
+        )
+        guided = callback(reference, torch.tensor([25]))
+        self.assertTrue(torch.allclose(guided[:, :3], reference[:, :3]))
+        self.assertTrue(torch.all(guided[:, 3:, 72] < reference[:, 3:, 72]))
+
+    def test_arm_guidance_remains_active_with_small_cap_at_final_ddim_step(self):
+        # v22: at t=0 the arm cap drops to arm_final_update_cap, but guidance
+        # stays active and the inner loop accumulates several small steps.
+        reference = torch.ones(1, 4, 151)
+
+        def palm_position(motion, _hand):
+            value = motion[..., 72:73]
+            return torch.cat((value, value * 0, value * 0), dim=-1)
+
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=1,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                object_surface_targets=torch.zeros(4, 3),
+                reference_motion=reference,
+                post_contact_hold_radius=0.02,
+                diffusion_steps=50,
+                arm_max_update_cap=0.20,
+                arm_final_update_cap=0.04,
+                final_inner_steps=5,
+            ),
+            palm_position,
+        )
+        guided = callback(reference, torch.tensor([0]))
+        frame_update = torch.linalg.vector_norm(guided - reference, dim=-1)
+        diag = callback.step_diagnostics[-1]
+        self.assertGreater(float(frame_update.max()), 0.0)
+        # Each inner step is capped at arm_final_update_cap ...
+        self.assertLessEqual(diag["arm_applied_update_norm"], 0.04 + 1e-6)
+        self.assertAlmostEqual(diag["scheduled_update_cap"], 0.04, places=5)
+        # ... but the 5-step inner loop accumulates more displacement.
+        self.assertLessEqual(float(frame_update.max()), 5 * 0.04 + 1e-4)
+        self.assertGreaterEqual(diag["inner_iterations"], 1)
+
+    def test_guidance_update_cap_is_applied_independently_per_frame(self):
+        reference = torch.zeros(1, 3, 151)
+        reference[..., 72] = 1.0
+
+        def palm_position(motion, _hand):
+            value = motion[..., 72:73]
+            return torch.cat((value, value * 0, value * 0), dim=-1)
+
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=0,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                object_surface_targets=torch.zeros(3, 3),
+                reference_motion=reference,
+                contact_transition_frames=0,
+                post_contact_hold_radius=0.0,
+                post_contact_relative_velocity_weight=0.0,
+                post_contact_worst_frame_weight=0.0,
+                w_reference=0.0,
+                w_temporal=0.0,
+                guidance_strength=100.0,
+                grad_clip_norm=100.0,
+                arm_max_update_cap=0.10,
+                arm_final_update_cap=0.02,
+            ),
+            palm_position,
+        )
+        guided = callback(reference, torch.tensor([49]))
+        frame_update = torch.linalg.vector_norm(guided - reference, dim=-1)
+        self.assertTrue(
+            torch.allclose(frame_update, torch.full_like(frame_update, 0.10))
+        )
+
+    def test_root_guidance_keeps_nonzero_final_scale(self):
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=0,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                reference_motion=torch.zeros(1, 1, 151),
+                root_guidance_final_scale=0.10,
+            ),
+            lambda motion, _hand: motion[..., :3],
+        )
+        self.assertAlmostEqual(
+            float(callback._time_scale(torch.tensor([0]), root=False)), 1.0
+        )
+        self.assertAlmostEqual(
+            float(callback._time_scale(torch.tensor([0]), root=True)), 0.10
+        )
+
+    def test_inner_step_schedule_matches_ddim_phase(self):
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=0,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                reference_motion=torch.zeros(1, 1, 151),
+                late_inner_steps=2,
+                final_inner_steps=5,
+                inner_step_late_threshold=4,
+                diffusion_steps=50,
+            ),
+            lambda motion, _hand: motion[..., :3],
+        )
+        self.assertEqual(callback._inner_step_schedule(torch.tensor([0])), 5)
+        self.assertEqual(callback._inner_step_schedule(torch.tensor([3])), 2)
+        self.assertEqual(callback._inner_step_schedule(torch.tensor([4])), 2)
+        self.assertEqual(callback._inner_step_schedule(torch.tensor([10])), 1)
+        self.assertEqual(callback._inner_step_schedule(torch.tensor([49])), 1)
+
+    def test_final_step_inner_loop_moves_more_than_single_step(self):
+        reference = torch.ones(1, 4, 151)
+
+        def palm_position(motion, _hand):
+            value = motion[..., 72:73]
+            return torch.cat((value, value * 0, value * 0), dim=-1)
+
+        def displacement(final_inner_steps):
+            callback = ContactGuidance(
+                ContactGuidanceConfig(
+                    contact_frame=1,
+                    selected_hand="left",
+                    object_surface_target=torch.zeros(3),
+                    object_surface_targets=torch.zeros(4, 3),
+                    reference_motion=reference,
+                    post_contact_hold_radius=0.0,
+                    diffusion_steps=50,
+                    arm_max_update_cap=0.20,
+                    arm_final_update_cap=0.04,
+                    final_inner_steps=final_inner_steps,
+                ),
+                palm_position,
+            )
+            guided = callback(reference, torch.tensor([0]))
+            return float(torch.linalg.vector_norm(guided - reference, dim=-1).max())
+
+        single = displacement(1)
+        multi = displacement(5)
+        self.assertGreater(single, 0.0)
+        self.assertGreater(multi, single * 1.5)
+
+    def test_arm_and_root_caps_are_independent(self):
+        reference = torch.zeros(1, 3, 151)
+        x0 = reference.clone()
+        x0[..., 72] = 1.0
+        x0[..., ROOT_VELOCITY_SLICE] = 1.0
+
+        def palm_position(motion, _hand):
+            arm = motion[..., 72:73]
+            root = motion[..., ROOT_VELOCITY_SLICE].sum(dim=-1, keepdim=True)
+            return torch.cat((arm + root, arm * 0, root * 0), dim=-1)
+
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=0,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                object_surface_targets=torch.zeros(3, 3),
+                reference_motion=reference,
+                include_root=True,
+                contact_transition_frames=0,
+                post_contact_hold_radius=0.0,
+                post_contact_relative_velocity_weight=0.0,
+                post_contact_worst_frame_weight=0.0,
+                w_reference=0.0,
+                w_temporal=0.0,
+                guidance_strength=100.0,
+                grad_clip_norm=100.0,
+                root_guidance_final_scale=1.0,
+                arm_max_update_cap=0.20,
+                arm_final_update_cap=0.04,
+                root_max_update_cap=0.05,
+                root_final_update_cap=0.02,
+            ),
+            palm_position,
+        )
+        callback(x0, torch.tensor([30]))
+        diag = callback.step_diagnostics[-1]
+        self.assertLessEqual(diag["arm_applied_update_norm"], 0.20 + 1e-6)
+        self.assertLessEqual(diag["root_applied_update_norm"], 0.05 + 1e-6)
+        # The arm cap is larger, so the arm update exceeds the root cap.
+        self.assertGreater(diag["arm_applied_update_norm"], 0.05 + 1e-6)
+
+    def test_root_gradient_is_temporally_smoothed(self):
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=0,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                reference_motion=torch.zeros(1, 20, 151),
+                include_root=True,
+                contact_transition_frames=0,
+                root_gradient_smooth_kernel=9,
+                root_guidance_final_scale=1.0,
+                root_guidance_multiplier=1.0,
+            ),
+            lambda motion, _hand: motion[..., :3],
+        )
+        spike = torch.zeros(1, 20, 3)
+        spike[0, 10, :] = 1.0
+        smoothed = callback._smooth_root_gradient(spike, torch.tensor([0]))
+        input_tv = float((spike[:, 1:] - spike[:, :-1]).abs().sum())
+        output_tv = float((smoothed[:, 1:] - smoothed[:, :-1]).abs().sum())
+        self.assertGreater(float(smoothed.abs().sum()), 0.0)
+        self.assertLess(output_tv, input_tv)
+
+    def test_inner_line_search_rejects_nonimproving_update(self):
+        # Palm already at the target -> zero gradient -> nothing should be
+        # accepted, so the motion is returned unchanged.
+        reference = torch.zeros(1, 3, 151)
+
+        def palm_position(motion, _hand):
+            value = motion[..., 72:73]
+            return torch.cat((value, value * 0, value * 0), dim=-1)
+
+        callback = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=0,
+                selected_hand="left",
+                object_surface_target=torch.zeros(3),
+                object_surface_targets=torch.zeros(3, 3),
+                reference_motion=reference,
+                contact_transition_frames=0,
+                post_contact_hold_radius=0.0,
+                w_reference=0.0,
+                w_temporal=0.0,
+                guidance_strength=100.0,
+                inner_line_search=True,
+                final_inner_steps=5,
+            ),
+            palm_position,
+        )
+        guided = callback(reference, torch.tensor([0]))
+        self.assertTrue(torch.allclose(guided, reference))
+        self.assertEqual(callback.step_diagnostics[-1]["inner_candidate_accepted"], 0)
+
+    # ------------------------------------------------------------------
+    # v23 whole-body guidance
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _whole_body_kin(motion, _hand):
+        # palm from left_collar x-channel (72); root position from the root
+        # velocity channels (148:151); the four feet Y from the ankle/foot
+        # channels so leg/foot gradients are exercised.
+        palm = torch.cat((motion[..., 72:73], motion[..., 73:74], motion[..., 74:75]), dim=-1)
+        root = motion[..., 148:151]
+
+        def on_y(v):
+            return torch.cat((v * 0, v, v * 0), dim=-1)
+
+        feet = torch.stack(
+            (
+                on_y(motion[..., 36:37]),  # left_ankle
+                on_y(motion[..., 54:55]),  # left_foot
+                on_y(motion[..., 42:43]),  # right_ankle
+                on_y(motion[..., 60:61]),  # right_foot
+            ),
+            dim=-2,
+        )
+        return {"palm_position": palm, "root_position": root, "foot_positions": feet}
+
+    def _whole_body_config(self, **overrides):
+        base = dict(
+            contact_frame=3,
+            selected_hand="left",
+            object_surface_target=torch.zeros(3),
+            reference_motion=torch.zeros(1, 6, 151),
+            include_root=True,
+            include_torso=True,
+            include_legs=True,
+            diffusion_steps=50,
+        )
+        base.update(overrides)
+        return ContactGuidanceConfig(**base)
+
+    def test_signed_point_mesh_distance_sign_and_magnitude(self):
+        v, f = _unit_cube_mesh()
+        pts = torch.tensor([
+            [0.0, 0.0, 0.0],    # center: inside, ~0.5 from each face
+            [0.9, 0.0, 0.0],    # outside +x by 0.4
+            [0.0, 0.0, -0.7],   # outside -z by 0.2
+        ], dtype=torch.float32)
+        sd = signed_point_mesh_distance(pts, v, f, candidate_faces=12)
+        self.assertLess(float(sd[0]), 0.0)                     # inside -> negative
+        self.assertAlmostEqual(float(sd[0]), -0.5, delta=0.05)  # ~0.5 deep
+        self.assertGreater(float(sd[1]), 0.0)                  # outside -> positive
+        self.assertAlmostEqual(float(sd[1]), 0.4, delta=0.05)
+        self.assertGreater(float(sd[2]), 0.0)
+        self.assertAlmostEqual(float(sd[2]), 0.2, delta=0.05)
+
+    def test_signed_point_mesh_distance_is_differentiable(self):
+        v, f = _unit_cube_mesh()
+        p = torch.tensor([[0.9, 0.0, 0.0]], dtype=torch.float32, requires_grad=True)
+        sd = signed_point_mesh_distance(p, v, f, candidate_faces=12)
+        sd.sum().backward()
+        self.assertIsNotNone(p.grad)
+        self.assertGreater(float(p.grad.abs().sum()), 0.0)
+
+    def test_gaussian_time_smooth_reduces_frame_to_frame_jitter(self):
+        # A spiky per-frame signal must have its temporal variation reduced,
+        # which is what tames post-contact hand jitter under a large cap.
+        g = torch.zeros(1, 20, 6)
+        g[0, ::2] = 1.0  # alternate frames -> maximal jitter
+        smoothed = ContactGuidance._gaussian_time_smooth(g, 7)
+        raw_tv = float((g[:, 1:] - g[:, :-1]).abs().sum())
+        smooth_tv = float((smoothed[:, 1:] - smoothed[:, :-1]).abs().sum())
+        self.assertLess(smooth_tv, raw_tv)
+        self.assertGreater(float(smoothed.abs().sum()), 0.0)
+        # kernel<=1 is a no-op
+        self.assertTrue(torch.equal(ContactGuidance._gaussian_time_smooth(g, 1), g))
+
+    def test_rigid_depth_placement_translates_palm_without_scaling(self):
+        # A pure translation offset must shift the decoded palm by exactly the
+        # same vector at every frame (no scaling): relative geometry preserved.
+        offset = torch.tensor([0.1, 0.0, -1.0])
+        reference = torch.zeros(1, 4, 151)
+        reference[..., 72] = torch.tensor([0.0, 0.2, 0.4, 0.6])
+
+        def palm_position(motion, _hand):
+            v = motion[..., 72:73]
+            return torch.cat((v, v * 0, v * 0), dim=-1)
+
+        def build(translation):
+            cb = ContactGuidance(
+                ContactGuidanceConfig(
+                    contact_frame=1,
+                    selected_hand="left",
+                    object_surface_target=torch.zeros(3),
+                    reference_motion=reference,
+                    human_translation_global=translation,
+                ),
+                palm_position,
+            )
+            _, comps = cb._compute_guidance_loss(reference, torch.tensor([10]))
+            return comps["palm"].detach()
+
+        base_palm = build(None)
+        shifted_palm = build(offset)
+        self.assertTrue(
+            torch.allclose(shifted_palm, base_palm + offset.reshape(1, 1, 3), atol=1e-6)
+        )
+
+    def test_effective_human_depth_scale_default_is_one(self):
+        cfg = ContactGuidanceConfig(
+            contact_frame=0,
+            selected_hand="left",
+            object_surface_target=torch.zeros(3),
+            reference_motion=torch.zeros(1, 1, 151),
+        )
+        self.assertEqual(cfg.human_depth_scale, 1.0)
+
+    def test_group_channel_slices_cover_arm_torso_legs_by_name(self):
+        slices = group_channel_slices("left")
+        # arm: left_collar(k12)=72:78, shoulder(k15)=90:96, elbow(k17)=102:108, wrist(k19)=114:120
+        self.assertEqual(slices["arm"], [slice(72, 78), slice(90, 96), slice(102, 108), slice(114, 120)])
+        # torso: spine1(k2)=12:18, spine2(k5)=30:36, spine3(k8)=48:54
+        self.assertEqual(slices["torso"], [slice(12, 18), slice(30, 36), slice(48, 54)])
+        # root velocity slice
+        self.assertEqual(slices["root"], [ROOT_VELOCITY_SLICE])
+        # legs include both left and right hip/knee/ankle/foot
+        self.assertEqual(len(slices["legs"]), 8)
+
+    def test_leg_channel_slices_left_and_right(self):
+        legs = leg_channel_slices("left")
+        # left_hip(k0)=0:6, left_knee(k3)=18:24, left_ankle(k6)=36:42, left_foot(k9)=54:60
+        self.assertEqual(legs["left_hip"], slice(0, 6))
+        self.assertEqual(legs["left_knee"], slice(18, 24))
+        self.assertEqual(legs["left_ankle"], slice(36, 42))
+        self.assertEqual(legs["left_foot"], slice(54, 60))
+        # right_hip(k1)=6:12, right_ankle(k7)=42:48, right_foot(k10)=60:66
+        self.assertEqual(legs["right_hip"], slice(6, 12))
+        self.assertEqual(legs["right_ankle"], slice(42, 48))
+        self.assertEqual(legs["right_foot"], slice(60, 66))
+
+    def test_arm_on_root_legs_off_at_final_ddim_step(self):
+        cb = ContactGuidance(
+            self._whole_body_config(root_leg_fade_fraction=0.30),
+            self._whole_body_kin,
+        )
+        self.assertAlmostEqual(float(cb._time_scale(torch.tensor([0]), root=False)), 1.0)
+        self.assertAlmostEqual(float(cb._root_leg_time_scale(torch.tensor([0]))), 0.0)
+        self.assertGreater(float(cb._root_leg_time_scale(torch.tensor([25]))), 0.0)
+
+    def test_root_offset_ramp_starts_zero_reaches_target_at_contact(self):
+        cb = ContactGuidance(
+            self._whole_body_config(contact_frame=5, contact_transition_frames=4,
+                                    reference_motion=torch.zeros(1, 10, 151)),
+            self._whole_body_kin,
+        )
+        ramp = cb._root_offset_ramp(10, torch.device("cpu"), torch.float32)
+        self.assertAlmostEqual(float(ramp[0]), 0.0)
+        self.assertAlmostEqual(float(ramp[5]), 1.0)
+        self.assertTrue(torch.allclose(ramp[5:], torch.ones_like(ramp[5:])))
+
+    def test_root_vertical_lock_penalizes_height_change(self):
+        cb = ContactGuidance(
+            self._whole_body_config(w_root_vertical_lock=1.0),
+            self._whole_body_kin,
+        )
+        flat = torch.zeros(1, 6, 151)  # root Y (channel 149) constant -> no height change
+        _, comps_flat = cb._compute_guidance_loss(flat, torch.tensor([10]))
+        raised = torch.zeros(1, 6, 151)
+        raised[..., 149] = torch.linspace(0.0, 0.3, 6)  # root Y rises over time
+        _, comps_raised = cb._compute_guidance_loss(raised, torch.tensor([10]))
+        self.assertAlmostEqual(float(comps_flat["root_vertical_loss"]), 0.0)
+        self.assertGreater(float(comps_raised["root_vertical_loss"]), 0.0)
+
+    def test_support_foot_loss_zero_when_static_and_ignores_swing_foot(self):
+        probs = torch.zeros(6, 4)
+        probs[:, 0] = 1.0  # left ankle is the support foot
+        probs[:, 1] = 1.0  # left foot is the support foot
+        cb = ContactGuidance(
+            self._whole_body_config(foot_contact_probs=probs, ground_height=0.0),
+            self._whole_body_kin,
+        )
+        static = torch.zeros(1, 6, 151)  # all feet channels constant -> no sliding
+        _, comps_static = cb._compute_guidance_loss(static, torch.tensor([10]))
+        self.assertAlmostEqual(float(comps_static["support_foot_loss"]), 0.0)
+
+        swing = torch.zeros(1, 6, 151)
+        swing[..., 42] = torch.linspace(0.0, 0.5, 6)  # move RIGHT ankle (swing, prob 0)
+        _, comps_swing = cb._compute_guidance_loss(swing, torch.tensor([10]))
+        self.assertAlmostEqual(float(comps_swing["support_foot_loss"]), 0.0)
+
+        support = torch.zeros(1, 6, 151)
+        support[..., 36] = torch.linspace(0.0, 0.5, 6)  # move LEFT ankle (support, prob 1)
+        _, comps_support = cb._compute_guidance_loss(support, torch.tensor([10]))
+        self.assertGreater(float(comps_support["support_foot_loss"]), 0.0)
+
+    def test_group_update_caps_are_independent(self):
+        cb = ContactGuidance(
+            self._whole_body_config(
+                contact_frame=0,
+                reference_motion=torch.zeros(1, 3, 151),
+                contact_transition_frames=0,
+                post_contact_hold_radius=0.0,
+                post_contact_relative_velocity_weight=0.0,
+                post_contact_worst_frame_weight=0.0,
+                w_reference=0.0,
+                w_temporal=0.0,
+                w_root_vertical_lock=0.0,
+                leg_reference_weight=0.0,
+                arm_reference_weight=0.0,
+                arm_smoothness_weight=0.0,
+                guidance_strength=100.0,
+                grad_clip_norm=100.0,
+                arm_max_update_cap=0.20,
+                arm_final_update_cap=0.04,
+                torso_max_update_cap=0.05,
+                leg_max_update_cap=0.05,
+                root_max_update_cap=0.05,
+                object_surface_targets=torch.zeros(3, 3),
+            ),
+            self._whole_body_kin,
+        )
+        x0 = torch.zeros(1, 3, 151)
+        x0[..., 72] = 1.0   # arm channel -> palm
+        x0[..., 148:151] = 1.0  # root channels
+        x0[..., 36] = 1.0   # left ankle (leg)
+        cb(x0, torch.tensor([30]))
+        diag = cb.step_diagnostics[-1]
+        self.assertLessEqual(diag["arm_applied_update_norm"], 0.20 + 1e-6)
+        self.assertLessEqual(diag["leg_applied_update_norm"], 0.05 + 1e-6)
+        self.assertLessEqual(diag["root_applied_update_norm"], 0.05 + 1e-6)
+        self.assertLessEqual(diag["torso_applied_update_norm"], 0.05 + 1e-6)
 
     def test_two_segment_targets_use_static_pre_contact_and_post_contact_sequence(self):
         reference = torch.ones(1, 6, 151)
@@ -249,6 +843,7 @@ class GenmoContactGuidanceTests(unittest.TestCase):
                 w_reference=0.0,
                 w_temporal=0.0,
                 guidance_strength=0.1,
+                arm_gradient_smooth_kernel=1,  # test raw per-frame behavior
             ),
             palm_position,
         )
@@ -318,6 +913,12 @@ class GenmoContactGuidanceTests(unittest.TestCase):
                     post_contact_worst_frame_weight=0.0,
                     guidance_strength=0.1,
                     grad_clip_norm=100.0,
+                    # Keep the per-frame caps out of the way so the velocity
+                    # term's effect on the gradient magnitude is visible (the
+                    # gradient direction is identical, so a saturated cap would
+                    # normalize both weights to the same update).
+                    arm_max_update_cap=100.0,
+                    arm_final_update_cap=100.0,
                 ),
                 palm_position,
             )
@@ -348,6 +949,14 @@ class GenmoContactGuidanceTests(unittest.TestCase):
                     include_root=True,
                     guidance_strength=0.1,
                     grad_clip_norm=100.0,
+                    # Disable the caps and the shared line-search scale so this
+                    # test isolates pure root-gradient multiplier linearity.
+                    arm_max_update_cap=100.0,
+                    arm_final_update_cap=100.0,
+                    root_max_update_cap=100.0,
+                    root_final_update_cap=100.0,
+                    root_gradient_smooth_kernel=0,
+                    inner_line_search=False,
                     root_guidance_multiplier=multiplier,
                 ),
                 palm_position,

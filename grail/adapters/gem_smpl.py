@@ -226,8 +226,13 @@ def _calibrate_human_points(points, camera_origin, depth_scale):
     return origin + float(depth_scale) * (points - origin)
 
 
-def _calibrate_compact_prediction(compact, camera_origin, depth_scale):
-    """Apply one depth calibration consistently to saved params and joints."""
+def _calibrate_compact_prediction(
+    compact, camera_origin, depth_scale, translation_global=None, translation_cam=None
+):
+    """Apply one depth calibration consistently to saved params and joints.
+
+    ``translation_global`` / ``translation_cam`` add a rigid (no-scale) offset
+    to the global / in-camera human (v23 frame-0 depth placement)."""
     scale = float(depth_scale)
     origin = torch.as_tensor(camera_origin, dtype=torch.float32).cpu()
     compact["smpl_params_global"]["transl"] = _calibrate_human_points(
@@ -240,6 +245,14 @@ def _calibrate_compact_prediction(compact, camera_origin, depth_scale):
         compact["smpl24_joints_global"], origin, scale
     )
     compact["smpl24_joints_incam"] = compact["smpl24_joints_incam"] * scale
+    if translation_global is not None:
+        tg = torch.as_tensor(translation_global, dtype=torch.float32).cpu()
+        compact["smpl_params_global"]["transl"] = compact["smpl_params_global"]["transl"] + tg
+        compact["smpl24_joints_global"] = compact["smpl24_joints_global"] + tg
+    if translation_cam is not None:
+        tc = torch.as_tensor(translation_cam, dtype=torch.float32).cpu()
+        compact["smpl_params_incam"]["transl"] = compact["smpl_params_incam"]["transl"] + tc
+        compact["smpl24_joints_incam"] = compact["smpl24_joints_incam"] + tc
     compact["human_depth_scale"] = scale
     return compact
 
@@ -350,7 +363,35 @@ def _guidance_step_summary(pred):
         "maximum_gradient_norm": max(step["gradient_norm"] for step in steps),
         "last_gradient_norm": steps[-1]["gradient_norm"],
     }
-    for block in ("arm", "root"):
+    for key in (
+        "sequence_gradient_norm",
+        "raw_update_norm",
+        "applied_update_norm",
+        "scheduled_update_cap",
+        "arm_raw_update_norm",
+        "arm_applied_update_norm",
+        "torso_raw_update_norm",
+        "torso_applied_update_norm",
+        "root_raw_update_norm",
+        "root_applied_update_norm",
+        "leg_raw_update_norm",
+        "leg_applied_update_norm",
+        "root_time_scale_last",
+        "root_target_loss",
+        "root_vertical_loss",
+        "support_foot_loss",
+        "ground_contact_loss",
+        "leg_reference_loss",
+        "arm_reference_loss",
+        "arm_smoothness_loss",
+        "inner_iterations",
+        "inner_candidate_accepted",
+        "inner_contact_error_after_m",
+    ):
+        if key in steps[0]:
+            summary[f"maximum_{key}"] = max(step[key] for step in steps)
+            summary[f"last_{key}"] = steps[-1][key]
+    for block in ("arm", "torso", "root", "leg"):
         key = f"{block}_gradient_norm"
         if key in steps[0]:
             summary[f"maximum_{key}"] = max(step[key] for step in steps)
@@ -400,7 +441,7 @@ def run_contact_guided_genmo(
     selected_hand,
     *,
     seed=42,
-    reach_error_threshold=0.03,
+    reach_error_threshold=0.02,
     max_arm_rotation_change_deg=30.0,
     max_root_correction=0.25,
     guidance_strength=0.7,
@@ -414,12 +455,46 @@ def run_contact_guided_genmo(
     object_poses_cam=None,
     contact_transition_frames=8,
     guidance_temporal_weight=0.5,
+    post_contact_hold_radius=0.02,
     post_contact_relative_velocity_weight=8.0,
-    post_contact_worst_frame_weight=0.0,
+    post_contact_relative_step_tolerance=0.01,
+    post_contact_worst_frame_weight=0.5,
     post_contact_terminal_position_weight=1.0,
     post_contact_terminal_frames=16,
     contact_frame_position_weight=1.25,
     contact_frame_weight_radius=2,
+    max_guidance_update_norm=0.25,
+    final_guidance_update_norm=0.05,
+    arm_guidance_fade_fraction=0.20,
+    root_guidance_final_scale=0.10,
+    late_inner_steps=2,
+    final_inner_steps=5,
+    arm_max_update_cap=0.60,
+    arm_final_update_cap=0.25,
+    root_max_update_cap=0.05,
+    root_final_update_cap=0.02,
+    root_gradient_smooth_kernel=9,
+    arm_gradient_smooth_kernel=9,
+    inner_line_search=True,
+    contact_standoff_m=0.05,
+    contact_min_clearance_m=0.04,
+    penetration_weight=60.0,
+    root_activation_distance_min=0.06,
+    root_activation_distance_max=0.15,
+    root_leg_fade_fraction=0.30,
+    torso_max_update_cap=0.05,
+    torso_final_update_cap=0.01,
+    leg_max_update_cap=0.05,
+    leg_final_update_cap=0.02,
+    w_root_target=1.0,
+    w_root_vertical_lock=5.0,
+    support_foot_weight=2.0,
+    ground_contact_weight=1.0,
+    leg_reference_weight=1.0,
+    arm_reference_weight=0.05,
+    arm_smoothness_weight=0.15,
+    approach_smoothness_weight=0.0,
+    post_contact_follow_mode="translation",
 ):
     """Run baseline and two-stage contact-guided GENMO with shared noise.
 
@@ -499,8 +574,58 @@ def run_contact_guided_genmo(
                 "Stage 3.5 requires frame-0 GT depth and the rendered human mask "
                 "to align GENMO before contact guidance"
             )
-        human_depth_scale, depth_alignment = _estimate_gt_human_depth_scale(
+        raw_human_depth_scale, depth_alignment = _estimate_gt_human_depth_scale(
             model, baseline, gt_depth_path, human_mask_path
+        )
+        # Option C: use the GT-depth similarity about the camera origin.  GENMO's
+        # monocular estimate has a scale/depth ambiguity (it places the human too
+        # far AND too big, which cancels in 2D -> reprojects to ~11px).  The GT
+        # depth map (exact for this synthetic scene) says the human surface is at
+        # the same depth as the object, so this similarity resolves the ambiguity
+        # to the true metric human (correct size AND depth) rather than faking
+        # contact by shrinking.  No pure rigid translation is applied here.
+        human_depth_scale = float(raw_human_depth_scale)
+        human_root_offset = torch.zeros(3, device=camera_to_global_t.device,
+                                        dtype=camera_to_global_t.dtype)
+        human_root_offset_cam = torch.zeros(3, device=camera_to_global_t.device,
+                                            dtype=camera_to_global_t.dtype)
+        depth_gap = float(
+            depth_alignment.get("gt_surface_depth_median_m", 0.0)
+            - depth_alignment.get("predicted_surface_depth_median_m", 0.0)
+        ) if depth_alignment.get("enabled", False) else 0.0
+        initial_root_alignment_error_m = float(
+            torch.linalg.vector_norm(
+                _calibrate_human_points(
+                    baseline_root_transl[frame], camera_to_global_t, human_depth_scale
+                )
+                - baseline_root_transl[frame]
+            ).detach().cpu()
+        )
+        # Baseline whole-body kinematics for foot-contact / ground height (Y-up),
+        # in the same GT-depth-calibrated frame as the guidance (so feet are
+        # scaled consistently with the in-loop palm).
+        baseline_kin = model.pipeline.decode_guidance_kinematics(
+            reference_x, palm_inputs, selected_hand
+        )
+        baseline_feet = _calibrate_human_points(
+            baseline_kin["foot_positions"][0].detach(), camera_to_global_t, human_depth_scale
+        )  # [L,4,3]
+        ground_height = float(baseline_feet[..., 1].min().detach().cpu())
+        static_conf = baseline["net_outputs"]["model_output"].get(
+            "static_conf_logits", None
+        )
+        foot_contact_probs = (
+            torch.sigmoid(static_conf[0, :, :4]).detach()
+            if static_conf is not None
+            else None
+        )
+        baseline_body_joints = _calibrate_human_points(
+            baseline["smpl24_joints_global"].detach(), camera_to_global_t, human_depth_scale
+        )
+        initial_body_height_m = float(
+            (baseline_body_joints[0, :, 1].max() - baseline_body_joints[0, :, 1].min())
+            .detach()
+            .cpu()
         )
         initial_palm_aligned = _calibrate_human_points(
             initial_palm_global, camera_to_global_t, human_depth_scale
@@ -546,13 +671,38 @@ def run_contact_guided_genmo(
             faces=faces_numpy[valid_faces],
             process=False,
         )
-        closest, distance, _ = trimesh.proximity.closest_point_naive(
+        closest, distance, tri_id = trimesh.proximity.closest_point_naive(
             mesh_global, initial_palm_aligned[frame : frame + 1].detach().cpu().numpy()
         )
-        target_global = torch.as_tensor(closest[0], device="cuda", dtype=torch.float32)
+        true_surface_point = torch.as_tensor(closest[0], device="cuda", dtype=torch.float32)
         initial_error = float(distance[0])
-        if not torch.isfinite(target_global).all() or not math.isfinite(initial_error):
+        if not torch.isfinite(true_surface_point).all() or not math.isfinite(initial_error):
             raise ValueError("closest object surface query returned NaN/Inf")
+        # Outward surface normal at the contact face (guidance-global, frame 89),
+        # oriented toward the hand.  Used for the per-frame penetration penalty.
+        face_normal_global = torch.as_tensor(
+            np.asarray(mesh_global.face_normals[int(tri_id[0])]).copy(),
+            device="cuda", dtype=torch.float32,
+        )
+        to_hand89 = initial_palm_aligned[frame] - true_surface_point
+        if float((face_normal_global @ to_hand89).detach().cpu()) < 0.0:
+            face_normal_global = -face_normal_global
+        face_normal_global = face_normal_global / torch.linalg.vector_norm(
+            face_normal_global
+        ).clamp_min(1e-8)
+        # Contact standoff: the guidance controls the palm *point* (wrist + a
+        # fixed offset), but the hand *mesh* has volume, so pulling the palm
+        # point onto the surface makes the hand clip through the object.  Offset
+        # the target outward from the surface along the hand's approach side by
+        # ~the hand half-thickness so the palm point stops short and the hand
+        # mesh rests ON the surface instead of penetrating it.
+        target_global = true_surface_point
+        contact_standoff = float(contact_standoff_m)
+        if contact_standoff > 0.0:
+            to_hand = initial_palm_aligned[frame] - true_surface_point
+            to_hand_norm = torch.linalg.vector_norm(to_hand)
+            if float(to_hand_norm.detach().cpu()) > 1e-6:
+                target_global = true_surface_point + contact_standoff * (to_hand / to_hand_norm)
 
         human_height = float(
             baseline["smpl24_joints_incam"][frame, :, 1].max()
@@ -575,16 +725,34 @@ def run_contact_guided_genmo(
         palm_to_surface_delta_cam = target_cam - initial_palm_cam
 
         object_surface_targets_global = None
+        object_surface_normals_global = None
         if object_vertices_local is not None and object_poses_cam is not None:
+            pose89_R = torch.as_tensor(
+                np.asarray(object_poses_cam[frame, :3, :3]).copy(), device="cuda", dtype=torch.float32
+            )
             local_target = (
                 target_cam
                 - torch.as_tensor(
                     np.asarray(object_poses_cam[frame, :3, 3]).copy(), device="cuda"
                 )
-            ) @ torch.as_tensor(
-                np.asarray(object_poses_cam[frame, :3, :3]).copy(), device="cuda"
+            ) @ pose89_R
+            # Contact-face normal in the object's local frame (direction only),
+            # so it rotates with the object over the trajectory.
+            face_normal_cam = face_normal_global @ camera_to_global_R  # global -> cam (dir)
+            normal_local = face_normal_cam @ pose89_R  # cam -> object local (dir)
+            # The user wants the hand to stay *positionally* fixed relative to the
+            # object and ride along with it, WITHOUT following the object's
+            # rotation.  In "translation" mode the post-contact target is the
+            # contact-frame target shifted only by the object's translation
+            # delta, and the contact normal is held constant.  "pose" mode keeps
+            # the legacy full-6DoF follow (target rotates with the object).
+            follow_mode = str(post_contact_follow_mode).lower()
+            t89 = torch.as_tensor(
+                np.asarray(object_poses_cam[frame, :3, 3]).copy(),
+                device="cuda", dtype=torch.float32,
             )
             trajectory_cam = []
+            normal_traj_cam = []
             for pose in np.asarray(object_poses_cam, dtype=np.float32):
                 R = torch.as_tensor(
                     np.asarray(pose[:3, :3]).copy(), device="cuda", dtype=torch.float32
@@ -592,14 +760,24 @@ def run_contact_guided_genmo(
                 t = torch.as_tensor(
                     np.asarray(pose[:3, 3]).copy(), device="cuda", dtype=torch.float32
                 )
-                trajectory_cam.append(local_target @ R.mT + t)
+                if follow_mode == "translation":
+                    trajectory_cam.append(target_cam + (t - t89))
+                    normal_traj_cam.append(face_normal_cam)  # constant, no rotation
+                else:
+                    trajectory_cam.append(local_target @ R.mT + t)
+                    normal_traj_cam.append(normal_local @ R.mT)  # object local -> cam
             trajectory_cam = torch.stack(trajectory_cam)
             object_surface_targets_global = (
                 trajectory_cam @ camera_to_global_R.mT + camera_to_global_t
             )
+            normal_traj_global = torch.stack(normal_traj_cam) @ camera_to_global_R.mT
+            object_surface_normals_global = normal_traj_global / torch.linalg.vector_norm(
+                normal_traj_global, dim=-1, keepdim=True
+            ).clamp_min(1e-8)
 
         compact_baseline = _calibrate_compact_prediction(
-            _compact_genmo_prediction(baseline), camera_to_global_t, human_depth_scale
+            _compact_genmo_prediction(baseline), camera_to_global_t, human_depth_scale,
+            translation_global=human_root_offset, translation_cam=human_root_offset_cam,
         )
         del baseline
 
@@ -609,7 +787,10 @@ def run_contact_guided_genmo(
             "initial_contact_error_m": initial_error,
             "initial_palm_position": initial_palm_aligned[frame].detach().cpu().tolist(),
             "object_center": verts_global.mean(0).detach().cpu().tolist(),
-            "closest_surface_point": target_global.detach().cpu().tolist(),
+            "closest_surface_point": true_surface_point.detach().cpu().tolist(),
+            "contact_target_point": target_global.detach().cpu().tolist(),
+            "contact_standoff_m": float(contact_standoff_m),
+            "post_contact_follow_mode": str(post_contact_follow_mode).lower(),
             "initial_palm_position_camera": initial_palm_cam.detach().cpu().tolist(),
             "closest_surface_point_camera": target_cam.detach().cpu().tolist(),
             "palm_to_surface_delta_camera": palm_to_surface_delta_cam.detach().cpu().tolist(),
@@ -680,6 +861,9 @@ def run_contact_guided_genmo(
             "selected_hand": selected_hand,
             "object_surface_target": target_global,
             "object_surface_targets": object_surface_targets_global,
+            "object_surface_normals": object_surface_normals_global,
+            "contact_min_clearance": float(contact_min_clearance_m),
+            "penetration_weight": float(penetration_weight),
             "pre_contact_surface_target": target_global,
             "post_contact_surface_targets": (
                 None
@@ -688,8 +872,12 @@ def run_contact_guided_genmo(
             ),
             "contact_transition_frames": int(contact_transition_frames),
             "w_temporal": float(guidance_temporal_weight),
+            "post_contact_hold_radius": float(post_contact_hold_radius),
             "post_contact_relative_velocity_weight": float(
                 post_contact_relative_velocity_weight
+            ),
+            "post_contact_relative_step_tolerance": float(
+                post_contact_relative_step_tolerance
             ),
             "post_contact_worst_frame_weight": float(
                 post_contact_worst_frame_weight
@@ -705,13 +893,52 @@ def run_contact_guided_genmo(
             "diffusion_steps": int(model.pipeline.denoiser3d.test_gen_only_diffusion.num_timesteps),
             "human_depth_scale": human_depth_scale,
             "camera_origin_global": camera_to_global_t,
+            "human_translation_global": None,
             "root_guidance_multiplier": float(root_guidance_multiplier),
+            "max_guidance_update_norm": float(max_guidance_update_norm),
+            "final_guidance_update_norm": float(final_guidance_update_norm),
+            "arm_guidance_fade_fraction": float(arm_guidance_fade_fraction),
+            "root_guidance_final_scale": float(root_guidance_final_scale),
+            "late_inner_steps": int(late_inner_steps),
+            "final_inner_steps": int(final_inner_steps),
+            "arm_max_update_cap": float(arm_max_update_cap),
+            "arm_final_update_cap": float(arm_final_update_cap),
+            "root_max_update_cap": float(root_max_update_cap),
+            "root_final_update_cap": float(root_final_update_cap),
+            "root_gradient_smooth_kernel": int(root_gradient_smooth_kernel),
+            "arm_gradient_smooth_kernel": int(arm_gradient_smooth_kernel),
+            "inner_line_search": bool(inner_line_search),
+            "reach_error_threshold": float(reach_error_threshold),
+            # v23 whole-body guidance
+            "include_torso": True,
+            "root_activation_distance_min": float(root_activation_distance_min),
+            "root_activation_distance_max": float(root_activation_distance_max),
+            "root_leg_fade_fraction": float(root_leg_fade_fraction),
+            "torso_max_update_cap": float(torso_max_update_cap),
+            "torso_final_update_cap": float(torso_final_update_cap),
+            "leg_max_update_cap": float(leg_max_update_cap),
+            "leg_final_update_cap": float(leg_final_update_cap),
+            "max_root_correction": float(max_root_correction),
+            "w_root_target": float(w_root_target),
+            "w_root_vertical_lock": float(w_root_vertical_lock),
+            "support_foot_weight": float(support_foot_weight),
+            "ground_contact_weight": float(ground_contact_weight),
+            "leg_reference_weight": float(leg_reference_weight),
+            "arm_reference_weight": float(arm_reference_weight),
+            "arm_smoothness_weight": float(arm_smoothness_weight),
+            "approach_smoothness_weight": float(approach_smoothness_weight),
+            "ground_height": float(ground_height),
         }
+        # Arm-only candidate: arm (+ small torso), no legs/root.
         arm_only = model.predict(
             data,
             static_cam=is_static_cam,
             sampling_noise=sampling_noise,
-            contact_guidance={**common_spec, "include_root": False},
+            contact_guidance={
+                **common_spec,
+                "include_root": False,
+                "include_legs": False,
+            },
             postproc_override=False,
         )
         arm_x = arm_only["net_outputs"]["model_output"]["pred_x"].detach()
@@ -740,8 +967,24 @@ def run_contact_guided_genmo(
 
         arm_guidance_summary = _guidance_step_summary(arm_only)
         compact_arm_only = _calibrate_compact_prediction(
-            _compact_genmo_prediction(arm_only), camera_to_global_t, human_depth_scale
+            _compact_genmo_prediction(arm_only), camera_to_global_t, human_depth_scale,
+            translation_global=human_root_offset, translation_cam=human_root_offset_cam,
         )
+
+        # Ground-plane root target (§五): the horizontal shift the root should
+        # absorb, from the arm-only contact-frame residual (global, Y removed),
+        # clamped to the max_root_correction safety cap.  Direction = toward the
+        # object (target - palm).
+        up = torch.tensor([0.0, 1.0, 0.0], device=arm_palm.device, dtype=arm_palm.dtype)
+        root_residual_global = (target_trajectory[frame] - arm_palm[frame]).detach()
+        root_target_delta_global = (
+            root_residual_global - (root_residual_global @ up) * up
+        )
+        delta_norm = float(torch.linalg.vector_norm(root_target_delta_global).cpu())
+        if delta_norm > float(max_root_correction):
+            root_target_delta_global = root_target_delta_global * (
+                float(max_root_correction) / max(delta_norm, 1e-8)
+            )
 
         arm_root = None
         root_palm = None
@@ -753,11 +996,20 @@ def run_contact_guided_genmo(
         root_candidate_change = 0.0
         root_fallback_selected = False
         if fallback:
+            whole_body_spec = {
+                **common_spec,
+                "include_root": True,
+                "include_legs": True,
+                "root_target_delta_global": root_target_delta_global,
+                "ground_height": float(ground_height),
+            }
+            if foot_contact_probs is not None:
+                whole_body_spec["foot_contact_probs"] = foot_contact_probs
             arm_root = model.predict(
                 data,
                 static_cam=is_static_cam,
                 sampling_noise=sampling_noise,
-                contact_guidance={**common_spec, "include_root": True},
+                contact_guidance=whole_body_spec,
                 postproc_override=False,
             )
             root_x = arm_root["net_outputs"]["model_output"]["pred_x"].detach()
@@ -810,6 +1062,8 @@ def run_contact_guided_genmo(
                 _compact_genmo_prediction(arm_root),
                 camera_to_global_t,
                 human_depth_scale,
+                translation_global=human_root_offset,
+                translation_cam=human_root_offset_cam,
             )
         compact_selected = (
             compact_arm_root if root_fallback_selected else compact_arm_only
@@ -851,6 +1105,55 @@ def run_contact_guided_genmo(
             if selected_relative_steps.numel()
             else frame
         )
+        # Residual palm->object vector at contact, rotated into the contact-frame
+        # camera axes (x_cam = (x_global - t) @ R; translation cancels in a
+        # difference).  A residual dominated by the z (depth) component points at
+        # human depth alignment rather than joint guidance.
+        contact_error_vector_camera = (
+            (selected_relative_position[frame] @ camera_to_global_R)
+            .detach()
+            .cpu()
+            .tolist()
+        )
+        # --- v23 diagnostics: contact-error vectors, body height, foot slide ---
+        final_contact_error_vector_global = (
+            selected_relative_position[frame].detach().cpu().tolist()
+        )
+        final_contact_error_vector_camera = contact_error_vector_camera
+        initial_error_global = (initial_palm_aligned[frame] - target_trajectory[frame]).detach()
+        initial_contact_error_vector_global = initial_error_global.cpu().tolist()
+        initial_contact_error_vector_camera = (
+            (initial_error_global @ camera_to_global_R).cpu().tolist()
+        )
+        selected_pred = arm_root if root_fallback_selected else arm_only
+        sel_body_joints = selected_pred["smpl24_joints_global"].detach()
+        final_body_height_m = float(
+            (sel_body_joints[0, :, 1].max() - sel_body_joints[0, :, 1].min()).cpu()
+        )
+        body_height_change_m = abs(final_body_height_m - initial_body_height_m)
+        root_displacement_at_contact_m = float(root_change)
+        root_target_ground_delta_m = float(
+            torch.linalg.vector_norm(root_target_delta_global).cpu()
+        )
+        # Support-foot sliding of the selected candidate (weighted by contact).
+        selected_x = root_x if root_fallback_selected else arm_x
+        sel_feet = model.pipeline.decode_guidance_kinematics(
+            selected_x, palm_inputs, selected_hand
+        )["foot_positions"][0].detach()  # [L,4,3]
+        foot_slide = {
+            "left_support_foot_sliding_mean_m": 0.0,
+            "left_support_foot_sliding_max_m": 0.0,
+            "right_support_foot_sliding_mean_m": 0.0,
+            "right_support_foot_sliding_max_m": 0.0,
+        }
+        if foot_contact_probs is not None and sel_feet.shape[0] > 1:
+            step = torch.linalg.vector_norm(sel_feet[1:] - sel_feet[:-1], dim=-1)  # [L-1,4]
+            w = foot_contact_probs[: sel_feet.shape[0]][1:]  # [L-1,4]
+            weighted = w * step
+            for side, cols in (("left", (0, 1)), ("right", (2, 3))):
+                vals = weighted[:, cols]
+                foot_slide[f"{side}_support_foot_sliding_mean_m"] = float(vals.mean().cpu())
+                foot_slide[f"{side}_support_foot_sliding_max_m"] = float(vals.max().cpu())
 
         diagnostics.update({
             "arm_only_contact_error_m": arm_error,
@@ -901,6 +1204,29 @@ def run_contact_guided_genmo(
             "post_contact_relative_velocity_weight": float(
                 post_contact_relative_velocity_weight
             ),
+            "post_contact_hold_radius_m": float(post_contact_hold_radius),
+            "post_contact_relative_step_tolerance_m": float(
+                post_contact_relative_step_tolerance
+            ),
+            "post_contact_hold_satisfied": bool(
+                selected_post_contact_errors.max()
+                <= float(post_contact_hold_radius) + 1e-6
+            ),
+            "max_guidance_update_norm": float(max_guidance_update_norm),
+            "final_guidance_update_norm": float(final_guidance_update_norm),
+            "arm_guidance_fade_fraction": float(arm_guidance_fade_fraction),
+            "root_guidance_final_scale": float(root_guidance_final_scale),
+            "late_inner_steps": int(late_inner_steps),
+            "final_inner_steps": int(final_inner_steps),
+            "arm_max_update_cap": float(arm_max_update_cap),
+            "arm_final_update_cap": float(arm_final_update_cap),
+            "root_max_update_cap": float(root_max_update_cap),
+            "root_final_update_cap": float(root_final_update_cap),
+            "root_gradient_smooth_kernel": int(root_gradient_smooth_kernel),
+            "arm_gradient_smooth_kernel": int(arm_gradient_smooth_kernel),
+            "inner_line_search": bool(inner_line_search),
+            "contact_error_vector_camera": contact_error_vector_camera,
+            "root_displacement_at_contact_m": root_displacement_at_contact_m,
             "root_fallback_used": fallback,
             "root_fallback_selected": root_fallback_selected,
             "root_candidate_displacement_change_m": root_candidate_change,
@@ -909,6 +1235,40 @@ def run_contact_guided_genmo(
             "arm_root_max_arm_rotation_change_deg": root_candidate_rotation_change,
             "max_arm_rotation_change_deg": final_arm_rotation_change,
             "seed": int(seed),
+            # ---- v23 whole-body guidance ----
+            "human_scale_applied": True,
+            "effective_human_depth_scale": float(human_depth_scale),
+            "raw_human_depth_scale": float(raw_human_depth_scale),
+            "frame0_rigid_depth_placement_applied": False,
+            "human_placement_method": "gt_depth_similarity_about_camera_origin",
+            "initial_root_depth_offset_m": float(depth_gap),
+            "human_root_offset_global_m": human_root_offset.detach().cpu().tolist(),
+            "initial_root_alignment_error_m": initial_root_alignment_error_m,
+            "initial_body_height_m": initial_body_height_m,
+            "final_body_height_m": final_body_height_m,
+            "body_height_change_m": body_height_change_m,
+            "initial_contact_error_vector_camera": initial_contact_error_vector_camera,
+            "final_contact_error_vector_camera": final_contact_error_vector_camera,
+            "initial_contact_error_vector_global": initial_contact_error_vector_global,
+            "final_contact_error_vector_global": final_contact_error_vector_global,
+            "root_target_delta_global_m": root_target_delta_global.detach().cpu().tolist(),
+            "root_target_ground_delta_m": root_target_ground_delta_m,
+            "root_activation_distance_min_m": float(root_activation_distance_min),
+            "root_activation_distance_max_m": float(root_activation_distance_max),
+            "root_leg_fade_fraction": float(root_leg_fade_fraction),
+            "torso_max_update_cap": float(torso_max_update_cap),
+            "torso_final_update_cap": float(torso_final_update_cap),
+            "leg_max_update_cap": float(leg_max_update_cap),
+            "leg_final_update_cap": float(leg_final_update_cap),
+            "w_root_target": float(w_root_target),
+            "w_root_vertical_lock": float(w_root_vertical_lock),
+            "support_foot_weight": float(support_foot_weight),
+            "ground_contact_weight": float(ground_contact_weight),
+            "leg_reference_weight": float(leg_reference_weight),
+            "arm_reference_weight": float(arm_reference_weight),
+            "arm_smoothness_weight": float(arm_smoothness_weight),
+            "ground_height_m": float(ground_height),
+            **foot_slide,
             "arm_only_guidance": arm_guidance_summary,
             "arm_root_guidance": root_guidance_summary,
         })

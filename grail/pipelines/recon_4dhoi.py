@@ -794,7 +794,7 @@ def main():
         help="Exit successfully after Stage 3.5 artifacts are saved and rendered.",
     )
     parser.add_argument("--genmo-guidance-seed", type=int, default=42)
-    parser.add_argument("--reach-error-threshold", type=float, default=0.03)
+    parser.add_argument("--reach-error-threshold", type=float, default=0.02)
     parser.add_argument("--max-arm-rotation-change-deg", type=float, default=30.0)
     parser.add_argument("--max-root-correction", type=float, default=0.25)
     parser.add_argument("--genmo-guidance-strength", type=float, default=0.7)
@@ -814,12 +814,42 @@ def main():
         "--genmo-post-contact-relative-velocity-weight",
         type=float,
         default=8.0,
-        help="Weight that keeps palm motion synchronized with frozen object motion after contact.",
+        help="Weight penalizing post-contact relative steps beyond the tolerance.",
+    )
+    parser.add_argument(
+        "--genmo-post-contact-hold-radius",
+        type=float,
+        default=0.02,
+        help="Zero-loss palm/object hold radius in metres (default: 2 cm).",
+    )
+    parser.add_argument(
+        "--genmo-post-contact-relative-step-tolerance",
+        type=float,
+        default=0.01,
+        help="Allowed palm/object relative motion per frame in metres.",
+    )
+    parser.add_argument(
+        "--genmo-max-guidance-update-norm",
+        type=float,
+        default=0.25,
+        help="Maximum per-frame normalized x0 update norm at early DDIM steps.",
+    )
+    parser.add_argument(
+        "--genmo-final-guidance-update-norm",
+        type=float,
+        default=0.05,
+        help="Non-zero per-frame x0 update cap at the final DDIM step.",
+    )
+    parser.add_argument(
+        "--genmo-arm-guidance-fade-fraction",
+        type=float,
+        default=0.20,
+        help="Fraction of final DDIM steps over which the update cap reaches its final value.",
     )
     parser.add_argument(
         "--genmo-post-contact-worst-frame-weight",
         type=float,
-        default=0.0,
+        default=0.5,
         help="Extra DDIM guidance weight on the worst post-contact palm frames.",
     )
     parser.add_argument(
@@ -851,6 +881,183 @@ def main():
         type=float,
         default=1.0,
         help="Scale only root-velocity gradients during arm+root fallback.",
+    )
+    parser.add_argument(
+        "--genmo-root-guidance-final-scale",
+        type=float,
+        default=0.10,
+        help="Non-zero root-gradient scale retained at the final DDIM step.",
+    )
+    parser.add_argument(
+        "--genmo-late-inner-steps",
+        type=int,
+        default=2,
+        help="Inner guidance iterations per late DDIM step (t in 1..4).",
+    )
+    parser.add_argument(
+        "--genmo-final-inner-steps",
+        type=int,
+        default=5,
+        help="Inner guidance iterations at the final DDIM step (t=0).",
+    )
+    parser.add_argument(
+        "--genmo-arm-max-update-cap",
+        type=float,
+        default=0.60,
+        help="Per-frame arm x0 update cap at early DDIM steps.",
+    )
+    parser.add_argument(
+        "--genmo-arm-final-update-cap",
+        type=float,
+        default=0.25,
+        help="Per-frame arm x0 update cap at the final DDIM step (per inner step).",
+    )
+    parser.add_argument(
+        "--genmo-root-max-update-cap",
+        type=float,
+        default=0.05,
+        help="Per-frame root x0 update cap at early DDIM steps.",
+    )
+    parser.add_argument(
+        "--genmo-root-final-update-cap",
+        type=float,
+        default=0.02,
+        help="Per-frame root x0 update cap at the final DDIM step (per inner step).",
+    )
+    parser.add_argument(
+        "--genmo-root-gradient-smooth-kernel",
+        type=int,
+        default=9,
+        help="Odd temporal Gaussian kernel for root-velocity gradient (<=1 disables).",
+    )
+    parser.add_argument(
+        "--genmo-inner-line-search",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Backtracking accept: keep an inner update only if it reduces contact loss.",
+    )
+    parser.add_argument(
+        "--genmo-arm-gradient-smooth-kernel",
+        type=int,
+        default=9,
+        help="Odd temporal Gaussian kernel for arm/torso/leg gradient (<=1 disables); reduces post-contact hand jitter.",
+    )
+    parser.add_argument(
+        "--genmo-contact-standoff-m",
+        type=float,
+        default=0.05,
+        help="Outward standoff (m) of the palm target from the object surface so the hand mesh rests on it instead of clipping through.",
+    )
+    parser.add_argument(
+        "--genmo-contact-min-clearance-m",
+        type=float,
+        default=0.04,
+        help="Minimum palm clearance (m) outside the object surface along the per-frame normal; a steep penetration penalty keeps the hand from clipping through.",
+    )
+    # ---- finger-grasp refinement (post-guidance) ----
+    parser.add_argument(
+        "--genmo-finger-grasp",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="After guidance, optimize the grasping hand's fingers/wrist/elbow so fingers wrap the object without penetrating.",
+    )
+    parser.add_argument("--genmo-finger-iterations", type=int, default=150)
+    parser.add_argument("--genmo-finger-contact-weight", type=float, default=8.0)
+    parser.add_argument("--genmo-finger-penetration-weight", type=float, default=300.0)
+    parser.add_argument(
+        "--genmo-finger-min-clearance-m", type=float, default=0.0,
+        help="Penalize hand vertices closer than this (m) to the surface; 0 allows "
+             "light grasp contact while forbidding penetration (sd<0).",
+    )
+    parser.add_argument(
+        "--genmo-finger-target-clearance-m", type=float, default=0.005,
+        help="Fingertips are pulled to rest ~this far (m) off the object surface.",
+    )
+    parser.add_argument("--genmo-finger-pose-reg-weight", type=float, default=0.5)
+    parser.add_argument("--genmo-finger-wrist-reg-weight", type=float, default=1.0)
+    parser.add_argument("--genmo-finger-elbow-reg-weight", type=float, default=3.0)
+    parser.add_argument(
+        "--genmo-penetration-weight",
+        type=float,
+        default=60.0,
+        help="Weight of the penetration penalty (palm going inside / closer than the min clearance).",
+    )
+    # ---- v23 whole-body guidance ----
+    parser.add_argument(
+        "--genmo-root-activation-distance-min",
+        type=float,
+        default=0.06,
+        help="Palm-object distance (m) below which root/legs stay inactive.",
+    )
+    parser.add_argument(
+        "--genmo-root-activation-distance-max",
+        type=float,
+        default=0.15,
+        help="Palm-object distance (m) above which root/legs are fully active.",
+    )
+    parser.add_argument(
+        "--genmo-root-leg-fade-fraction",
+        type=float,
+        default=0.30,
+        help="Fraction of final DDIM steps over which root/legs fade to zero (off at t=0).",
+    )
+    parser.add_argument(
+        "--genmo-torso-max-update-cap", type=float, default=0.05,
+        help="Per-frame torso x0 update cap at early DDIM steps.",
+    )
+    parser.add_argument(
+        "--genmo-torso-final-update-cap", type=float, default=0.01,
+        help="Per-frame torso x0 update cap at the final DDIM step.",
+    )
+    parser.add_argument(
+        "--genmo-leg-max-update-cap", type=float, default=0.05,
+        help="Per-frame leg x0 update cap at early DDIM steps.",
+    )
+    parser.add_argument(
+        "--genmo-leg-final-update-cap", type=float, default=0.02,
+        help="Per-frame leg x0 update cap at the final DDIM step.",
+    )
+    parser.add_argument(
+        "--genmo-root-target-weight", type=float, default=1.0,
+        help="Weight of the ground-plane root-position target loss.",
+    )
+    parser.add_argument(
+        "--genmo-root-vertical-lock-weight", type=float, default=5.0,
+        help="Weight locking root height (forbids vertical root motion / no scaling).",
+    )
+    parser.add_argument(
+        "--genmo-support-foot-weight", type=float, default=2.0,
+        help="Weight of the support-foot no-slide loss.",
+    )
+    parser.add_argument(
+        "--genmo-ground-contact-weight", type=float, default=1.0,
+        help="Weight of the support-foot on-ground height loss.",
+    )
+    parser.add_argument(
+        "--genmo-leg-reference-weight", type=float, default=1.0,
+        help="Weight keeping legs close to the GENMO reference pose.",
+    )
+    parser.add_argument(
+        "--genmo-arm-reference-weight", type=float, default=0.05,
+        help="Weight keeping the arm close to the GENMO reference reach.",
+    )
+    parser.add_argument(
+        "--genmo-arm-smoothness-weight", type=float, default=0.15,
+        help="Weight of the arm angular-acceleration smoothness loss.",
+    )
+    parser.add_argument(
+        "--genmo-approach-smooth-weight", type=float, default=1.0,
+        help="Weight of the palm-position acceleration penalty over the pre-contact "
+             "approach window; spreads the reach so the hand does not lunge at the "
+             "object in the final frames. 0 disables.",
+    )
+    parser.add_argument(
+        "--genmo-post-contact-follow-mode",
+        type=str,
+        default="translation",
+        choices=["translation", "pose"],
+        help="After contact the hand rides with the object by translation only "
+             "(default, position-static, no rotation) or by full 6DoF pose.",
     )
     parser.add_argument(
         "--genmo-guidance-dir",
