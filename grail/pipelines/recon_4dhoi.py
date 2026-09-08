@@ -813,8 +813,8 @@ def main():
     parser.add_argument(
         "--genmo-post-contact-relative-velocity-weight",
         type=float,
-        default=8.0,
-        help="Weight penalizing post-contact relative steps beyond the tolerance.",
+        default=15.0,
+        help="Weight penalizing post-contact relative (hand-object) steps beyond the tolerance; v25c default 15 keeps the hand moving WITH the lifted object.",
     )
     parser.add_argument(
         "--genmo-post-contact-hold-radius",
@@ -825,8 +825,8 @@ def main():
     parser.add_argument(
         "--genmo-post-contact-relative-step-tolerance",
         type=float,
-        default=0.01,
-        help="Allowed palm/object relative motion per frame in metres.",
+        default=0.002,
+        help="Allowed palm/object relative motion per frame in metres; v25c default 2 mm so small per-frame lags cannot accumulate into drift.",
     )
     parser.add_argument(
         "--genmo-max-guidance-update-norm",
@@ -855,8 +855,8 @@ def main():
     parser.add_argument(
         "--genmo-post-contact-terminal-position-weight",
         type=float,
-        default=1.0,
-        help="Optional smooth final-frame multiplier; 1 disables terminal reweighting.",
+        default=6.0,
+        help="Terminal-frame position-weight ramp; v25c default 6 pulls the hand to follow the object through the lift.",
     )
     parser.add_argument(
         "--genmo-post-contact-terminal-frames",

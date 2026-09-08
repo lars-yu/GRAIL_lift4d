@@ -894,13 +894,13 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         getattr(args, "genmo_guidance_temporal_weight", 0.5)
     )
     post_contact_relative_velocity_weight = float(
-        getattr(args, "genmo_post_contact_relative_velocity_weight", 8.0)
+        getattr(args, "genmo_post_contact_relative_velocity_weight", 15.0)
     )
     post_contact_hold_radius = float(
         getattr(args, "genmo_post_contact_hold_radius", 0.02)
     )
     post_contact_relative_step_tolerance = float(
-        getattr(args, "genmo_post_contact_relative_step_tolerance", 0.01)
+        getattr(args, "genmo_post_contact_relative_step_tolerance", 0.002)
     )
     max_guidance_update_norm = float(
         getattr(args, "genmo_max_guidance_update_norm", 0.25)
@@ -969,7 +969,7 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         getattr(args, "genmo_post_contact_worst_frame_weight", 0.5)
     )
     post_contact_terminal_position_weight = float(
-        getattr(args, "genmo_post_contact_terminal_position_weight", 1.0)
+        getattr(args, "genmo_post_contact_terminal_position_weight", 6.0)
     )
     post_contact_terminal_frames = int(
         getattr(args, "genmo_post_contact_terminal_frames", 16)
