@@ -1010,17 +1010,15 @@ def run_contact_guided_genmo(
                 float(max_root_correction) / max(delta_norm, 1e-8)
             )
 
-        # §9: only ask the root to move if the approach window actually has a
-        # swing-foot phase (some foot lifts / low contact prob).  If both feet
-        # stay planted throughout, don't invent a new step — shrink the root
-        # correction so the arm/torso absorb more of the reach.
+        # Swing-phase availability is reported for diagnostics only.  Per the
+        # v25 contact-closure spec (#7) we no longer scale the root target down
+        # when has_swing_phase is False — root fallback is instead gated on the
+        # arm+torso candidate first converging and still missing by > 2 cm (#6).
         approach_start_frame = max(0, frame - int(contact_transition_frames))
         has_swing_phase = True
         if foot_contact_probs is not None:
             win = foot_contact_probs[approach_start_frame : frame + 1]
             has_swing_phase = bool((win < 0.5).any().item()) if win.numel() else False
-        if not has_swing_phase:
-            root_target_delta_global = root_target_delta_global * 0.3
         diagnostics_swing_phase = bool(has_swing_phase)
 
         arm_root = None
@@ -1228,6 +1226,12 @@ def run_contact_guided_genmo(
             "guided_contact_error_m": float(guided_contact_error),
             "approach_swing_phase_available": diagnostics_swing_phase,
             "post_contact_follow_mode": str(post_contact_follow_mode).lower(),
+            # §2: surface the clearance/hold-radius relationship (must not conflict).
+            "contact_min_clearance_m": float(contact_min_clearance_m),
+            "post_contact_hold_radius_m": float(post_contact_hold_radius),
+            "clearance_hold_conflict": bool(
+                float(contact_min_clearance_m) > float(post_contact_hold_radius) + 1e-9
+            ),
             "arm_only_contact_error_m": arm_error,
             "arm_only_post_contact_mean_error_m": arm_post_contact_mean_error,
             "arm_only_post_contact_max_error_m": arm_post_contact_max_error,

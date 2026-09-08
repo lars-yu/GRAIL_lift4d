@@ -392,8 +392,9 @@ class GenmoContactGuidanceTests(unittest.TestCase):
         # Each inner step is capped at arm_final_update_cap ...
         self.assertLessEqual(diag["arm_applied_update_norm"], 0.04 + 1e-6)
         self.assertAlmostEqual(diag["scheduled_update_cap"], 0.04, places=5)
-        # ... but the 5-step inner loop accumulates more displacement.
-        self.assertLessEqual(float(frame_update.max()), 5 * 0.04 + 1e-4)
+        # ... but the inner loop (up to t0_max_inner_steps=40) accumulates more
+        # displacement, bounded by that many capped steps (v25 #3).
+        self.assertLessEqual(float(frame_update.max()), 40 * 0.04 + 1e-4)
         self.assertGreaterEqual(diag["inner_iterations"], 1)
 
     def test_guidance_update_cap_is_applied_independently_per_frame(self):
@@ -462,7 +463,9 @@ class GenmoContactGuidanceTests(unittest.TestCase):
             ),
             lambda motion, _hand: motion[..., :3],
         )
-        self.assertEqual(callback._inner_step_schedule(torch.tensor([0])), 5)
+        # v25 (#3): t=0 runs up to t0_max_inner_steps (default 40) to reach
+        # convergence, not the fixed final_inner_steps; earlier phases unchanged.
+        self.assertEqual(callback._inner_step_schedule(torch.tensor([0])), 40)
         self.assertEqual(callback._inner_step_schedule(torch.tensor([3])), 2)
         self.assertEqual(callback._inner_step_schedule(torch.tensor([4])), 2)
         self.assertEqual(callback._inner_step_schedule(torch.tensor([10])), 1)
@@ -475,7 +478,7 @@ class GenmoContactGuidanceTests(unittest.TestCase):
             value = motion[..., 72:73]
             return torch.cat((value, value * 0, value * 0), dim=-1)
 
-        def displacement(final_inner_steps):
+        def displacement(timestep):
             callback = ContactGuidance(
                 ContactGuidanceConfig(
                     contact_frame=1,
@@ -487,15 +490,16 @@ class GenmoContactGuidanceTests(unittest.TestCase):
                     diffusion_steps=50,
                     arm_max_update_cap=0.20,
                     arm_final_update_cap=0.04,
-                    final_inner_steps=final_inner_steps,
                 ),
                 palm_position,
             )
-            guided = callback(reference, torch.tensor([0]))
+            guided = callback(reference, torch.tensor([timestep]))
             return float(torch.linalg.vector_norm(guided - reference, dim=-1).max())
 
-        single = displacement(1)
-        multi = displacement(5)
+        # v25 (#3): t=0 runs the full inner loop (up to 40, converging), an early
+        # DDIM step runs a single inner iteration, so t=0 moves much more.
+        single = displacement(10)
+        multi = displacement(0)
         self.assertGreater(single, 0.0)
         self.assertGreater(multi, single * 1.5)
 
@@ -1243,6 +1247,86 @@ class GenmoContactGuidanceTests(unittest.TestCase):
         from grail.optimization.finger_grasp import signed_point_mesh_distance
         self.assertTrue(callable(signed_point_mesh_distance))
         self.assertEqual(ROOT_VELOCITY_SLICE, slice(148, 151))
+
+    # ------------------------------------------------------------------
+    # v25 contact-closure fix
+    # ------------------------------------------------------------------
+    def _closure_cb(self, **ov):
+        reference = torch.zeros(1, 6, 151)
+        reference[:, :, 72] = torch.tensor([0.0, 0.0, 0.0, 0.05, 0.05, 0.05])
+
+        def palm(m, _h):
+            v = m[..., 72:73]
+            return torch.cat((v, v * 0, v * 0), dim=-1)
+
+        base = dict(
+            contact_frame=3, selected_hand="left",
+            object_surface_target=torch.zeros(3), object_surface_targets=torch.zeros(6, 3),
+            reference_motion=reference, contact_transition_frames=2,
+            post_contact_hold_radius=0.02, w_reference=0.0, w_temporal=0.0,
+            arm_gradient_smooth_kernel=1,
+        )
+        base.update(ov)
+        return ContactGuidance(ContactGuidanceConfig(**base), palm), reference
+
+    def test_v25_contact_frame_loss_is_independent_term(self):
+        cb, reference = self._closure_cb()
+        _, comps = cb._compute_guidance_loss(reference, torch.tensor([10]))
+        self.assertIn("contact_frame_position_loss", comps)
+        # contact frame (3) sits 5 cm from the surface (> 2 cm hold) -> nonzero.
+        self.assertGreater(float(comps["contact_frame_position_loss"]), 0.0)
+
+    def test_v25_contact_frame_term_respects_hold_dead_zone(self):
+        # When the contact frame is already within the 2 cm hold, the independent
+        # term is zero (it must not fight GENMO inside the dead zone).
+        reference = torch.zeros(1, 6, 151)
+        reference[:, :, 72] = torch.tensor([0.0, 0.0, 0.0, 0.010, 0.010, 0.010])
+
+        def palm(m, _h):
+            v = m[..., 72:73]
+            return torch.cat((v, v * 0, v * 0), dim=-1)
+
+        cb = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=3, selected_hand="left",
+                object_surface_target=torch.zeros(3), object_surface_targets=torch.zeros(6, 3),
+                reference_motion=reference, contact_transition_frames=2,
+                post_contact_hold_radius=0.02,
+            ),
+            palm,
+        )
+        _, comps = cb._compute_guidance_loss(reference, torch.tensor([10]))
+        self.assertAlmostEqual(float(comps["contact_frame_position_loss"]), 0.0)
+
+    def test_v25_t0_inner_loop_runs_up_to_40(self):
+        cb, _ = self._closure_cb(final_inner_steps=5, t0_max_inner_steps=40)
+        self.assertEqual(int(cb._inner_step_schedule(torch.tensor([0]))), 40)
+
+    def test_v25_inner_after_is_best_not_last(self):
+        cb, reference = self._closure_cb(final_inner_steps=8, guidance_strength=0.2)
+        cb(reference, torch.tensor([0]))
+        diag = cb.step_diagnostics[-1]
+        # The returned candidate is the minimum-contact-error one, so the reported
+        # "after" error never exceeds the last iteration's error.
+        self.assertLessEqual(
+            diag["inner_contact_error_after_m"], diag["inner_contact_error_last_m"] + 1e-9
+        )
+
+    def test_v25_inner_loop_converges_below_cap(self):
+        # With a reachable target the loop early-stops (2 cm or patience) well
+        # before the 40-step cap.
+        cb, reference = self._closure_cb(
+            final_inner_steps=40, t0_max_inner_steps=40, guidance_strength=0.3,
+            arm_max_update_cap=0.5, arm_final_update_cap=0.5,
+        )
+        cb(reference, torch.tensor([0]))
+        diag = cb.step_diagnostics[-1]
+        self.assertLess(int(diag["inner_iterations"]), 40)
+
+    def test_v25_no_swing_phase_does_not_zero_root_target(self):
+        # The v24 "root_target * 0.3 when no swing" scaling was removed (#7).
+        src = (Path(__file__).resolve().parents[1] / "grail" / "adapters" / "gem_smpl.py").read_text()
+        self.assertNotIn("root_target_delta_global * 0.3", src)
 
 
 if __name__ == "__main__":
