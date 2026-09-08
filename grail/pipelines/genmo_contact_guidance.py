@@ -947,11 +947,17 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
     arm_reference_weight = float(getattr(args, "genmo_arm_reference_weight", 0.05))
     arm_smoothness_weight = float(getattr(args, "genmo_arm_smoothness_weight", 0.15))
     approach_smoothness_weight = float(
-        getattr(args, "genmo_approach_smooth_weight", 0.0)
+        getattr(args, "genmo_approach_smooth_weight", 1.0)
     )
     post_contact_follow_mode = str(
-        getattr(args, "genmo_post_contact_follow_mode", "translation")
+        getattr(args, "genmo_post_contact_follow_mode", "pose")
     )
+    # v24 whole-body action terms (§5 root velocity, §8 torso/elbow, §10 slide).
+    w_root_velocity = float(getattr(args, "genmo_root_velocity_weight", 1.0))
+    torso_reference_weight = float(getattr(args, "genmo_torso_reference_weight", 0.5))
+    torso_smoothness_weight = float(getattr(args, "genmo_torso_smoothness_weight", 0.5))
+    elbow_direction_weight = float(getattr(args, "genmo_elbow_direction_weight", 0.5))
+    foot_slide_limit = float(getattr(args, "genmo_foot_slide_limit", 0.05))
     post_contact_worst_frame_weight = float(
         getattr(args, "genmo_post_contact_worst_frame_weight", 0.5)
     )
@@ -967,11 +973,23 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
     contact_frame_weight_radius = int(
         getattr(args, "genmo_contact_frame_weight_radius", 2)
     )
-    contact_transition_frames = (
-        max(1, contact_frame - int(mask_contact_frame))
-        if configured_transition is None
-        else max(0, int(configured_transition))
-    )
+    # §6: the approach ramp must span enough frames to produce a natural step /
+    # reach.  Prefer the mask/gait-derived start, but clamp the window length to
+    # [min_approach, max_approach], extending BACKWARDS only (never move the
+    # contact frame).  A too-short window makes the hand lunge at the object.
+    min_approach_frames = int(getattr(args, "genmo_min_approach_frames", 20))
+    max_approach_frames = int(getattr(args, "genmo_max_approach_frames", 40))
+    if configured_transition is not None:
+        contact_transition_frames = max(0, int(configured_transition))
+    else:
+        detected = max(1, contact_frame - int(mask_contact_frame))
+        contact_transition_frames = detected
+        if min_approach_frames > 0:
+            contact_transition_frames = max(contact_transition_frames, min_approach_frames)
+        if max_approach_frames > 0:
+            contact_transition_frames = min(contact_transition_frames, max_approach_frames)
+        # Never extend past frame 0 (backwards-only, contact frame unchanged).
+        contact_transition_frames = min(contact_transition_frames, contact_frame)
 
     print("Stage 3.5a: Anchored Lift4D Object Motion (no optimization/contact loss)")
     raw_object_poses = np.asarray(
@@ -1054,6 +1072,11 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         contact_frame_weight_radius=contact_frame_weight_radius,
         approach_smoothness_weight=approach_smoothness_weight,
         post_contact_follow_mode=post_contact_follow_mode,
+        w_root_velocity=w_root_velocity,
+        torso_reference_weight=torso_reference_weight,
+        torso_smoothness_weight=torso_smoothness_weight,
+        elbow_direction_weight=elbow_direction_weight,
+        foot_slide_limit=foot_slide_limit,
     )
     result["diagnostics"]["object_pose_at_contact_frame"] = pose_at_contact.tolist()
     result["diagnostics"]["object_pose_source"] = OBJECT_TRAJECTORY_METHOD
@@ -1075,9 +1098,13 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         "arm_only_guided_motion.npz": result["arm_only"],
         "selected_guided_motion.npz": result["selected"],
     }
-    if result["arm_root"] is not None:
-        variants["arm_root_guided_motion.npz"] = result["arm_root"]
+    # §14: the whole-body candidate is always built now — save it for comparison.
+    whole_body_pred = result.get("whole_body", result.get("arm_root"))
+    if whole_body_pred is not None:
+        variants["whole_body_guided_motion.npz"] = whole_body_pred
+        variants["arm_root_guided_motion.npz"] = whole_body_pred  # legacy alias
     else:
+        (output_dir / "whole_body_guided_motion.npz").unlink(missing_ok=True)
         (output_dir / "arm_root_guided_motion.npz").unlink(missing_ok=True)
     saved_motions = {}
     for filename, prediction in variants.items():
@@ -1090,7 +1117,15 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
     # Finger-grasp refinement: optimize the grasping hand so fingers wrap the
     # object without penetrating (arm/body from GENMO stay fixed).  Updates the
     # selected motion in place (both the exported npz and the render input).
-    if bool(getattr(args, "genmo_finger_grasp", True)):
+    # §12: DISABLED by default in v24 — validate body/arm/palm first.  A copy of
+    # the selected motion BEFORE any finger refinement is always kept so contact/
+    # penetration metrics can be recomputed when finger-grasp is re-enabled.
+    sel_global0, sel_incam0 = saved_motions["selected_guided_motion.npz"]
+    save_human_motion_data(
+        sel_global0, sel_incam0,
+        str(output_dir / "selected_guided_motion_before_finger.npz"),
+    )
+    if bool(getattr(args, "genmo_finger_grasp", False)):
         from grail.optimization.finger_grasp import FingerGraspConfig, refine_finger_grasp
         from grail.models.smplx_model import setup_smplx_model
 
@@ -1146,11 +1181,21 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
     model_path = Path(args.cfg["human_model"]["smplx_model_path"])
     if not model_path.is_absolute():
         model_path = Path.cwd() / model_path
+    # §16: render every candidate (baseline / arm-only / whole-body / selected)
+    # so the acceptance comparison is honest, not just initial vs selected.
+    preview_specs = [
+        ("initial_genmo", "initial", "initial_genmo_motion.npz", "Initial GENMO"),
+        ("arm_only_guided", "arm_only", "arm_only_guided_motion.npz", "Arm-only Guided"),
+        ("whole_body_guided", "whole_body", "whole_body_guided_motion.npz", "Whole-body Guided"),
+        ("selected_guided", "selected", "selected_guided_motion.npz", "Selected Guided"),
+    ]
+    preview_specs = [
+        (vid, key, fn, label)
+        for vid, key, fn, label in preview_specs
+        if result.get(key) is not None and fn in saved_motions
+    ]
     _attach_smplx_render_meshes(
-        (
-            (result["initial"], saved_motions["initial_genmo_motion.npz"][1]),
-            (result["selected"], saved_motions["selected_guided_motion.npz"][1]),
-        ),
+        tuple((result[key], saved_motions[fn][1]) for _, key, fn, _ in preview_specs),
         model_path,
     )
     c2g_R = np.asarray(
@@ -1161,7 +1206,8 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         torch.as_tensor(result["coordinate_transform"]["camera_to_genmo_global_t"]).cpu(),
         dtype=np.float32,
     )
-    for prediction in (result["initial"], result["selected"]):
+    for _, key, _, _ in preview_specs:
+        prediction = result[key]
         prediction["smplx_joints_global"] = (
             np.asarray(prediction["smplx_joints_incam"], dtype=np.float32)
             @ c2g_R.T
@@ -1185,22 +1231,36 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
     with (output_dir / "diagnostics.json").open("w") as handle:
         json.dump(_json_ready(result["diagnostics"]), handle, indent=2, allow_nan=False)
 
-    initial_video = output_dir / "initial_genmo.mp4"
-    guided_video = output_dir / "guided_genmo.mp4"
-    render_guided_motion(
-        str(video_file), str(initial_video), result["initial"], object_vertices, object_faces,
-        object_poses, result["coordinate_transform"], contact_frame, selected_hand,
-        "Initial GENMO", human_mask_dir=human_mask_dir, human_masks=human_masks,
-    )
-    render_guided_motion(
-        str(video_file), str(guided_video), result["selected"], object_vertices, object_faces,
-        object_poses, result["coordinate_transform"], contact_frame, selected_hand,
-        "Guided GENMO", human_mask_dir=human_mask_dir, human_masks=human_masks,
-    )
-    make_side_by_side(str(initial_video), str(guided_video), str(output_dir / "initial_vs_guided.mp4"))
     source_reader = imageio.get_reader(str(video_file))
     fps = float(source_reader.get_meta_data().get("fps", 30.0))
     source_reader.close()
+
+    front_videos = {}
+    for vid, key, _, label in preview_specs:
+        front = output_dir / f"{vid}.mp4"
+        render_guided_motion(
+            str(video_file), str(front), result[key], object_vertices, object_faces,
+            object_poses, result["coordinate_transform"], contact_frame, selected_hand,
+            label, human_mask_dir=human_mask_dir, human_masks=human_masks,
+        )
+        front_videos[key] = front
+        # Per-candidate top view: guided candidates are shown against the
+        # baseline; the baseline itself is shown against the selected motion.
+        other = result["selected"] if key == "initial" else result["initial"]
+        render_top_view_comparison(
+            str(output_dir / f"{vid}_top_view.mp4"),
+            result[key] if key == "initial" else result["initial"],
+            other if key == "initial" else result[key],
+            object_vertices, object_poses, result["coordinate_transform"],
+            result["object_surface_target"], contact_frame, selected_hand, fps,
+        )
+    # Backward-compatible aliases (guided_genmo == selected) + main comparisons.
+    guided_video = output_dir / "guided_genmo.mp4"
+    initial_video = front_videos.get("initial", output_dir / "initial_genmo.mp4")
+    if "selected" in front_videos:
+        import shutil as _shutil
+        _shutil.copyfile(str(front_videos["selected"]), str(guided_video))
+    make_side_by_side(str(initial_video), str(guided_video), str(output_dir / "initial_vs_guided.mp4"))
     render_top_view_comparison(
         str(output_dir / "initial_vs_guided_top.mp4"),
         result["initial"],

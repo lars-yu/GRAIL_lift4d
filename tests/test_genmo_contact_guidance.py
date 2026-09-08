@@ -1049,6 +1049,201 @@ class GenmoContactGuidanceTests(unittest.TestCase):
         run_pipeline_steps(["rand00033"], args, steps=steps)
         self.assertEqual(called, ["3.5"])
 
+    # ------------------------------------------------------------------
+    # v24 action/contact fix
+    # ------------------------------------------------------------------
+    def _wb(self, reference, **ov):
+        return ContactGuidance(
+            self._whole_body_config(reference_motion=reference, **ov), self._whole_body_kin
+        )
+
+    def test_v24_default_contact_target_is_true_surface_point(self):
+        # standoff 0 => the palm-point guidance target IS the true surface point.
+        import inspect
+        from grail.adapters.gem_smpl import run_contact_guided_genmo
+        sig = inspect.signature(run_contact_guided_genmo)
+        self.assertEqual(sig.parameters["contact_standoff_m"].default, 0.0)
+
+    def test_v24_default_clearance_not_greater_than_hold_radius(self):
+        cfg = ContactGuidanceConfig(
+            contact_frame=1, selected_hand="left",
+            object_surface_target=torch.zeros(3), reference_motion=torch.zeros(1, 3, 151),
+        )
+        self.assertLessEqual(cfg.contact_min_clearance, cfg.post_contact_hold_radius)
+        with self.assertRaises(ValueError):
+            ContactGuidanceConfig(
+                contact_frame=1, selected_hand="left",
+                object_surface_target=torch.zeros(3), reference_motion=torch.zeros(1, 3, 151),
+                contact_min_clearance=0.05, post_contact_hold_radius=0.02,
+            )
+
+    def test_v24_initial_and_final_error_share_one_target(self):
+        ref = torch.zeros(1, 6, 151)
+        P = torch.tensor([0.1, 0.2, 0.3])
+        cb = ContactGuidance(
+            ContactGuidanceConfig(
+                contact_frame=3, selected_hand="left",
+                object_surface_target=P, reference_motion=ref,
+                pre_contact_surface_target=P,
+                post_contact_surface_targets=P.reshape(1, 3).repeat(3, 1),
+                contact_transition_frames=2, guidance_strength=0.1,
+            ),
+            lambda m, _h: torch.cat((m[..., 72:73], m[..., 73:74], m[..., 74:75]), dim=-1),
+        )
+        _, comps = cb._compute_guidance_loss(ref, torch.tensor([10]))
+        ts = comps["target_seq"]
+        self.assertTrue(torch.allclose(ts[:, 2], P.reshape(1, 3), atol=1e-6))  # pre-contact
+        self.assertTrue(torch.allclose(ts[:, 3], P.reshape(1, 3), atol=1e-6))  # post-contact[0]
+
+    def test_v24_root_target_is_reference_root_plus_residual(self):
+        T, frame = 8, 5
+        ref = torch.zeros(1, T, 151)
+        ref[..., 148] = torch.linspace(0.0, 1.0, T)  # reference root X walks forward
+        delta = torch.tensor([0.3, 0.0, 0.0])
+        cb = self._wb(ref, contact_frame=frame, contact_transition_frames=3,
+                      root_target_delta_global=delta, w_root_target=1.0)
+        ramp = cb._root_offset_ramp(T, torch.device("cpu"), torch.float32)
+        cand = ref.clone()
+        cand[..., 148] = ref[..., 148] + ramp * delta[0]  # ref_root + residual ramp
+        _, comps = cb._compute_guidance_loss(cand, torch.tensor([10]))
+        self.assertLess(float(comps["root_target_loss"]), 1e-6)
+        _, comps0 = cb._compute_guidance_loss(ref, torch.tensor([10]))  # no residual
+        self.assertGreater(float(comps0["root_target_loss"]), 1e-4)
+
+    def test_v24_root_residual_zero_before_approach_start(self):
+        T, frame, trans = 10, 8, 3  # approach_start = 5
+        ref = torch.zeros(1, T, 151)
+        cb = self._wb(ref, contact_frame=frame, contact_transition_frames=trans,
+                      root_target_delta_global=torch.tensor([0.5, 0.0, 0.0]))
+        ramp = cb._root_offset_ramp(T, torch.device("cpu"), torch.float32)
+        self.assertTrue(torch.allclose(ramp[: frame - trans], torch.zeros(frame - trans)))
+        self.assertAlmostEqual(float(ramp[frame]), 1.0)
+
+    def test_v24_root_residual_constant_and_velocity_zero_after_contact(self):
+        T, frame, trans = 10, 5, 3
+        ref = torch.zeros(1, T, 151)
+        ref[..., 148] = torch.linspace(0.0, 2.0, T)
+        delta = torch.tensor([0.4, 0.0, 0.0])
+        cb = self._wb(ref, contact_frame=frame, contact_transition_frames=trans,
+                      root_target_delta_global=delta, w_root_velocity=1.0)
+        ramp = cb._root_offset_ramp(T, torch.device("cpu"), torch.float32)
+        desired_x = ref[..., 148] + ramp * delta[0]
+        dv = desired_x[:, 1:] - desired_x[:, :-1]
+        rv = ref[..., 148][:, 1:] - ref[..., 148][:, :-1]
+        # After contact the residual is constant, so desired velocity == reference.
+        self.assertTrue(torch.allclose(dv[:, frame:], rv[:, frame:], atol=1e-6))
+        cand = ref.clone(); cand[..., 148] = desired_x  # follow desired exactly
+        _, comps = cb._compute_guidance_loss(cand, torch.tensor([10]))
+        self.assertLess(float(comps["root_velocity_loss"]), 1e-6)
+
+    def test_v24_reference_vertical_motion_preserved(self):
+        T = 6
+        ref = torch.zeros(1, T, 151)
+        ref[..., 149] = torch.linspace(0.0, 0.3, T)  # reference root Y bends down/up
+        cb = self._wb(ref, w_root_vertical_lock=1.0)
+        _, comps = cb._compute_guidance_loss(ref, torch.tensor([10]))  # candidate == reference
+        self.assertLess(float(comps["root_vertical_loss"]), 1e-6)
+        cand = ref.clone(); cand[..., 149] = cand[..., 149] + torch.linspace(0.0, 0.2, T)
+        _, comps2 = cb._compute_guidance_loss(cand, torch.tensor([10]))
+        self.assertGreater(float(comps2["root_vertical_loss"]), 1e-4)
+
+    def test_v24_arm_active_at_final_ddim_step(self):
+        cb = self._wb(torch.zeros(1, 6, 151))
+        self.assertAlmostEqual(float(cb._group_time_scale("arm", torch.tensor([0]))), 1.0)
+        self.assertAlmostEqual(float(cb._group_time_scale("torso", torch.tensor([0]))), 1.0)
+
+    def test_v24_root_and_legs_off_at_final_ddim_step(self):
+        cb = self._wb(torch.zeros(1, 6, 151))
+        self.assertAlmostEqual(float(cb._group_time_scale("root", torch.tensor([0]))), 0.0)
+        self.assertAlmostEqual(float(cb._group_time_scale("legs", torch.tensor([0]))), 0.0)
+
+    def test_v24_torso_reference_and_temporal_losses_present(self):
+        ref = torch.zeros(1, 6, 151)
+        cb = self._wb(ref, include_torso=True, torso_reference_weight=1.0)
+        torso_sl = group_channel_slices("left")["torso"][0]
+        cand = ref.clone()
+        cand[..., torso_sl.start:torso_sl.stop] = 0.5  # torso deviates from reference
+        _, comps = cb._compute_guidance_loss(cand, torch.tensor([10]))
+        self.assertGreater(float(comps["torso_reference_loss"]), 0.0)
+        self.assertIn("torso_smoothness_loss", comps)
+
+    def test_v24_ground_contact_uses_reference_height_not_global_min(self):
+        T = 6
+        probs = torch.zeros(T, 4); probs[:, 1] = 1.0  # left foot planted
+        ref = torch.zeros(1, T, 151); ref[..., 54] = 0.2  # ref left-foot Y elevated, constant
+        cb = self._wb(ref, foot_contact_probs=probs, ground_height=0.0)
+        _, comps = cb._compute_guidance_loss(ref, torch.tensor([10]))  # candidate == reference
+        self.assertLess(float(comps["ground_contact_loss"]), 1e-6)  # 0.2 != global-min 0, yet fine
+        cand = ref.clone(); cand[..., 54] = 0.0
+        _, comps2 = cb._compute_guidance_loss(cand, torch.tensor([10]))
+        self.assertGreater(float(comps2["ground_contact_loss"]), 1e-4)
+
+    def test_v24_swing_foot_not_locked_by_support_loss(self):
+        T = 6
+        probs = torch.ones(T, 4)  # all feet reported high-contact
+        ref = torch.zeros(1, T, 151); ref[..., 60] = torch.linspace(0.0, 0.5, T)  # right foot swings
+        cb = self._wb(ref, foot_contact_probs=probs, ground_height=0.0)
+        _, comps = cb._compute_guidance_loss(ref, torch.tensor([10]))  # follows reference swing
+        self.assertLess(float(comps["support_foot_loss"]), 1e-6)
+
+    def test_v24_candidate_metrics_report_total_and_safety(self):
+        cb = self._wb(torch.zeros(1, 6, 151), foot_contact_probs=torch.zeros(6, 4))
+        m = cb._candidate_metrics(
+            torch.zeros(1, 6, 151), torch.zeros(1, 6, 151), torch.tensor([10])
+        )
+        for key in ("total_loss", "contact_error_m", "max_palm_step_m", "foot_slide_m"):
+            self.assertIn(key, m)
+
+    def test_v24_translation_is_not_default_follow_mode(self):
+        import inspect
+        from grail.adapters.gem_smpl import run_contact_guided_genmo
+        d = inspect.signature(run_contact_guided_genmo).parameters[
+            "post_contact_follow_mode"
+        ].default
+        self.assertEqual(d, "pose")
+        self.assertNotEqual(d, "translation")
+
+    def test_v24_finger_grasp_default_disabled(self):
+        cli = (Path(__file__).resolve().parents[1] / "grail" / "pipelines" / "recon_4dhoi.py").read_text()
+        block = cli[cli.index('"--genmo-finger-grasp"'):]
+        block = block[: block.index(")")]
+        self.assertIn("default=False", block)
+        self.assertFalse(bool(getattr(SimpleNamespace(), "genmo_finger_grasp", False)))
+
+    def test_v24_renderer_does_not_rotate_hand_pose_channels(self):
+        src = (Path(__file__).resolve().parents[1] / "tools" / "render_genmo_grail_hybrid.py").read_text()
+        self.assertNotIn("148:151] @", src)  # no rotation of the 165-dim right-hand pose
+
+    def test_v24_camera_to_world_preserves_hand_object_distance(self):
+        rng = np.random.RandomState(0)
+        Q, _ = np.linalg.qr(rng.randn(3, 3))
+        if np.linalg.det(Q) < 0:
+            Q[:, 0] = -Q[:, 0]
+        c2w_R, c2w_t = Q, rng.randn(3)
+        hand_cam, obj_cam = rng.randn(3), rng.randn(3)
+        # human and object are carried to world by the SAME camera->world SE(3).
+        hand_w = hand_cam @ c2w_R.T + c2w_t
+        obj_w = obj_cam @ c2w_R.T + c2w_t
+        d_cam = float(np.linalg.norm(hand_cam - obj_cam))
+        d_w = float(np.linalg.norm(hand_w - obj_w))
+        self.assertLess(abs(d_cam - d_w), 1e-5)
+        src = (Path(__file__).resolve().parents[1] / "tools" / "render_genmo_grail_hybrid.py").read_text()
+        self.assertIn("t_cam @ c2w_R.T + c2w_t", src)  # object path
+        self.assertIn("trans @ R.T + t", src)          # human path, same (R, t)
+
+    def test_v24_sampling_noise_reproducible_same_seed(self):
+        a = generate_sampling_noise((2, 3, 151), device=torch.device("cpu"), seed=7)
+        b = generate_sampling_noise((2, 3, 151), device=torch.device("cpu"), seed=7)
+        self.assertTrue(torch.equal(a, b))
+
+    def test_v24_preserves_v22_v23_public_symbols(self):
+        from hmr4d.model.genmo.contact_guidance import (
+            allowed_channel_mask, group_channel_slices, ROOT_VELOCITY_SLICE,
+        )
+        from grail.optimization.finger_grasp import signed_point_mesh_distance
+        self.assertTrue(callable(signed_point_mesh_distance))
+        self.assertEqual(ROOT_VELOCITY_SLICE, slice(148, 151))
+
 
 if __name__ == "__main__":
     unittest.main()

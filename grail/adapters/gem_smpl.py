@@ -476,9 +476,9 @@ def run_contact_guided_genmo(
     root_gradient_smooth_kernel=9,
     arm_gradient_smooth_kernel=9,
     inner_line_search=True,
-    contact_standoff_m=0.05,
-    contact_min_clearance_m=0.04,
-    penetration_weight=60.0,
+    contact_standoff_m=0.0,
+    contact_min_clearance_m=0.0,
+    penetration_weight=0.0,
     root_activation_distance_min=0.06,
     root_activation_distance_max=0.15,
     root_leg_fade_fraction=0.30,
@@ -494,7 +494,13 @@ def run_contact_guided_genmo(
     arm_reference_weight=0.05,
     arm_smoothness_weight=0.15,
     approach_smoothness_weight=0.0,
-    post_contact_follow_mode="translation",
+    post_contact_follow_mode="pose",
+    w_root_velocity=1.0,
+    torso_reference_weight=0.0,
+    torso_smoothness_weight=0.0,
+    elbow_direction_weight=0.0,
+    foot_slide_limit=0.05,
+    min_guided_improvement_m=0.005,
 ):
     """Run baseline and two-stage contact-guided GENMO with shared noise.
 
@@ -502,6 +508,13 @@ def run_contact_guided_genmo(
     system.  The baseline root pose determines the rigid camera-to-GENMO-global
     transform used consistently by all three samples.
     """
+    # §2 regression guard: the palm target is the true surface point, so a
+    # positive clearance must never exceed the post-contact hold radius (else the
+    # palm target is unsatisfiable: >= clearance off the surface yet <= hold from it).
+    assert float(contact_min_clearance_m) <= float(post_contact_hold_radius) + 1e-9, (
+        f"contact_min_clearance_m ({contact_min_clearance_m}) must be <= "
+        f"post_contact_hold_radius ({post_contact_hold_radius})"
+    )
     import hydra
     import trimesh
     _setup_imports()
@@ -722,6 +735,11 @@ def run_contact_guided_genmo(
             initial_palm_aligned[frame] - camera_to_global_t
         )
         target_cam = camera_to_global_R.mT @ (target_global - camera_to_global_t)
+        # §2: keep the honest surface point separate from any standoff target so
+        # the diagnostic actually stores the surface (with standoff=0 they match).
+        true_surface_point_cam = camera_to_global_R.mT @ (
+            true_surface_point - camera_to_global_t
+        )
         palm_to_surface_delta_cam = target_cam - initial_palm_cam
 
         object_surface_targets_global = None
@@ -792,7 +810,8 @@ def run_contact_guided_genmo(
             "contact_standoff_m": float(contact_standoff_m),
             "post_contact_follow_mode": str(post_contact_follow_mode).lower(),
             "initial_palm_position_camera": initial_palm_cam.detach().cpu().tolist(),
-            "closest_surface_point_camera": target_cam.detach().cpu().tolist(),
+            "closest_surface_point_camera": true_surface_point_cam.detach().cpu().tolist(),
+            "contact_target_point_camera": target_cam.detach().cpu().tolist(),
             "palm_to_surface_delta_camera": palm_to_surface_delta_cam.detach().cpu().tolist(),
             "initial_depth_error_m": float(abs(palm_to_surface_delta_cam[2]).detach().cpu()),
             "initial_camera_xy_error_m": float(
@@ -927,6 +946,11 @@ def run_contact_guided_genmo(
             "arm_reference_weight": float(arm_reference_weight),
             "arm_smoothness_weight": float(arm_smoothness_weight),
             "approach_smoothness_weight": float(approach_smoothness_weight),
+            "w_root_velocity": float(w_root_velocity),
+            "torso_reference_weight": float(torso_reference_weight),
+            "torso_smoothness_weight": float(torso_smoothness_weight),
+            "elbow_direction_weight": float(elbow_direction_weight),
+            "foot_slide_limit": float(foot_slide_limit),
             "ground_height": float(ground_height),
         }
         # Arm-only candidate: arm (+ small torso), no legs/root.
@@ -986,6 +1010,19 @@ def run_contact_guided_genmo(
                 float(max_root_correction) / max(delta_norm, 1e-8)
             )
 
+        # §9: only ask the root to move if the approach window actually has a
+        # swing-foot phase (some foot lifts / low contact prob).  If both feet
+        # stay planted throughout, don't invent a new step — shrink the root
+        # correction so the arm/torso absorb more of the reach.
+        approach_start_frame = max(0, frame - int(contact_transition_frames))
+        has_swing_phase = True
+        if foot_contact_probs is not None:
+            win = foot_contact_probs[approach_start_frame : frame + 1]
+            has_swing_phase = bool((win < 0.5).any().item()) if win.numel() else False
+        if not has_swing_phase:
+            root_target_delta_global = root_target_delta_global * 0.3
+        diagnostics_swing_phase = bool(has_swing_phase)
+
         arm_root = None
         root_palm = None
         root_errors = None
@@ -995,7 +1032,10 @@ def run_contact_guided_genmo(
         root_candidate_rotation_change = None
         root_candidate_change = 0.0
         root_fallback_selected = False
-        if fallback:
+        # §14: always build the whole-body candidate so it can be saved/compared
+        # (whole_body_guided_motion.npz), even when the arm alone already reaches.
+        # Selection still requires the fallback gate below.
+        if True:
             whole_body_spec = {
                 **common_spec,
                 "include_root": True,
@@ -1043,7 +1083,8 @@ def run_contact_guided_genmo(
                 and root_candidate_change <= float(max_root_correction) + 1e-6
             )
             root_fallback_selected = bool(
-                root_candidate_safe
+                fallback
+                and root_candidate_safe
                 and root_candidate_improves_hold(
                     arm_error,
                     arm_post_contact_mean_error,
@@ -1065,23 +1106,51 @@ def run_contact_guided_genmo(
                 translation_global=human_root_offset,
                 translation_cam=human_root_offset_cam,
             )
-        compact_selected = (
-            compact_arm_root if root_fallback_selected else compact_arm_only
+        # Guided pick: arm_root if the root fallback won its gates, else arm_only.
+        guided_compact = compact_arm_root if root_fallback_selected else compact_arm_only
+        guided_palm = root_palm if root_fallback_selected else arm_palm
+        guided_pred = arm_root if root_fallback_selected else arm_only
+        guided_x = root_x if root_fallback_selected else arm_x
+        guided_rotation_change = (
+            root_candidate_rotation_change if root_fallback_selected else arm_rotation_change
         )
-
-        selected_palm = root_palm if root_fallback_selected else arm_palm
-        final_arm_rotation_change = (
-            root_candidate_rotation_change
-            if root_fallback_selected
-            else arm_rotation_change
+        guided_contact_error = root_error if root_fallback_selected else arm_error
+        # §14: keep the frozen baseline unless a guided candidate CLEARLY beats it
+        # at the contact frame (and is finite) — never emit a worse-than-baseline
+        # guided motion just because guidance ran.
+        baseline_contact_error = float(
+            torch.linalg.vector_norm(
+                initial_palm_aligned[frame] - target_trajectory[frame]
+            ).detach().cpu()
         )
+        guided_finite = bool(torch.isfinite(guided_palm).all())
+        select_baseline = (not guided_finite) or (
+            guided_contact_error
+            > baseline_contact_error - float(min_guided_improvement_m)
+        )
+        if select_baseline:
+            compact_selected = compact_baseline
+            selected_palm = initial_palm_aligned
+            selected_pred = baseline
+            selected_x = reference_x
+            final_arm_rotation_change = 0.0
+            root_fallback_selected = False
+            root_change = 0.0
+            selected_candidate = "baseline"
+        else:
+            compact_selected = guided_compact
+            selected_palm = guided_palm
+            selected_pred = guided_pred
+            selected_x = guided_x
+            final_arm_rotation_change = guided_rotation_change
+            root_change = root_candidate_change if root_fallback_selected else 0.0
+            selected_candidate = "arm_root" if root_fallback_selected else "arm_only"
         if final_arm_rotation_change > float(max_arm_rotation_change_deg) + 1e-6:
             raise RuntimeError(
                 "no guided candidate satisfies the arm rotation safety limit: "
                 f"selected={final_arm_rotation_change:.4f}deg, "
                 f"limit={float(max_arm_rotation_change_deg):.4f}deg"
             )
-        root_change = root_candidate_change if root_fallback_selected else 0.0
         selected_errors = torch.linalg.vector_norm(
             selected_palm - target_trajectory, dim=-1
         )
@@ -1125,7 +1194,6 @@ def run_contact_guided_genmo(
         initial_contact_error_vector_camera = (
             (initial_error_global @ camera_to_global_R).cpu().tolist()
         )
-        selected_pred = arm_root if root_fallback_selected else arm_only
         sel_body_joints = selected_pred["smpl24_joints_global"].detach()
         final_body_height_m = float(
             (sel_body_joints[0, :, 1].max() - sel_body_joints[0, :, 1].min()).cpu()
@@ -1136,7 +1204,6 @@ def run_contact_guided_genmo(
             torch.linalg.vector_norm(root_target_delta_global).cpu()
         )
         # Support-foot sliding of the selected candidate (weighted by contact).
-        selected_x = root_x if root_fallback_selected else arm_x
         sel_feet = model.pipeline.decode_guidance_kinematics(
             selected_x, palm_inputs, selected_hand
         )["foot_positions"][0].detach()  # [L,4,3]
@@ -1156,6 +1223,11 @@ def run_contact_guided_genmo(
                 foot_slide[f"{side}_support_foot_sliding_max_m"] = float(vals.max().cpu())
 
         diagnostics.update({
+            "selected_candidate": selected_candidate,
+            "baseline_contact_error_m": baseline_contact_error,
+            "guided_contact_error_m": float(guided_contact_error),
+            "approach_swing_phase_available": diagnostics_swing_phase,
+            "post_contact_follow_mode": str(post_contact_follow_mode).lower(),
             "arm_only_contact_error_m": arm_error,
             "arm_only_post_contact_mean_error_m": arm_post_contact_mean_error,
             "arm_only_post_contact_max_error_m": arm_post_contact_max_error,
@@ -1276,7 +1348,9 @@ def run_contact_guided_genmo(
             "initial": compact_baseline,
             "arm_only": compact_arm_only,
             "arm_root": compact_arm_root,
+            "whole_body": compact_arm_root,
             "selected": compact_selected,
+            "selected_candidate": selected_candidate,
             "sampling_noise": sampling_noise.detach().cpu(),
             "coordinate_transform": {
                 "camera_to_genmo_global_R": camera_to_global_R.detach().cpu(),

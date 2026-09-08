@@ -945,21 +945,21 @@ def main():
     parser.add_argument(
         "--genmo-contact-standoff-m",
         type=float,
-        default=0.05,
-        help="Outward standoff (m) of the palm target from the object surface so the hand mesh rests on it instead of clipping through.",
+        default=0.0,
+        help="Outward standoff (m) of the palm target from the object surface. v24 default 0: the palm target IS the true surface point; full-hand-mesh penetration is left to the finger stage.",
     )
     parser.add_argument(
         "--genmo-contact-min-clearance-m",
         type=float,
-        default=0.04,
-        help="Minimum palm clearance (m) outside the object surface along the per-frame normal; a steep penetration penalty keeps the hand from clipping through.",
+        default=0.0,
+        help="Minimum palm clearance (m) outside the surface along the per-frame normal. v24 default 0 (off); must be <= post-contact hold radius.",
     )
     # ---- finger-grasp refinement (post-guidance) ----
     parser.add_argument(
         "--genmo-finger-grasp",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="After guidance, optimize the grasping hand's fingers/wrist/elbow so fingers wrap the object without penetrating.",
+        default=False,
+        help="After guidance, optimize the grasping hand's fingers/wrist/elbow so fingers wrap the object without penetrating. v24: OFF by default — validate body/arm/palm first.",
     )
     parser.add_argument("--genmo-finger-iterations", type=int, default=150)
     parser.add_argument("--genmo-finger-contact-weight", type=float, default=8.0)
@@ -979,8 +979,8 @@ def main():
     parser.add_argument(
         "--genmo-penetration-weight",
         type=float,
-        default=60.0,
-        help="Weight of the penetration penalty (palm going inside / closer than the min clearance).",
+        default=0.0,
+        help="Weight of the GENMO-stage palm-point penetration penalty. v24 default 0 (off); hand-mesh penetration is handled by the finger stage.",
     )
     # ---- v23 whole-body guidance ----
     parser.add_argument(
@@ -1054,10 +1054,40 @@ def main():
     parser.add_argument(
         "--genmo-post-contact-follow-mode",
         type=str,
-        default="translation",
+        default="pose",
         choices=["translation", "pose"],
-        help="After contact the hand rides with the object by translation only "
-             "(default, position-static, no rotation) or by full 6DoF pose.",
+        help="After contact the hand target follows the object surface point in the "
+             "object frame (v24 default 'pose': target stays on the surface as the "
+             "object rotates, with a 2cm dead-zone) or by translation only.",
+    )
+    # ---- v24 approach window + whole-body action terms ----
+    parser.add_argument(
+        "--genmo-min-approach-frames", type=int, default=20,
+        help="Minimum pre-contact approach-ramp length (frames), extended backwards only; too short a window makes the hand lunge.",
+    )
+    parser.add_argument(
+        "--genmo-max-approach-frames", type=int, default=40,
+        help="Maximum pre-contact approach-ramp length (frames).",
+    )
+    parser.add_argument(
+        "--genmo-root-velocity-weight", type=float, default=1.0,
+        help="Weight of the root-velocity residual loss (candidate vs reference+ramp desired root velocity).",
+    )
+    parser.add_argument(
+        "--genmo-torso-reference-weight", type=float, default=0.5,
+        help="Weight keeping the torso/spine near the reference pose (prevents chest twist).",
+    )
+    parser.add_argument(
+        "--genmo-torso-smoothness-weight", type=float, default=0.5,
+        help="Weight of the torso temporal (acceleration) smoothness loss.",
+    )
+    parser.add_argument(
+        "--genmo-elbow-direction-weight", type=float, default=0.5,
+        help="Weight keeping the elbow bend plane from flipping vs the reference (natural reach).",
+    )
+    parser.add_argument(
+        "--genmo-foot-slide-limit", type=float, default=0.05,
+        help="Line-search reject threshold (m/frame) for support-foot slide relative to the reference motion.",
     )
     parser.add_argument(
         "--genmo-guidance-dir",

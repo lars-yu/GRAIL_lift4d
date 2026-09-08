@@ -59,8 +59,9 @@ def _align_motion(source, reference):
     b = ref_trans[0] - src_trans[0] @ A.T
     src_pose[:, :3] = np.asarray([_matrix_to_axis_angle(A @ _axis_angle_to_matrix(x)) for x in src_pose[:, :3]])
     src_trans[:] = src_trans @ A.T + b
-    if src_pose.shape[1] >= 151:
-        src_pose[:, 148:151] = src_pose[:, 148:151] @ A.T
+    # NB: the exported ``poses`` is the 165-dim SMPL-X axis-angle vector, where
+    # 148:151 is part of the RIGHT-HAND pose — NOT a root velocity.  Never rotate
+    # it; root velocity 148:151 only exists in the 151-dim GENMO latent.
     return out
 
 
@@ -95,8 +96,8 @@ def _camera_to_world_motion(motion, R, t, human_model=None):
     out["trans"] = trans @ R.T + t + pelvis_offset @ R.T - pelvis_offset
     roots = np.asarray(out["poses"][:, :3], dtype=np.float32)
     out["poses"][:, :3] = np.asarray([_matrix_to_axis_angle(R @ _axis_angle_to_matrix(x)) for x in roots])
-    if out["poses"].shape[1] >= 151:
-        out["poses"][:, 148:151] = out["poses"][:, 148:151] @ R.T
+    # Do NOT rotate poses[:,148:151]: on the 165-dim SMPL-X vector that is the
+    # right-hand finger pose, not a root velocity.  Rotating it corrupts the hand.
     return out
 
 
@@ -169,11 +170,12 @@ def main():
         diagnostics = json.load(f)
     initial = load_human_motion_data(str(source / "initial_genmo_motion.npz"), is_global=False)
     guided = load_human_motion_data(str(source / "selected_guided_motion.npz"), is_global=False)
-    reference = load_human_motion_data(
-        str(args.reference_motion_dir.resolve() / "initial_genmo_motion.npz"), is_global=False
-    )
-    initial = _align_motion(initial, reference)
-    guided = _align_motion(guided, reference)
+    # §13: the GENMO motion and the object trajectory are ALREADY in the same
+    # contact-frame camera coordinates, so they are both carried to GRAIL world by
+    # the identical camera->world SE(3) below (_camera_to_world_motion for the
+    # human, _object_world_data for the object).  We no longer align the human to
+    # an old reference motion (which the object was not aligned to), which
+    # previously broke the relative hand-object geometry.
 
     with np.load(source / "anchored_lift4d_object_motion.npz", allow_pickle=True) as z:
         poses_cam = np.asarray(z["poses_in_cam"], dtype=np.float32)
@@ -258,11 +260,12 @@ def main():
     diagnostics["hybrid_human_model_path"] = cfg["human_model"]["smplx_model_path"]
     diagnostics["hybrid_coordinate_policy"] = {
         "human": (
-            "v11 first-frame rigid alignment, then GRAIL SMPL-X camera-to-world "
-            "transform including per-frame pelvis offset"
+            "v24: GRAIL SMPL-X camera-to-world transform (incl. per-frame pelvis "
+            "offset); no alignment to an old reference motion"
         ),
         "object": "v10 anchored camera trajectory, then OpenCV camera-to-GRAIL world",
-        "object_transform_not_aligned_with_human": True,
+        "object_transform_not_aligned_with_human": False,
+        "human_object_share_camera_to_world_se3": True,
         "top_view": "original GRAIL HOIVisualizer top camera; no horizontal flip",
     }
     with (out / "diagnostics.json").open("w") as f:
