@@ -1137,6 +1137,60 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         sel_global0, sel_incam0,
         str(output_dir / "selected_guided_motion_before_finger.npz"),
     )
+
+    # v26: fixed-object grasp + arm IK.  After the guided approach + contact, the
+    # palm-centre contact is frozen in the object's LOCAL frame (offset out by the
+    # palm-shell thickness so the hand mesh rests ON the surface) and transported
+    # rigidly by the object trajectory; a small IK rides the arm on those targets
+    # so the hand tracks the lifted object without drifting away or penetrating.
+    if bool(getattr(args, "genmo_fixed_object_grasp_ik", True)):
+        from grail.optimization.fixed_object_arm_ik import (
+            FixedObjectArmIKConfig, refine_fixed_object_grasp_ik,
+        )
+        from grail.models.smplx_model import setup_smplx_model
+
+        ik_model_path = Path(args.cfg["human_model"]["smplx_model_path"])
+        if not ik_model_path.is_absolute():
+            ik_model_path = Path.cwd() / ik_model_path
+        ik_model = setup_smplx_model(
+            model_path=str(ik_model_path), flat_hand_mean=True, device="cuda"
+        )
+        ik_config = FixedObjectArmIKConfig(
+            contact_frame=contact_frame,
+            selected_hand=selected_hand,
+            iterations=int(getattr(args, "genmo_ik_iterations", 200)),
+            position_weight=float(getattr(args, "genmo_ik_position_weight", 150.0)),
+            normal_weight=float(getattr(args, "genmo_ik_normal_weight", 2.0)),
+            penetration_weight=float(getattr(args, "genmo_ik_penetration_weight", 800.0)),
+            finger_contact_weight=float(getattr(args, "genmo_ik_finger_weight", 3.0)),
+            min_clearance=float(getattr(args, "genmo_ik_min_clearance_m", 0.0)),
+            palm_clearance_min=float(getattr(args, "genmo_ik_palm_clearance_min_m", 0.018)),
+            palm_clearance_max=float(getattr(args, "genmo_ik_palm_clearance_max_m", 0.040)),
+        )
+        sel_global, sel_incam = saved_motions["selected_guided_motion.npz"]
+        save_human_motion_data(
+            sel_global, sel_incam, str(output_dir / "selected_guided_motion_before_ik.npz")
+        )
+        refined_incam, ik_diag = refine_fixed_object_grasp_ik(
+            sel_incam, object_vertices, object_faces, object_poses,
+            contact_frame, selected_hand, ik_model, ik_config, device="cuda",
+        )
+        # Body + hand pose are frame-local (identical in global and in-camera);
+        # copy them from the refined in-camera motion into the global track.
+        refined_global = dict(sel_global)
+        rg_poses = np.array(sel_global["poses"], copy=True)
+        rg_poses[:, 3:] = np.asarray(refined_incam["poses"])[:, 3:]
+        refined_global["poses"] = rg_poses
+        for k in ("left_hand_pose", "right_hand_pose"):
+            if k in refined_incam:
+                refined_global[k] = refined_incam[k]
+        save_human_motion_data(
+            refined_global, refined_incam, str(output_dir / "selected_guided_motion.npz")
+        )
+        saved_motions["selected_guided_motion.npz"] = (refined_global, refined_incam)
+        result["diagnostics"]["fixed_object_grasp_ik"] = ik_diag
+        del ik_model
+
     if bool(getattr(args, "genmo_finger_grasp", False)):
         from grail.optimization.finger_grasp import FingerGraspConfig, refine_finger_grasp
         from grail.models.smplx_model import setup_smplx_model

@@ -955,11 +955,29 @@ def main():
         help="Minimum palm clearance (m) outside the surface along the per-frame normal. v24 default 0 (off); must be <= post-contact hold radius.",
     )
     # ---- finger-grasp refinement (post-guidance) ----
+    # ---- v26 fixed-object grasp + arm IK (post-contact) ----
+    parser.add_argument(
+        "--genmo-fixed-object-grasp-ik",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="After guidance, freeze the palm contact in the object-local frame and IK the arm (collar/shoulder/elbow/wrist) so the hand rides the lifted object without drifting away or penetrating (fingers lightly fitted).",
+    )
+    parser.add_argument("--genmo-ik-iterations", type=int, default=200)
+    parser.add_argument("--genmo-ik-position-weight", type=float, default=150.0)
+    parser.add_argument("--genmo-ik-normal-weight", type=float, default=2.0)
+    parser.add_argument("--genmo-ik-penetration-weight", type=float, default=800.0)
+    parser.add_argument("--genmo-ik-finger-weight", type=float, default=3.0)
+    parser.add_argument(
+        "--genmo-ik-min-clearance-m", type=float, default=0.0,
+        help="Penalize hand vertices closer than this (m) to the surface (0 = forbid penetration, allow touch).",
+    )
+    parser.add_argument("--genmo-ik-palm-clearance-min-m", type=float, default=0.018)
+    parser.add_argument("--genmo-ik-palm-clearance-max-m", type=float, default=0.040)
     parser.add_argument(
         "--genmo-finger-grasp",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="After guidance, optimize the grasping hand's fingers/wrist/elbow so fingers wrap the object without penetrating. v24: OFF by default — validate body/arm/palm first.",
+        help="After guidance, optimize the grasping hand's fingers/wrist/elbow so fingers wrap the object without penetrating. v24: OFF by default (the fixed-object IK stage now also fits fingers).",
     )
     parser.add_argument("--genmo-finger-iterations", type=int, default=150)
     parser.add_argument("--genmo-finger-contact-weight", type=float, default=8.0)

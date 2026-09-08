@@ -1390,6 +1390,71 @@ class GenmoContactGuidanceTests(unittest.TestCase):
         self.assertAlmostEqual(float(interp[frame]), 0.0, places=5)  # contact point
         self.assertGreaterEqual(float(interp[2]), float(interp[5]))  # ramps toward contact
 
+    # ------------------------------------------------------------------
+    # v26 fixed-object grasp + arm IK
+    # ------------------------------------------------------------------
+    def test_v26_fixed_object_targets_transport_rigidly(self):
+        from grail.optimization.fixed_object_grasp import (
+            build_fixed_object_grasp_targets, world_point_to_object_local,
+        )
+        T = 6
+        # object rotates about Y and translates
+        ang = torch.linspace(0.0, 1.0, T)
+        R = torch.zeros(T, 3, 3)
+        R[:, 0, 0] = torch.cos(ang); R[:, 0, 2] = torch.sin(ang)
+        R[:, 1, 1] = 1.0
+        R[:, 2, 0] = -torch.sin(ang); R[:, 2, 2] = torch.cos(ang)
+        t = torch.stack([torch.linspace(0, 0.5, T), torch.zeros(T), torch.linspace(0, 0.3, T)], dim=1)
+        contact = torch.tensor([0.3, 0.1, 0.2])
+        g = build_fixed_object_grasp_targets(contact, R, t, 2)
+        # the world target at the contact frame equals the contact point
+        self.assertTrue(torch.allclose(g.position_world[2], contact, atol=1e-5))
+        # the object-LOCAL coordinate is constant across all frames (rigid).
+        for f in range(T):
+            local = world_point_to_object_local(g.position_world[f], R[f], t[f])
+            self.assertTrue(torch.allclose(local, g.anchor_object, atol=1e-5))
+
+    def test_v26_palm_center_target_offsets_outside_surface(self):
+        from grail.optimization.fixed_object_grasp import build_palm_center_contact_target
+        surface = torch.zeros(3)
+        normal = torch.tensor([0.0, 0.0, 1.0])           # +z outward
+        palm_center = torch.tensor([0.0, 0.0, 0.05])     # hand 5cm out along +z
+        patch = palm_center[None] + 0.02 * torch.randn(20, 3)  # palm shell ~2cm
+        tgt = build_palm_center_contact_target(
+            surface, normal, palm_center, patch,
+            minimum_clearance=0.012, maximum_clearance=0.040,
+        )
+        # centre target sits OUTSIDE the surface along +z, within the clearance band
+        self.assertGreater(float(tgt.center_position_world[2]), 0.0)
+        self.assertGreaterEqual(float(tgt.center_clearance), 0.012 - 1e-6)
+        self.assertLessEqual(float(tgt.center_clearance), 0.040 + 1e-6)
+
+    def test_v26_arm_and_palm_indices_resolve_by_name(self):
+        from grail.optimization.fixed_object_arm_ik import (
+            _body_pose_slice, _joint_index, _ARM_JOINT_NAMES, _PALM_JOINT_NAMES,
+        )
+        # right arm body-pose slices match the known SMPL-X layout
+        self.assertEqual(_body_pose_slice("R_Thorax"), slice(42, 45))
+        self.assertEqual(_body_pose_slice("R_Shoulder"), slice(51, 54))
+        self.assertEqual(_body_pose_slice("R_Elbow"), slice(57, 60))
+        self.assertEqual(_body_pose_slice("R_Wrist"), slice(63, 66))
+        self.assertEqual(_joint_index("R_Wrist"), 21)
+        # every configured joint name resolves
+        for hand in ("left", "right"):
+            for nm in _ARM_JOINT_NAMES[hand].values():
+                self.assertIsInstance(_body_pose_slice(nm), slice)
+            for nm in _PALM_JOINT_NAMES[hand]:
+                self.assertGreaterEqual(_joint_index(nm), 0)
+
+    def test_v26_pipeline_default_ik_on_finger_off(self):
+        cli = (Path(__file__).resolve().parents[1] / "grail" / "pipelines" / "recon_4dhoi.py").read_text()
+        ik = cli[cli.index('"--genmo-fixed-object-grasp-ik"'):]
+        ik = ik[: ik.index(")")]
+        self.assertIn("default=True", ik)
+        fg = cli[cli.index('"--genmo-finger-grasp"'):]
+        fg = fg[: fg.index(")")]
+        self.assertIn("default=False", fg)
+
 
 if __name__ == "__main__":
     unittest.main()
