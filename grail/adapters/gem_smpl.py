@@ -501,6 +501,11 @@ def run_contact_guided_genmo(
     elbow_direction_weight=0.0,
     foot_slide_limit=0.05,
     min_guided_improvement_m=0.005,
+    palm_velocity_weight=0.0,
+    palm_velocity_slack_m=0.005,
+    interpolate_pre_contact_target=True,
+    approach_weight_floor=0.5,
+    approach_max_step_m=0.02,
 ):
     """Run baseline and two-stage contact-guided GENMO with shared noise.
 
@@ -951,6 +956,11 @@ def run_contact_guided_genmo(
             "torso_smoothness_weight": float(torso_smoothness_weight),
             "elbow_direction_weight": float(elbow_direction_weight),
             "foot_slide_limit": float(foot_slide_limit),
+            "palm_velocity_weight": float(palm_velocity_weight),
+            "palm_velocity_slack_m": float(palm_velocity_slack_m),
+            "interpolate_pre_contact_target": bool(interpolate_pre_contact_target),
+            "approach_weight_floor": float(approach_weight_floor),
+            "approach_max_step_m": float(approach_max_step_m),
             "ground_height": float(ground_height),
         }
         # Arm-only candidate: arm (+ small torso), no legs/root.

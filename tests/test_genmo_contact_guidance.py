@@ -1328,6 +1328,68 @@ class GenmoContactGuidanceTests(unittest.TestCase):
         src = (Path(__file__).resolve().parents[1] / "grail" / "adapters" / "gem_smpl.py").read_text()
         self.assertNotIn("root_target_delta_global * 0.3", src)
 
+    def test_v25b_palm_velocity_penalizes_faster_than_reference(self):
+        # Reference palm is static (0); a candidate whose palm lunges (a large
+        # single-frame step) incurs a palm-velocity loss, a slow one does not.
+        ref = torch.zeros(1, 8, 151)
+
+        def palm(m, _h):
+            v = m[..., 72:73]
+            return torch.cat((v, v * 0, v * 0), dim=-1)
+
+        cfg = dict(
+            contact_frame=5, selected_hand="left",
+            object_surface_target=torch.zeros(3), object_surface_targets=torch.zeros(8, 3),
+            reference_motion=ref, contact_transition_frames=4,
+            palm_velocity_weight=1.0, palm_velocity_slack_m=0.005,
+        )
+        cb = ContactGuidance(ContactGuidanceConfig(**cfg), palm)
+        lunge = ref.clone()
+        lunge[:, 4, 72] = 0.10  # a single 10 cm jump at frame 4 (in the window)
+        _, comps_l = cb._compute_guidance_loss(lunge, torch.tensor([10]))
+        _, comps_0 = cb._compute_guidance_loss(ref, torch.tensor([10]))
+        self.assertGreater(float(comps_l["palm_velocity_loss"]), 0.0)
+        self.assertAlmostEqual(float(comps_0["palm_velocity_loss"]), 0.0)
+
+    def test_v25b_interpolated_pre_contact_target_ramps_to_contact(self):
+        # With interpolation the pre-contact targets ramp from the natural palm
+        # (at approach start) to the contact point, instead of all being the
+        # static contact point — so early frames move only a little.
+        T, frame, trans = 10, 6, 4  # approach_start = 2
+        ref = torch.zeros(1, T, 151)
+        # natural palm (channel 72 -> palm x) walks slowly; contact point is 0.
+        ref[:, :, 72] = torch.linspace(0.5, 0.4, T)
+        P = torch.zeros(3)
+
+        def palm(m, _h):
+            v = m[..., 72:73]
+            return torch.cat((v, v * 0, v * 0), dim=-1)
+
+        def targets(interp):
+            cb = ContactGuidance(
+                ContactGuidanceConfig(
+                    contact_frame=frame, selected_hand="left",
+                    object_surface_target=P, reference_motion=ref,
+                    pre_contact_surface_target=P,
+                    post_contact_surface_targets=P.reshape(1, 3).repeat(T - frame, 1),
+                    contact_transition_frames=trans,
+                    interpolate_pre_contact_target=interp,
+                ),
+                palm,
+            )
+            _, comps = cb._compute_guidance_loss(ref, torch.tensor([10]))
+            return comps["target_seq"][0, :, 0]
+
+        interp = targets(True)
+        static = targets(False)
+        # Legacy: every pre-contact target is the static contact point (0).
+        self.assertTrue(torch.allclose(static[:frame], torch.zeros(frame), atol=1e-6))
+        # Interpolated: approach-start target follows the natural palm (~0.5),
+        # ramping to the contact point (0) by the contact frame -> monotone down.
+        self.assertGreater(float(interp[2]), 0.3)          # near natural palm
+        self.assertAlmostEqual(float(interp[frame]), 0.0, places=5)  # contact point
+        self.assertGreaterEqual(float(interp[2]), float(interp[5]))  # ramps toward contact
+
 
 if __name__ == "__main__":
     unittest.main()

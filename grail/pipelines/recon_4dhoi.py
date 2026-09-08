@@ -939,8 +939,8 @@ def main():
     parser.add_argument(
         "--genmo-arm-gradient-smooth-kernel",
         type=int,
-        default=9,
-        help="Odd temporal Gaussian kernel for arm/torso/leg gradient (<=1 disables); reduces post-contact hand jitter.",
+        default=31,
+        help="Odd temporal Gaussian kernel for arm/torso/leg gradient (<=1 disables). v25b default 31: spreads the strong contact-frame pull across the approach window so the reach is distributed into a smooth motion (no last-frame lunge) while keeping the ~2 cm contact closure.",
     )
     parser.add_argument(
         "--genmo-contact-standoff-m",
@@ -1088,6 +1088,27 @@ def main():
     parser.add_argument(
         "--genmo-foot-slide-limit", type=float, default=0.05,
         help="Line-search reject threshold (m/frame) for support-foot slide relative to the reference motion.",
+    )
+    parser.add_argument(
+        "--genmo-palm-velocity-weight", type=float, default=6.0,
+        help="Weight penalizing the guided palm moving faster frame-to-frame than the natural (reference) motion over the approach/contact window; removes the sudden lunge. 0 disables.",
+    )
+    parser.add_argument(
+        "--genmo-palm-velocity-slack-m", type=float, default=0.005,
+        help="Allowed extra palm speed (m/frame) above the reference before the palm-velocity penalty applies.",
+    )
+    parser.add_argument(
+        "--genmo-interpolate-approach-target",
+        action=argparse.BooleanOptionalAction, default=True,
+        help="Spread the reach: each pre-contact frame targets a smoothstep interpolation from the natural palm to the contact point (removes the last-frame lunge). Disable for the legacy static pre-contact target.",
+    )
+    parser.add_argument(
+        "--genmo-approach-weight-floor", type=float, default=0.5,
+        help="Minimum guidance weight on pre-contact approach frames (0=legacy 0->1 ramp). A floor makes the palm move throughout the approach instead of lunging in the last few frames.",
+    )
+    parser.add_argument(
+        "--genmo-approach-max-step-m", type=float, default=0.0,
+        help="Hard line-search cap (m/frame) on the max frame-to-frame palm step within the approach window; rejects lunge updates so the reach spreads. 0 disables (a too-small cap starves the reach).",
     )
     parser.add_argument(
         "--genmo-guidance-dir",

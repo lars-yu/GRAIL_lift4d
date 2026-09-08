@@ -924,7 +924,7 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         getattr(args, "genmo_root_gradient_smooth_kernel", 9)
     )
     inner_line_search = bool(getattr(args, "genmo_inner_line_search", True))
-    arm_gradient_smooth_kernel = int(getattr(args, "genmo_arm_gradient_smooth_kernel", 9))
+    arm_gradient_smooth_kernel = int(getattr(args, "genmo_arm_gradient_smooth_kernel", 31))
     contact_standoff_m = float(getattr(args, "genmo_contact_standoff_m", 0.05))
     contact_min_clearance_m = float(getattr(args, "genmo_contact_min_clearance_m", 0.04))
     penetration_weight = float(getattr(args, "genmo_penetration_weight", 60.0))
@@ -958,6 +958,13 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
     torso_smoothness_weight = float(getattr(args, "genmo_torso_smoothness_weight", 0.5))
     elbow_direction_weight = float(getattr(args, "genmo_elbow_direction_weight", 0.5))
     foot_slide_limit = float(getattr(args, "genmo_foot_slide_limit", 0.05))
+    palm_velocity_weight = float(getattr(args, "genmo_palm_velocity_weight", 0.0))
+    palm_velocity_slack_m = float(getattr(args, "genmo_palm_velocity_slack_m", 0.005))
+    interpolate_pre_contact_target = bool(
+        getattr(args, "genmo_interpolate_approach_target", True)
+    )
+    approach_weight_floor = float(getattr(args, "genmo_approach_weight_floor", 0.5))
+    approach_max_step_m = float(getattr(args, "genmo_approach_max_step_m", 0.0))
     post_contact_worst_frame_weight = float(
         getattr(args, "genmo_post_contact_worst_frame_weight", 0.5)
     )
@@ -1077,6 +1084,11 @@ def run_genmo_contact_guidance_stage(video_id, args, object_mesh_path):
         torso_smoothness_weight=torso_smoothness_weight,
         elbow_direction_weight=elbow_direction_weight,
         foot_slide_limit=foot_slide_limit,
+        palm_velocity_weight=palm_velocity_weight,
+        palm_velocity_slack_m=palm_velocity_slack_m,
+        interpolate_pre_contact_target=interpolate_pre_contact_target,
+        approach_weight_floor=approach_weight_floor,
+        approach_max_step_m=approach_max_step_m,
     )
     result["diagnostics"]["object_pose_at_contact_frame"] = pose_at_contact.tolist()
     result["diagnostics"]["object_pose_source"] = OBJECT_TRAJECTORY_METHOD
